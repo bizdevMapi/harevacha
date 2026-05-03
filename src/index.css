@@ -1,0 +1,8 @@
+@import "tailwindcss";
+@config "../tailwind.config.js";
+
+body {
+  direction: rtl;
+  margin: 0;
+  font-family: Heebo, system-ui, sans-serif;
+}
