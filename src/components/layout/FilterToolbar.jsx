@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import {
   IconBackCircle,
   IconChevronDown,
@@ -8,33 +7,29 @@ import {
   IconPerson,
   IconPin,
 } from '../../assets/icons'
+import {
+  DASHBOARD_AREA_OPTIONS,
+  POPULATION_SEGMENT_OPTIONS,
+  PROFILE_FILTER_OPTIONS,
+} from '../../constants'
+import { useDashboardUi } from '../../context/DashboardUiContext'
 import { ToolbarSelect } from '../ui'
 
 /**
  * סרגל פעולות ומסננים מתחת להדר.
- * `viewMode` ו־`onViewModeChange` מגיעים מהורה — אותו state שמחליט אם להציג מפה או רשימה.
+ * מצב התצוגה והסינונים נלקח מ־DashboardUiContext (בלי פרופס מה־App).
  */
-const FilterToolbar = ({
-  matchCount = 265,
-  viewMode,
-  onViewModeChange,
-  onBack,
-}) => {
-  const [population, setPopulation] = useState('none')
-  const [area, setArea] = useState('jerusalem-all')
-
-  const populationOptions = [
-    { value: 'none', label: 'ללא פילוח' },
-    { value: 'age', label: 'לפי גיל' },
-    { value: 'household', label: 'לפי משק בית' },
-  ]
-
-  const areaOptions = [
-    { value: 'jerusalem-all', label: 'ירושלים - כל העיר' },
-    { value: 'jerusalem-center', label: 'ירושלים - מרכז' },
-    { value: 'jerusalem-south', label: 'ירושלים - דרום' },
-  ]
-
+const FilterToolbar = ({ matchCount = 265, onBack }) => {
+  const {
+    viewMode,
+    setViewMode,
+    selectedArea,
+    setSelectedArea,
+    populationSegment,
+    setPopulationSegment,
+    profileKey,
+    setProfileKey,
+  } = useDashboardUi()
   const divider = (
     <div
       className="hidden h-11 w-px shrink-0 bg-white/55 sm:block"
@@ -48,22 +43,33 @@ const FilterToolbar = ({
         <div className="flex min-w-0 shrink-0 flex-wrap items-end gap-4 sm:flex-nowrap sm:gap-5">
           <ToolbarSelect
             label="אזור"
-            value={area}
-            onChange={(e) => setArea(e.target.value)}
-            options={areaOptions}
+            value={selectedArea}
+            onChange={(e) => setSelectedArea(e.target.value)}
+            options={[...DASHBOARD_AREA_OPTIONS]}
             leftIcon={<IconChevronsUpDown />}
             rightIcon={<IconPin />}
             className="w-[min(100%,280px)] sm:w-[248px]"
           />
           <ToolbarSelect
             label="נתוני אוכלוסייה"
-            value={population}
-            onChange={(e) => setPopulation(e.target.value)}
-            options={populationOptions}
+            value={populationSegment}
+            onChange={(e) => setPopulationSegment(e.target.value)}
+            options={[...POPULATION_SEGMENT_OPTIONS]}
             leftIcon={<IconChevronDown />}
             rightIcon={<IconPerson />}
             className="w-[min(100%,240px)] sm:w-[208px]"
           />
+          {populationSegment !== 'none' && (
+            <ToolbarSelect
+              label="פרופיל"
+              value={profileKey}
+              onChange={(e) => setProfileKey(e.target.value)}
+              options={[...PROFILE_FILTER_OPTIONS]}
+              leftIcon={<IconChevronDown />}
+              rightIcon={<IconPerson />}
+              className="w-[min(100%,240px)] sm:w-[208px]"
+            />
+          )}
         </div>
 
         {divider}
@@ -87,7 +93,7 @@ const FilterToolbar = ({
             {/* ב־RTL הסדר הזה מציב מפה מימין ורשימה משמאל כמו במוקאפ */}
             <button
               type="button"
-              onClick={() => onViewModeChange('map')}
+              onClick={() => setViewMode('map')}
               className={`flex items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-bold transition-all duration-150 ${
                 viewMode === 'map'
                   ? 'bg-brand-toolbarToggleOn text-white shadow-toolbarToggleOn'
@@ -99,7 +105,7 @@ const FilterToolbar = ({
             </button>
             <button
               type="button"
-              onClick={() => onViewModeChange('list')}
+              onClick={() => setViewMode('list')}
               className={`flex items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-bold transition-all duration-150 ${
                 viewMode === 'list'
                   ? 'bg-brand-toolbarToggleOn text-white shadow-toolbarToggleOn'

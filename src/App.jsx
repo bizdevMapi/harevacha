@@ -1,5 +1,5 @@
-import { useState } from "react"
 import GovMapView from "./components/map/GovMapView"
+import { DashboardUiProvider, useDashboardUi } from "./context/DashboardUiContext"
 import { FilterToolbar, Header } from "./components/layout"
 
 const layers = [
@@ -13,13 +13,13 @@ const layers = [
   "שטחים פתוחים",
 ]
 
-function App() {
-  const [viewMode, setViewMode] = useState("map")
+function AppShell() {
+  const { viewMode } = useDashboardUi()
 
   return (
     <div className="flex h-screen flex-col overflow-hidden">
       <Header />
-      <FilterToolbar viewMode={viewMode} onViewModeChange={setViewMode} />
+      <FilterToolbar />
 
       <main className="flex min-h-0 flex-1 flex-row-reverse">
         {/* <aside className="h-full w-[320px] shrink-0 border-l border-slate-200 bg-white">
@@ -111,6 +111,14 @@ function App() {
         </section>
       </main>
     </div>
+  )
+}
+
+function App() {
+  return (
+    <DashboardUiProvider>
+      <AppShell />
+    </DashboardUiProvider>
   )
 }
 

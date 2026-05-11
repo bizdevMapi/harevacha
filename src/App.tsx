@@ -1,4 +1,5 @@
 import GovMapView from './components/map/GovMapView'
+import { DashboardUiProvider } from './context/DashboardUiContext'
 
 const filters: string[] = [
   'בתי ספר',
@@ -15,7 +16,8 @@ const filters: string[] = [
 
 function App() {
   return (
-    <div className="h-screen overflow-hidden bg-brand-bgLight" dir="rtl">
+    <DashboardUiProvider>
+      <div className="h-screen overflow-hidden bg-brand-bgLight" dir="rtl">
       <header className="flex h-14 items-center justify-between bg-brand-darkBlue px-5 text-white shadow-sm">
         <h1 className="text-sm font-semibold md:text-base">מערכת GIS עירונית</h1>
         <div className="text-xs text-white/90">Jerusalem • Gov Dashboard</div>
@@ -49,7 +51,8 @@ function App() {
           </div>
         </section>
       </main>
-    </div>
+      </div>
+    </DashboardUiProvider>
   )
 }
 

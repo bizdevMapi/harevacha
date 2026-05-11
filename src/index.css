@@ -6,3 +6,34 @@ body {
   margin: 0;
   font-family: Heebo, system-ui, sans-serif;
 }
+
+/* Global scrollbar theme for all scrollable areas */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #8fb4d6 #eef3f8;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: #eef3f8;
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: #8fb4d6;
+  border: 1px solid #eef3f8;
+  border-radius: 999px;
+  min-height: 36px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: #7ea8cf;
+}
+
+*::-webkit-scrollbar-corner {
+  background: #eef3f8;
+}
