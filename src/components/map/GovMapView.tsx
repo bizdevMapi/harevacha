@@ -156,6 +156,7 @@ const GovMapView = () => {
   }
 
   useEffect(() => {
+    console.log('test')
     const scriptSrc = 'https://govmap.gov.il/govmap/api/govmap.api.js'
 
     const initMap = () => {
