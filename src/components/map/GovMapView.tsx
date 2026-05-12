@@ -26,7 +26,7 @@ const AREA_POINTS: Record<string, Array<{ x: number; y: number }>> = {
 }
 
 const GovMapView = () => {
-  const { selectedArea } = useDashboardUi()
+  const { selectedArea, setNeighborhoodsList } = useDashboardUi()
   const mapRef = useRef<HTMLDivElement | null>(null)
   const lastHoverIdentifyAtRef = useRef(0)
   const isHoverIdentifyInFlightRef = useRef(false)
@@ -51,8 +51,10 @@ const GovMapView = () => {
           radius: 3000,
           layers: [
             {
-              name: 'layer_232641',
-              fields: ['servicenam', 'serviceid'],
+              // name: 'layer_232641',
+              name: '22',
+              fields: ['fname'],
+              //fields: ['servicenam', 'serviceid'],
             },
           ],
         },
@@ -69,6 +71,29 @@ const GovMapView = () => {
       })
   }
 
+  const getNeighborhoods = () => {
+    var params = {
+      geometry:`POLYGON ((130000 380000, 285000 380000, 285000 805000, 130000 805000, 130000 380000))`,
+      layerName: "22",
+      fields: ['fname','setl_name'],
+      whereClause: "setl_name IN ('ירושלים', 'טירת כרמל')",
+
+      getShapes: true,
+  };
+  window.govmap.intersectFeatures(params).then(function (response) {
+      console.log(response);
+      const neighborhoods = response?.data?.map((item: { Values: [string, string, number, number] }) =>
+        ({
+          label: `${item.Values[1]} - ${item.Values[0]}`,
+          value: {x:item.Values[2],y:item.Values[3]},
+        })
+      )  
+      setNeighborhoodsList(neighborhoods)
+    }).catch(function (error) {
+      console.error('failed getting neighborhoods', error)
+    });
+  }
+
   const registerMapInteractionEvents = () => {
     const HOVER_IDENTIFY_THROTTLE_MS = 250
     const govmap = window.govmap
@@ -77,7 +102,7 @@ const GovMapView = () => {
     govmap.onEvent?.(clickEventType).progress((payload: any) => {
       console.log('map click', payload)
 
-      govmap.identifyByXYAndLayer(payload.mapPoint.x, payload.mapPoint.y, ['layer_232641','layer_208094'])
+      govmap.identifyByXYAndLayer(payload.mapPoint.x, payload.mapPoint.y, ['layer_232641', 'layer_208094'])
         .then((response: any) => {
           console.log('response', response)
           const rawEntity = response?.data?.[0]?.entities?.[0] ?? response?.data?.[0]?.fields ?? null
@@ -172,19 +197,22 @@ const GovMapView = () => {
         layers: [
           SITE.layers.municipalitiesLayer,
           "layer_232641",
-          "layer_208094"//stage
+          "layer_208094",//stage
+          "layer_22"// שכונות
 
         ],
         visibleLayers: [
           SITE.layers.municipalitiesLayer,
           "layer_232641",
-          "layer_208094"//stage
+          "layer_208094",//stage
+          "layer_22"// שכונות
 
         ],
         onLoad: () => {
           registerMapInteractionEvents()
           fetchFeaturesByArea(selectedArea)
-          getLayerFilters()
+          // getLayerFilters()
+          getNeighborhoods()
           //setIsMapReady(true)
         }
 
@@ -220,20 +248,10 @@ const GovMapView = () => {
   return (
     <section className="h-full w-full overflow-hidden rounded-md border border-brand-lightBlue bg-brand-bgLight">
       <div className="relative flex h-full w-full">
-        {isFiltersOpen && <MapFiltersPanel />}
+        <MapFiltersPanel isOpen={isFiltersOpen} onToggle={() => setIsFiltersOpen((prev) => !prev)} />
 
         <div className="relative min-w-0 flex-1">
           <div ref={mapRef} id="map-container" className="h-full w-full" style={{ direction: 'rtl' }} />
-
-          <button
-            type="button"
-            onClick={() => setIsFiltersOpen((prev) => !prev)}
-            className="absolute right-3 top-3 z-30 flex h-9 w-9 items-center justify-center rounded-full border border-[#b9cde1] bg-white text-lg font-semibold text-[#1f6ea8] shadow-sm transition-colors hover:bg-[#f2f7fb]"
-            aria-label={isFiltersOpen ? 'סגירת פנל סינון' : 'פתיחת פנל סינון'}
-            title={isFiltersOpen ? 'סגירת פנל סינון' : 'פתיחת פנל סינון'}
-          >
-            {isFiltersOpen ? '›' : '‹'}
-          </button>
           {hoverPointInfo && hoverTooltipPosition && (
             <MapPointTooltip
               title={hoverPointInfo.title}

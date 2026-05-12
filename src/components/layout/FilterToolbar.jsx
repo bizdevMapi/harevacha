@@ -29,6 +29,7 @@ const FilterToolbar = ({ matchCount = 265, onBack }) => {
     setPopulationSegment,
     profileKey,
     setProfileKey,
+    neighborhoodsList,
   } = useDashboardUi()
   const divider = (
     <div
@@ -45,7 +46,7 @@ const FilterToolbar = ({ matchCount = 265, onBack }) => {
             label="אזור"
             value={selectedArea}
             onChange={(e) => setSelectedArea(e.target.value)}
-            options={[...DASHBOARD_AREA_OPTIONS]}
+            options={neighborhoodsList}
             leftIcon={<IconChevronsUpDown />}
             rightIcon={<IconPin />}
             className="w-[min(100%,280px)] sm:w-[248px]"

@@ -4,10 +4,17 @@ import {
   useContext,
   useMemo,
   useState,
+  type Dispatch,
   type ReactNode,
+  type SetStateAction,
 } from 'react'
 
 export type DashboardViewMode = 'map' | 'list'
+
+export type NeighborhoodMapOption = {
+  label: string
+  value: { x: number; y: number }
+}
 
 export type DashboardUiValue = {
   viewMode: DashboardViewMode
@@ -20,6 +27,8 @@ export type DashboardUiValue = {
   setProfileKey: (key: string) => void
   profileInsightsOpen: boolean
   setProfileInsightsOpen: (open: boolean) => void
+  neighborhoodsList: NeighborhoodMapOption[]
+  setNeighborhoodsList: Dispatch<SetStateAction<NeighborhoodMapOption[]>>
 }
 
 const DashboardUiContext = createContext<DashboardUiValue | null>(null)
@@ -33,6 +42,7 @@ export function DashboardUiProvider({ children }: { children: ReactNode }) {
   const [populationSegment, setPopulationSegmentState] = useState('none')
   const [profileKey, setProfileKey] = useState('none')
   const [profileInsightsOpen, setProfileInsightsOpen] = useState(false)
+  const [neighborhoodsList, setNeighborhoodsList] = useState<NeighborhoodMapOption[]>([])
 
   const setPopulationSegment = useCallback((value: string) => {
     setPopulationSegmentState(value)
@@ -56,8 +66,10 @@ export function DashboardUiProvider({ children }: { children: ReactNode }) {
       setProfileKey,
       profileInsightsOpen,
       setProfileInsightsOpen,
+      neighborhoodsList,
+      setNeighborhoodsList,
     }),
-    [viewMode, selectedArea, populationSegment, profileKey, profileInsightsOpen, setPopulationSegment],
+    [viewMode, selectedArea, populationSegment, profileKey, profileInsightsOpen, setPopulationSegment, neighborhoodsList, setNeighborhoodsList],
   )
 
   return <DashboardUiContext.Provider value={value}>{children}</DashboardUiContext.Provider>
