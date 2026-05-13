@@ -35,10 +35,10 @@ jobs:
       # 4. סנכרון התיקייה שנוצרה ל-S3
       - name: Sync to S3
         run: |
-          aws s3 sync ./dist s3://govmap-frontend-il-prod/sites/harevachaDev --delete
+          aws s3 sync ./dist s3://govmap-frontend-il-prod/sites/harevacha-dev --delete
 
       - name: CloudFront Invalidation
         run: |
           aws cloudfront create-invalidation \
             --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
-            --paths "/sites/harevachaDev/*"
+            --paths "/sites/harevacha-dev/*"
