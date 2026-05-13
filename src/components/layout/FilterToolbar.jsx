@@ -14,6 +14,7 @@ import {
   JERUSALEM_CITY_CENTER_AREA_OPTION,
   POPULATION_SEGMENT_OPTIONS,
   PROFILE_FILTER_OPTIONS,
+  SITE,
 } from '../../constants'
 import { useDashboardUi } from '../../context/DashboardUiContext'
 import { ToolbarSelect } from '../ui'
@@ -58,15 +59,37 @@ const FilterToolbar = ({ matchCount = 265, onBack }) => {
               if (!opt || !govmap) return
 
               if (opt.layerObjectId != null) {
+
+                //התמקדות בשכונה
                 govmap.searchInLayer?.({
-                  layerName: '22',
+                  layerName: SITE.layers.municipalitiesLayer,
                   fieldName: 'objectId',
-                  fieldValues: [opt.layerObjectId],
+                  fieldValues: [opt.layerObjectId?.toString()],
                   highlight: false,
                 })
+                var params = {
+                  geometry: opt.geometry,
+                  layerName: SITE.layers.servicesLayer,
+                  fields: ['objectId']
+                };
+                // קבלת המענים בשכונה הנבחרת
+                govmap.intersectFeatures(params).then(function (response) {
+                  console.log('response', response);
+                  var params = {
+                    layerName: SITE.layers.servicesLayer,
+                    whereClause: "objectid in (" + response.data.map((item) => item.ObjectId?.toString()).join(',') + ")",
+                    zoomToExtent: true
+                  };
+                  // הצגת המענים בשכונה הנבחרת
+                  govmap.filterLayers(params);
+                }).catch(function (error) {
+                  console.error('failed intersecting features', error);
+                });
+
+
               }
 
-             else govmap.zoomToXY?.({
+              else govmap.zoomToXY?.({
                 x: opt.value.x,
                 y: opt.value.y,
                 level: GOVMAP_DEFAULT_VIEW_LEVEL,
@@ -127,11 +150,10 @@ const FilterToolbar = ({ matchCount = 265, onBack }) => {
             <button
               type="button"
               onClick={() => setViewMode('map')}
-              className={`flex items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-bold transition-all duration-150 ${
-                viewMode === 'map'
+              className={`flex items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-bold transition-all duration-150 ${viewMode === 'map'
                   ? 'bg-brand-toolbarToggleOn text-white shadow-toolbarToggleOn'
                   : 'text-white/90 hover:bg-white/12 hover:text-white'
-              }`}
+                }`}
             >
               <IconMap />
               מפה
@@ -139,11 +161,10 @@ const FilterToolbar = ({ matchCount = 265, onBack }) => {
             <button
               type="button"
               onClick={() => setViewMode('list')}
-              className={`flex items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-bold transition-all duration-150 ${
-                viewMode === 'list'
+              className={`flex items-center gap-1.5 rounded-full px-3.5 py-2 text-xs font-bold transition-all duration-150 ${viewMode === 'list'
                   ? 'bg-brand-toolbarToggleOn text-white shadow-toolbarToggleOn'
                   : 'text-white/90 hover:bg-white/12 hover:text-white'
-              }`}
+                }`}
             >
               <IconList />
               רשימה

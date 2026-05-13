@@ -98,14 +98,16 @@ const GovMapView = () => {
             const setlName = String(vals?.[1] ?? '')
             const x = typeof vals?.[2] === 'number' ? vals[2] : Number.NaN
             const y = typeof vals?.[3] === 'number' ? vals[3] : Number.NaN
+            const geometry = typeof vals?.[4] === 'string' ? vals[4] : undefined
             if (id == null || !Number.isFinite(x) || !Number.isFinite(y)) return null
-            return { id, fname, setlName, x, y }
+            return { id, fname, setlName, x, y, geometry }
           })
           .filter((n): n is NonNullable<typeof n> => n != null) ?? []
 
       const toOption = (n: (typeof raw)[number]): NeighborhoodMapOption => ({
         label: `${n.setlName} - ${n.fname}`,
         value: { x: n.x, y: n.y },
+        geometry: n.geometry,
         optionValue: String(n.id),
         layerObjectId: n.id,
       })
@@ -226,7 +228,6 @@ const GovMapView = () => {
   }
 
   useEffect(() => {
-    console.log('test')
     const scriptSrc = 'https://govmap.gov.il/govmap/api/govmap.api.js'
 
     const initMap = () => {
@@ -243,14 +244,14 @@ const GovMapView = () => {
         layers: [
           SITE.layers.municipalitiesLayer,
           SITE.layers.neighborhoodsLayer,
-          "layer_232641",
+          SITE.layers.servicesLayer,
           "layer_208094",//stage
 
         ],
         visibleLayers: [
           SITE.layers.municipalitiesLayer,
           SITE.layers.neighborhoodsLayer,
-          "layer_232641",
+          SITE.layers.servicesLayer,
           "layer_208094",//stage
 
         ],
