@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   IconBackCircle,
   IconChevronDown,
@@ -8,7 +9,9 @@ import {
   IconPin,
 } from '../../assets/icons'
 import {
-  DASHBOARD_AREA_OPTIONS,
+  getCityCenterAreaSelectValue,
+  GOVMAP_DEFAULT_VIEW_LEVEL,
+  JERUSALEM_CITY_CENTER_AREA_OPTION,
   POPULATION_SEGMENT_OPTIONS,
   PROFILE_FILTER_OPTIONS,
 } from '../../constants'
@@ -23,13 +26,15 @@ const FilterToolbar = ({ matchCount = 265, onBack }) => {
   const {
     viewMode,
     setViewMode,
-    selectedArea,
-    setSelectedArea,
     populationSegment,
     setPopulationSegment,
     profileKey,
     setProfileKey,
+    neighborhoodsList,
   } = useDashboardUi()
+  const [selectedNeighborhoodOptionValue, setSelectedNeighborhoodOptionValue] = useState(() =>
+    getCityCenterAreaSelectValue(JERUSALEM_CITY_CENTER_AREA_OPTION.value),
+  )
   const divider = (
     <div
       className="hidden h-11 w-px shrink-0 bg-white/55 sm:block"
@@ -43,9 +48,37 @@ const FilterToolbar = ({ matchCount = 265, onBack }) => {
         <div className="flex min-w-0 shrink-0 flex-wrap items-end gap-4 sm:flex-nowrap sm:gap-5">
           <ToolbarSelect
             label="אזור"
-            value={selectedArea}
-            onChange={(e) => setSelectedArea(e.target.value)}
-            options={[...DASHBOARD_AREA_OPTIONS]}
+            value={selectedNeighborhoodOptionValue}
+            onChange={(e) => {
+              const v = e.target.value
+              setSelectedNeighborhoodOptionValue(v)
+              if (!v) return
+              const opt = neighborhoodsList.find((n) => n.optionValue === v)
+              const govmap = window.govmap
+              if (!opt || !govmap) return
+
+              if (opt.layerObjectId != null) {
+                govmap.searchInLayer?.({
+                  layerName: '22',
+                  fieldName: 'objectId',
+                  fieldValues: [opt.layerObjectId],
+                  highlight: false,
+                })
+              }
+
+             else govmap.zoomToXY?.({
+                x: opt.value.x,
+                y: opt.value.y,
+                level: GOVMAP_DEFAULT_VIEW_LEVEL,
+                marker: false,
+              })
+            }}
+            options={[
+              ...neighborhoodsList.map((n) => ({
+                value: n.optionValue,
+                label: n.label,
+              })),
+            ]}
             leftIcon={<IconChevronsUpDown />}
             rightIcon={<IconPin />}
             className="w-[min(100%,280px)] sm:w-[248px]"

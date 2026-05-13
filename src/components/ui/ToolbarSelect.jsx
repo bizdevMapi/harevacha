@@ -8,9 +8,7 @@ const selectBaseClass = [
   'focus:border-white focus:ring-2 focus:ring-white/95 focus:ring-offset-2 focus:ring-offset-brand-toolbarBar',
 ].join(' ')
 
-/**
- * סלקט בסרגל הסינון הכחול — תווית צפה, אותו עיצוב לכל השדות.
- */
+
 export default function ToolbarSelect({
   label,
   value,
@@ -37,7 +35,7 @@ export default function ToolbarSelect({
           onChange={onChange}
           className={`${selectBaseClass} ${className}`.trim()}
         >
-          {options.map(({ value: optValue, label: optLabel }) => (
+          {options?.map(({ value: optValue, label: optLabel }) => (
             <option key={optValue} value={optValue}>
               {optLabel}
             </option>

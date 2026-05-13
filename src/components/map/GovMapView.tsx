@@ -1,6 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { useDashboardUi } from '../../context/DashboardUiContext'
-import { SITE } from '../../constants'
+import {
+  getCityCenterAreaSelectValue,
+  GOVMAP_DEFAULT_VIEW_LEVEL,
+  JERUSALEM_CITY_CENTER_AREA_OPTION,
+  TIRAT_CARMEL_CITY_CENTER_AREA_OPTION,
+  SITE,
+} from '../../constants'
+import type { NeighborhoodMapOption } from '../../context/DashboardUiContext'
 import MapFiltersPanel from './MapFiltersPanel'
 import MapPointInfoCard from './MapPointInfoCard'
 import MapPointTooltip from './MapPointTooltip'
@@ -26,7 +33,7 @@ const AREA_POINTS: Record<string, Array<{ x: number; y: number }>> = {
 }
 
 const GovMapView = () => {
-  const { selectedArea } = useDashboardUi()
+  const { selectedArea, setNeighborhoodsList } = useDashboardUi()
   const mapRef = useRef<HTMLDivElement | null>(null)
   const lastHoverIdentifyAtRef = useRef(0)
   const isHoverIdentifyInFlightRef = useRef(false)
@@ -51,8 +58,10 @@ const GovMapView = () => {
           radius: 3000,
           layers: [
             {
-              name: 'layer_232641',
-              fields: ['servicenam', 'serviceid'],
+              // name: 'layer_232641',
+              name: '22',
+              fields: ['fname'],
+              //fields: ['servicenam', 'serviceid'],
             },
           ],
         },
@@ -69,6 +78,67 @@ const GovMapView = () => {
       })
   }
 
+  const getNeighborhoods = () => {
+    const params = {
+      geometry: `POLYGON ((130000 380000, 285000 380000, 285000 805000, 130000 805000, 130000 380000))`,
+      layerName: '22',
+      fields: ['fname', 'setl_name'],
+      whereClause: "setl_name IN ('ירושלים', 'טירת כרמל')",
+      getShapes: true,
+    }
+    window.govmap?.intersectFeatures?.(params)?.then(function (response: {
+      data?: Array<{ ObjectId?: number; Values?: unknown[] }>
+    }) {
+      const raw =
+        response?.data
+          ?.map((item) => {
+            const id = item.ObjectId
+            const vals = item.Values
+            const fname = String(vals?.[0] ?? '')
+            const setlName = String(vals?.[1] ?? '')
+            const x = typeof vals?.[2] === 'number' ? vals[2] : Number.NaN
+            const y = typeof vals?.[3] === 'number' ? vals[3] : Number.NaN
+            if (id == null || !Number.isFinite(x) || !Number.isFinite(y)) return null
+            return { id, fname, setlName, x, y }
+          })
+          .filter((n): n is NonNullable<typeof n> => n != null) ?? []
+
+      const toOption = (n: (typeof raw)[number]): NeighborhoodMapOption => ({
+        label: `${n.setlName} - ${n.fname}`,
+        value: { x: n.x, y: n.y },
+        optionValue: String(n.id),
+        layerObjectId: n.id,
+      })
+
+      const byFname = (a: (typeof raw)[number], b: (typeof raw)[number]) =>
+        a.fname.localeCompare(b.fname, 'he')
+
+      const jerusalemRows = raw.filter((r) => r.setlName === 'ירושלים').sort(byFname)
+      const tiratRows = raw.filter((r) => r.setlName === 'טירת כרמל').sort(byFname)
+
+      const jerusalemNeighborhoods = jerusalemRows.map(toOption)
+      const tiratNeighborhoods = tiratRows.map(toOption)
+
+      console.log('neighborhoods', { jerusalemNeighborhoods, tiratNeighborhoods })
+      setNeighborhoodsList([
+        {
+          label: JERUSALEM_CITY_CENTER_AREA_OPTION.label,
+          value: { ...JERUSALEM_CITY_CENTER_AREA_OPTION.value },
+          optionValue: getCityCenterAreaSelectValue(JERUSALEM_CITY_CENTER_AREA_OPTION.value),
+        },
+        ...jerusalemNeighborhoods,
+        {
+          label: TIRAT_CARMEL_CITY_CENTER_AREA_OPTION.label,
+          value: { ...TIRAT_CARMEL_CITY_CENTER_AREA_OPTION.value },
+          optionValue: getCityCenterAreaSelectValue(TIRAT_CARMEL_CITY_CENTER_AREA_OPTION.value),
+        },
+        ...tiratNeighborhoods,
+      ])
+    }).catch(function (error) {
+      console.error('failed getting neighborhoods', error)
+    })
+  }
+
   const registerMapInteractionEvents = () => {
     const HOVER_IDENTIFY_THROTTLE_MS = 250
     const govmap = window.govmap
@@ -77,7 +147,7 @@ const GovMapView = () => {
     govmap.onEvent?.(clickEventType).progress((payload: any) => {
       console.log('map click', payload)
 
-      govmap.identifyByXYAndLayer(payload.mapPoint.x, payload.mapPoint.y, ['layer_232641','layer_208094'])
+      govmap.identifyByXYAndLayer(payload.mapPoint.x, payload.mapPoint.y, ['layer_232641', 'layer_208094'])
         .then((response: any) => {
           console.log('response', response)
           const rawEntity = response?.data?.[0]?.entities?.[0] ?? response?.data?.[0]?.fields ?? null
@@ -156,6 +226,7 @@ const GovMapView = () => {
   }
 
   useEffect(() => {
+    console.log('test')
     const scriptSrc = 'https://govmap.gov.il/govmap/api/govmap.api.js'
 
     const initMap = () => {
@@ -163,27 +234,31 @@ const GovMapView = () => {
       if (!govmap) return
       govmap.createMap('map-container', {
         token: GOVMAP_TOKEN,
-        level: 7,
-        // center: { x: 220000, y: 630000 },
-        center: { x: 197388.45, y: 741225.93 },
+        level: GOVMAP_DEFAULT_VIEW_LEVEL,
+        center: { 
+           x: JERUSALEM_CITY_CENTER_AREA_OPTION.value.x,
+           y: JERUSALEM_CITY_CENTER_AREA_OPTION.value.y },
         layersMode: 1,
         identifyOnClick: false,
         layers: [
           SITE.layers.municipalitiesLayer,
+          SITE.layers.neighborhoodsLayer,
           "layer_232641",
-          "layer_208094"//stage
+          "layer_208094",//stage
 
         ],
         visibleLayers: [
           SITE.layers.municipalitiesLayer,
+          SITE.layers.neighborhoodsLayer,
           "layer_232641",
-          "layer_208094"//stage
+          "layer_208094",//stage
 
         ],
         onLoad: () => {
           registerMapInteractionEvents()
           fetchFeaturesByArea(selectedArea)
-          getLayerFilters()
+          // getLayerFilters()
+          getNeighborhoods()
           //setIsMapReady(true)
         }
 
@@ -219,20 +294,10 @@ const GovMapView = () => {
   return (
     <section className="h-full w-full overflow-hidden rounded-md border border-brand-lightBlue bg-brand-bgLight">
       <div className="relative flex h-full w-full">
-        {isFiltersOpen && <MapFiltersPanel />}
+        <MapFiltersPanel isOpen={isFiltersOpen} onToggle={() => setIsFiltersOpen((prev) => !prev)} />
 
         <div className="relative min-w-0 flex-1">
           <div ref={mapRef} id="map-container" className="h-full w-full" style={{ direction: 'rtl' }} />
-
-          <button
-            type="button"
-            onClick={() => setIsFiltersOpen((prev) => !prev)}
-            className="absolute right-3 top-3 z-30 flex h-9 w-9 items-center justify-center rounded-full border border-[#b9cde1] bg-white text-lg font-semibold text-[#1f6ea8] shadow-sm transition-colors hover:bg-[#f2f7fb]"
-            aria-label={isFiltersOpen ? 'סגירת פנל סינון' : 'פתיחת פנל סינון'}
-            title={isFiltersOpen ? 'סגירת פנל סינון' : 'פתיחת פנל סינון'}
-          >
-            {isFiltersOpen ? '›' : '‹'}
-          </button>
           {hoverPointInfo && hoverTooltipPosition && (
             <MapPointTooltip
               title={hoverPointInfo.title}

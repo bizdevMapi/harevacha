@@ -54,9 +54,35 @@ const withCategoryColors = (sections: ApiFilterSection[]) =>
 
 const sectionsWithColors = withCategoryColors(apiFilterSections)
 
-const MapFiltersPanel = () => {
+type MapFiltersPanelProps = {
+  isOpen: boolean
+  onToggle: () => void
+}
+
+const MapFiltersPanel = ({ isOpen, onToggle }: MapFiltersPanelProps) => {
+  const toggleButton = (
+    <button
+      type="button"
+      onClick={onToggle}
+      className="absolute left-0 top-6 z-30 flex h-9 w-9 -translate-x-1/2 items-center justify-center rounded-full border border-[#b9cde1] bg-white text-lg font-semibold text-[#1f6ea8] shadow-sm transition-colors hover:bg-[#f2f7fb]"
+      aria-label={isOpen ? 'סגירת פנל סינון' : 'פתיחת פנל סינון'}
+      title={isOpen ? 'סגירת פנל סינון' : 'פתיחת פנל סינון'}
+    >
+      {isOpen ? '›' : '‹'}
+    </button>
+  )
+
+  if (!isOpen) {
+    return (
+      <div className="relative h-full w-0 shrink-0 overflow-visible">
+        {toggleButton}
+      </div>
+    )
+  }
+
   return (
-    <aside className="h-full w-[280px] max-w-[88vw] shrink-0 border-l border-[#d7e1ee] bg-white/95 shadow-[-8px_0_18px_rgba(21,58,97,0.08)] backdrop-blur-[1px]">
+    <aside className="relative h-full w-[280px] max-w-[88vw] shrink-0 border-l border-[#d7e1ee] bg-white/95 shadow-[-8px_0_18px_rgba(21,58,97,0.08)] backdrop-blur-[1px]">
+      {toggleButton}
       <div className="h-full overflow-y-auto px-5 pb-5 pt-6">
         <div className="mb-5 flex items-center justify-between">
           <h2 className="text-[27px] font-bold leading-none text-[#1e2f47]">סינון מענים</h2>
