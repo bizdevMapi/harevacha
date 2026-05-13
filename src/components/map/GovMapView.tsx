@@ -1,6 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { useDashboardUi } from '../../context/DashboardUiContext'
-import { SITE } from '../../constants'
+import {
+  getCityCenterAreaSelectValue,
+  GOVMAP_DEFAULT_VIEW_LEVEL,
+  JERUSALEM_CITY_CENTER_AREA_OPTION,
+  TIRAT_CARMEL_CITY_CENTER_AREA_OPTION,
+  SITE,
+} from '../../constants'
+import type { NeighborhoodMapOption } from '../../context/DashboardUiContext'
 import MapFiltersPanel from './MapFiltersPanel'
 import MapPointInfoCard from './MapPointInfoCard'
 import MapPointTooltip from './MapPointTooltip'
@@ -72,26 +79,64 @@ const GovMapView = () => {
   }
 
   const getNeighborhoods = () => {
-    var params = {
-      geometry:`POLYGON ((130000 380000, 285000 380000, 285000 805000, 130000 805000, 130000 380000))`,
-      layerName: "22",
-      fields: ['fname','setl_name'],
+    const params = {
+      geometry: `POLYGON ((130000 380000, 285000 380000, 285000 805000, 130000 805000, 130000 380000))`,
+      layerName: '22',
+      fields: ['fname', 'setl_name'],
       whereClause: "setl_name IN ('ירושלים', 'טירת כרמל')",
-
       getShapes: true,
-  };
-  window.govmap.intersectFeatures(params).then(function (response) {
-      console.log(response);
-      const neighborhoods = response?.data?.map((item: { Values: [string, string, number, number] }) =>
-        ({
-          label: `${item.Values[1]} - ${item.Values[0]}`,
-          value: {x:item.Values[2],y:item.Values[3]},
-        })
-      )  
-      setNeighborhoodsList(neighborhoods)
+    }
+    window.govmap?.intersectFeatures?.(params)?.then(function (response: {
+      data?: Array<{ ObjectId?: number; Values?: unknown[] }>
+    }) {
+      const raw =
+        response?.data
+          ?.map((item) => {
+            const id = item.ObjectId
+            const vals = item.Values
+            const fname = String(vals?.[0] ?? '')
+            const setlName = String(vals?.[1] ?? '')
+            const x = typeof vals?.[2] === 'number' ? vals[2] : Number.NaN
+            const y = typeof vals?.[3] === 'number' ? vals[3] : Number.NaN
+            if (id == null || !Number.isFinite(x) || !Number.isFinite(y)) return null
+            return { id, fname, setlName, x, y }
+          })
+          .filter((n): n is NonNullable<typeof n> => n != null) ?? []
+
+      const toOption = (n: (typeof raw)[number]): NeighborhoodMapOption => ({
+        label: `${n.setlName} - ${n.fname}`,
+        value: { x: n.x, y: n.y },
+        optionValue: String(n.id),
+        layerObjectId: n.id,
+      })
+
+      const byFname = (a: (typeof raw)[number], b: (typeof raw)[number]) =>
+        a.fname.localeCompare(b.fname, 'he')
+
+      const jerusalemRows = raw.filter((r) => r.setlName === 'ירושלים').sort(byFname)
+      const tiratRows = raw.filter((r) => r.setlName === 'טירת כרמל').sort(byFname)
+
+      const jerusalemNeighborhoods = jerusalemRows.map(toOption)
+      const tiratNeighborhoods = tiratRows.map(toOption)
+
+      console.log('neighborhoods', { jerusalemNeighborhoods, tiratNeighborhoods })
+      setNeighborhoodsList([
+        {
+          label: JERUSALEM_CITY_CENTER_AREA_OPTION.label,
+          value: { ...JERUSALEM_CITY_CENTER_AREA_OPTION.value },
+          optionValue: getCityCenterAreaSelectValue(JERUSALEM_CITY_CENTER_AREA_OPTION.value),
+        },
+        ...jerusalemNeighborhoods,
+        {
+          label: TIRAT_CARMEL_CITY_CENTER_AREA_OPTION.label,
+          value: { ...TIRAT_CARMEL_CITY_CENTER_AREA_OPTION.value },
+          optionValue: getCityCenterAreaSelectValue(TIRAT_CARMEL_CITY_CENTER_AREA_OPTION.value),
+        },
+        ...tiratNeighborhoods,
+      ])
     }).catch(function (error) {
       console.error('failed getting neighborhoods', error)
-    });
+    })
   }
 
   const registerMapInteractionEvents = () => {
@@ -189,23 +234,24 @@ const GovMapView = () => {
       if (!govmap) return
       govmap.createMap('map-container', {
         token: GOVMAP_TOKEN,
-        level: 7,
-        // center: { x: 220000, y: 630000 },
-        center: { x: 197388.45, y: 741225.93 },
+        level: GOVMAP_DEFAULT_VIEW_LEVEL,
+        center: { 
+           x: JERUSALEM_CITY_CENTER_AREA_OPTION.value.x,
+           y: JERUSALEM_CITY_CENTER_AREA_OPTION.value.y },
         layersMode: 1,
         identifyOnClick: false,
         layers: [
           SITE.layers.municipalitiesLayer,
+          SITE.layers.neighborhoodsLayer,
           "layer_232641",
           "layer_208094",//stage
-          "layer_22"// שכונות
 
         ],
         visibleLayers: [
           SITE.layers.municipalitiesLayer,
+          SITE.layers.neighborhoodsLayer,
           "layer_232641",
           "layer_208094",//stage
-          "layer_22"// שכונות
 
         ],
         onLoad: () => {

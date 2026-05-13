@@ -62,6 +62,7 @@ interface GovMapApi {
   on?: (eventType: number | string, handler: (payload: GovMapClickPayload) => void) => void
   onEvent?: (eventType: number | string) => GovMapOnEventChain
   unbindEvent?: (eventType: number | string, handler: (payload: GovMapClickPayload) => void) => void
+  zoomToXY?: (params: { x: number; y: number; level?: number; marker?: boolean }) => void
 }
 
 interface Window {

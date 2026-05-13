@@ -27,11 +27,25 @@ export function getPopulationSegmentLabel(segmentValue: string): string {
 /** ערך «כל העיר» בסלקט האזור — יישור עם FilterToolbar */
 export const DASHBOARD_ALL_CITY_AREA_VALUE = 'jerusalem-all'
 
-export const DASHBOARD_AREA_OPTIONS = [
-  { value: 'jerusalem-all', label: 'ירושלים - כל העיר' },
-  { value: 'jerusalem-center', label: 'ירושלים - מרכז' },
-  { value: 'jerusalem-south', label: 'ירושלים - דרום' },
-] as const
+/** אזור קבוע ראשון בסלקט «אזור» — מרכז ירושלים (קואורדינטות GovMap / רשת ישראל החדשה) */
+export const JERUSALEM_CITY_CENTER_AREA_OPTION = {
+  label: 'ירושלים - מרכז העיר',
+  value: { x: 220000, y: 630000 },
+} as const
+
+/** מרכז טירת כרמל — אחרי שכונות ירושלים ולפני שכונות טירת כרמל מהשכבה */
+export const TIRAT_CARMEL_CITY_CENTER_AREA_OPTION = {
+  label: 'טירת כרמל - מרכז העיר',
+  value: { x: 199580, y: 743467 },
+} as const
+
+/** רמת זום ל-GovMap — ערכים גבוהים מדי (למשל 10+) עלולים להציג מפה לבנה ללא אריחי בסיס */
+export const GOVMAP_DEFAULT_VIEW_LEVEL = 7 as const
+
+/** ערך ייחודי ל־<select> לפי קואורדינטות מרכז (פריטי «מרכז העיר» הקבועים) */
+export function getCityCenterAreaSelectValue(point: { x: number; y: number }): string {
+  return `${point.x},${point.y}`
+}
 
 export const PROFILE_FILTER_OPTIONS = [
   { value: 'none', label: 'ללא פרופיל' },
@@ -39,11 +53,6 @@ export const PROFILE_FILTER_OPTIONS = [
   { value: 'profileB', label: 'פרופיל ב' },
   { value: 'profileC', label: 'פרופיל ג' },
 ] as const
-
-export function getDashboardAreaLabel(areaValue: string): string {
-  const row = DASHBOARD_AREA_OPTIONS.find((o) => o.value === areaValue)
-  return row?.label ?? areaValue
-}
 
 export function getProfileFilterLabel(profileValue: string): string {
   const row = PROFILE_FILTER_OPTIONS.find((o) => o.value === profileValue)
@@ -75,6 +84,7 @@ export const SITE = Object.freeze({
   locale: 'he',
   layers: Object.freeze({
     municipalitiesLayer: 'layer_125',
+    neighborhoodsLayer: 'layer_22',
   }),
   /**
    * ניתוח מרחבי (standalone) — govmap.getLayerFeaturesByLocation

@@ -13,7 +13,12 @@ export type DashboardViewMode = 'map' | 'list'
 
 export type NeighborhoodMapOption = {
   label: string
+  /** קואורדינטות למיקוד במפה */
   value: { x: number; y: number }
+  /** ערך ייחודי ל־<select> — לא להסיק מ־value.x/y כשיש גם objectId */
+  optionValue: string
+  /** מזהה ישות בשכבה 22 (ל־searchInLayer), אופציונלי לפריט קבוע בלי שכבה */
+  layerObjectId?: number
 }
 
 export type DashboardUiValue = {
