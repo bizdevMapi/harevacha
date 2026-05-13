@@ -18,7 +18,8 @@ export type NeighborhoodMapOption = {
   /** ערך ייחודי ל־<select> — לא להסיק מ־value.x/y כשיש גם objectId */
   optionValue: string
   /** מזהה ישות בשכבה 22 (ל־searchInLayer), אופציונלי לפריט קבוע בלי שכבה */
-  layerObjectId?: number
+  layerObjectId?: number,
+  geometry?: string,
 }
 
 export type DashboardUiValue = {

@@ -85,6 +85,7 @@ export const SITE = Object.freeze({
   layers: Object.freeze({
     municipalitiesLayer: 'layer_125',
     neighborhoodsLayer: 'layer_22',
+    servicesLayer: 'layer_232641',
   }),
   /**
    * ניתוח מרחבי (standalone) — govmap.getLayerFeaturesByLocation
