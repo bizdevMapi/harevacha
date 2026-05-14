@@ -257,7 +257,7 @@ const GovMapView = () => {
         ],
         onLoad: () => {
           registerMapInteractionEvents()
-          fetchFeaturesByArea(selectedArea)
+          // fetchFeaturesByArea(selectedArea)
           // getLayerFilters()
           getNeighborhoods()
           //setIsMapReady(true)
