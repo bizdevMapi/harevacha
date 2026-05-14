@@ -59,6 +59,7 @@ function lowercaseOutputPaths() {
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), lowercaseOutputPaths()],
+  base: '/sites/harevacha-dev/',
   server: {
     port: 3000,
     host: 'mylocalsite',
