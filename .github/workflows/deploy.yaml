@@ -24,6 +24,8 @@ jobs:
       # 3. הרצת ה-Build
       - name: Build Project
         run: npm run build
+        env:
+          VITE_GOVMAP_TOKEN: ${{ secrets.VITE_GOVMAP_TOKEN }}
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
