@@ -10,11 +10,7 @@ import {
 import type { NeighborhoodMapOption } from '../../context/DashboardUiContext'
 import MapFiltersPanel from './MapFiltersPanel'
 import MapPointInfoCard from './MapPointInfoCard'
-import {
-  mapGovmapEntityToPointInfo,
-  MOCK_SELECTED_MAP_POINT,
-  type MapPointInfo,
-} from './mapPointInfoData'
+import { mapGovmapEntityToPointInfo, type MapPointInfo } from './mapPointInfoData'
 import MapPointTooltip from './MapPointTooltip'
 import MapProfileInsightsCard from './profile-insights/MapProfileInsightsCard'
 import {
@@ -54,7 +50,7 @@ const GovMapView = () => {
   const isHoverIdentifyInFlightRef = useRef(false)
   const [isFiltersOpen, setIsFiltersOpen] = useState(true)
   const [isMapReady, setIsMapReady] = useState(false)
-  const [selectedPointInfo, setSelectedPointInfo] = useState<MapPointInfo | null>(MOCK_SELECTED_MAP_POINT)
+  const [selectedPointInfo, setSelectedPointInfo] = useState<MapPointInfo | null>(null)
   const [hoverPointInfo, setHoverPointInfo] = useState<{ title: string; subtitle?: string } | null>(null)
   const [hoverTooltipPosition, setHoverTooltipPosition] = useState<{ left: number; top: number } | null>(null)
 
@@ -173,11 +169,12 @@ const GovMapView = () => {
           console.log('response', response)
           const rawEntity = response?.data?.[0]?.entities?.[0] ?? response?.data?.[0]?.fields ?? null
           console.log('rawEntity', rawEntity)
-          if (!rawEntity || typeof rawEntity !== 'object') {
-            setSelectedPointInfo(null)
-            return
-          }
-          setSelectedPointInfo(mapGovmapEntityToPointInfo(rawEntity))
+          //const pointInfo = mapGovmapEntityToPointInfo(rawEntity)
+          setSelectedPointInfo(rawEntity.fields)
+        })
+        .catch((error: unknown) => {
+          console.error('failed identifying map point', error)
+          setSelectedPointInfo(null)
         })
     })
 
@@ -232,8 +229,6 @@ const GovMapView = () => {
     // }
   }
 
-  console.log('selectedPointInfo', selectedPointInfo)
-
   const getLayerFilters = () => {
     return;
     console.log('getting layer filters',SITE.layers.servicesLayer, GOVMAP_TOKEN)
@@ -284,15 +279,11 @@ const GovMapView = () => {
           SITE.layers.municipalitiesLayer,
           SITE.layers.neighborhoodsLayer,
           SITE.layers.servicesLayer,
-          "layer_208094",//stage
-
         ],
         visibleLayers: [
           SITE.layers.municipalitiesLayer,
           SITE.layers.neighborhoodsLayer,
-          SITE.layers.servicesLayer,
-          "layer_208094",//stage
-
+          SITE.layers.servicesLayer
         ],
         onLoad: () => {
           registerMapInteractionEvents()
@@ -334,6 +325,8 @@ const GovMapView = () => {
 
     return () => window.clearTimeout(resizeTimer)
   }, [isFiltersOpen])
+
+  console.log('selectedPointInfo--------:', selectedPointInfo)
 
   return (
     <section className="h-full w-full overflow-hidden rounded-md border border-brand-lightBlue bg-brand-bgLight">

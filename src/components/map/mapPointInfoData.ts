@@ -1,3 +1,5 @@
+import { formatServiceCost } from '../../data/servicesListTypes'
+
 /** סוג אייקון לשורת פרטים — להרחבה כשמחברים ל-API */
 export type MapPointInfoIconId =
   | 'location'
@@ -26,52 +28,53 @@ export type MapPointInfo = {
   details: MapPointInfoDetail[]
 }
 
-/**
- * נתוני דוגמה — להחלפה בקריאה אמיתית, למשל:
- * `setSelectedPointInfo(mapGovmapFeatureToPointInfo(feature))`
- */
-/** המרה זמנית מתשובת GovMap — להחליף כשה-API ייציב */
-export function mapGovmapEntityToPointInfo(rawEntity: {
-  fields?: Array<{ name?: string; fieldValue?: string; value?: string }>
-}): MapPointInfo | null {
-  const fields = rawEntity.fields ?? []
-  const getVal = (name: string) =>
-    fields.find((f) => f.name === name)?.fieldValue ?? fields.find((f) => f.name === name)?.value
+type GovmapFieldRow = { name?: string; fieldValue?: string; value?: string }
 
-  const title = getVal('servicenam')
-  if (!title) return null
+function cellToString(value: unknown): string {
+  if (value == null) return ''
+  const text = String(value).trim()
+  if (text === '' || text.toUpperCase() === 'NULL') return ''
+  return text
+}
 
-  const description = getVal('address') ?? ''
-  const otherFields = fields.filter(
-    (f) => f.name && !['servicenam', 'serviceid', 'address'].includes(f.name),
-  )
+function normalizeGovmapFields(rawEntity: unknown): Record<string, string> {
+  const map: Record<string, string> = {}
 
-  return {
-    id: String(getVal('serviceid') ?? title),
-    title,
-    description,
-    details: otherFields.map((f, i) => ({
-      id: f.name ?? `field-${i}`,
-      icon: 'location' as const,
-      value: f.fieldValue ?? f.value ?? '',
-    })),
+  const ingestFieldRows = (rows: GovmapFieldRow[]) => {
+    for (const row of rows) {
+      if (!row?.name) continue
+      const value = cellToString(row.fieldValue ?? row.value)
+      if (value) map[row.name] = value
+    }
   }
+
+  if (Array.isArray(rawEntity)) {
+    ingestFieldRows(rawEntity)
+    return map
+  }
+
+  if (!rawEntity || typeof rawEntity !== 'object') return map
+
+  const entity = rawEntity as Record<string, unknown>
+  if (Array.isArray(entity.fields)) {
+    ingestFieldRows(entity.fields as GovmapFieldRow[])
+  }
+
+  for (const [key, value] of Object.entries(entity)) {
+    if (key === 'fields' || key === 'geometry') continue
+    const text = cellToString(value)
+    if (text) map[key] = text
+  }
+
+  return map
 }
 
-export const MOCK_SELECTED_MAP_POINT: MapPointInfo = {
-  id: 'mock-bari-bahaim',
-  title: 'בריא בחיים',
-  description:
-    'מרכז לאורח חיים בריא לגיל השלישי, עם פעילות גופנית מותאמת, תזונה נכונה וקהילה תומכת לחיים פעילים ומלאי חיוניות.',
-  details: [
-    { id: 'address', icon: 'location', value: 'שמואל הלוי 44, ירושלים' },
-    { id: 'phone', icon: 'phone', value: '02-6457898' },
-    { id: 'hours', icon: 'clock', value: "א'-ה', 8:00-16:00" },
-    { id: 'audience', icon: 'group', value: 'כללית, ערבים, חרדים, דתיים, עולים' },
-    { id: 'languages', icon: 'language', value: 'עברית, ערבית, רוסית' },
-    { id: 'focus', icon: 'target', value: 'עוני, ניתוק חברתי, ירידה קוגניטיבית' },
-    { id: 'price', icon: 'price', value: '50-80 ש״ח למפגש' },
-    { id: 'provider', icon: 'building', value: 'קופ״ח' },
-    { id: 'accessibility', icon: 'accessibility', value: 'מגבלת ניידות, שמיעה' },
-  ],
-}
+const POINT_INFO_DETAIL_SPECS: Array<{ field: string; icon: MapPointInfoIconId }> = [
+  { field: 'FullAddress', icon: 'location' },
+  { field: 'Phone', icon: 'phone' },
+  { field: 'OpenHours', icon: 'clock' },
+  { field: 'TargetPopulations', icon: 'group' },
+  { field: 'RiskStatusDescription_Agg', icon: 'target' },
+  { field: 'ServiceProviderOrganizationType', icon: 'building' },
+  { field: 'Accessibility', icon: 'accessibility' },
+]

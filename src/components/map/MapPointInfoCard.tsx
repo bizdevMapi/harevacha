@@ -15,17 +15,22 @@ function DetailRow({ detail }: { detail: MapPointInfoDetail }) {
   )
 }
 
-const MapPointInfoCard = ({ data, onClose }: MapPointInfoCardProps) => {
+
+
+const MapPointInfoCard = ({ data, onClose }: any) => {
+  const getFieldValue = (fieldName: string) => {
+    return data.find((item:any) => item.fieldName === fieldName).fieldValue
+  }
   return (
     <aside
       className="flex h-full w-[404px] max-w-[min(100vw,404px)] shrink-0 flex-col bg-white shadow-[2px_0_4px_rgba(164,177,192,0.2)]"
       dir="rtl"
-      aria-label={`פרטי מענה: ${data.title}`}
+      aria-label={`פרטי מענה: ${getFieldValue('servicename')}`}
     >
       <div className="flex min-h-0 flex-1 flex-col gap-4 px-8 pt-0">
         {/* כותרת + סגירה */}
         <div className="flex h-16 shrink-0 items-end justify-between pb-0">
-          <h2 className="pb-3 text-[22px] font-bold leading-[21px] text-[#084878]">{data.title}</h2>
+          <h2 className="pb-3 text-[22px] font-bold leading-[21px] text-[#084878]">{getFieldValue('servicename')}</h2>
           <button
             type="button"
             onClick={onClose}
@@ -37,7 +42,7 @@ const MapPointInfoCard = ({ data, onClose }: MapPointInfoCardProps) => {
         </div>
 
         {/* תיאור */}
-        <p className="shrink-0 py-4 text-right text-sm leading-[22px] text-[#34404f]">{data.description}</p>
+        <p className="shrink-0 py-4 text-right text-sm leading-[22px] text-[#34404f]">{getFieldValue('servicedescription')}</p>
 
         {/* גלילה: מפה + פרטים */}
         <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto overflow-x-hidden pb-6">
@@ -69,7 +74,7 @@ const MapPointInfoCard = ({ data, onClose }: MapPointInfoCardProps) => {
 
           {/* רשימת פרטים */}
           <div className="flex w-full flex-col items-end gap-3.5">
-            {data.details.map((detail) => (
+            {data?.map((detail) => (
               <DetailRow key={detail.id} detail={detail} />
             ))}
           </div>
