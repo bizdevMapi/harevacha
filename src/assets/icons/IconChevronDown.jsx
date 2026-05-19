@@ -1,15 +1,8 @@
 export default function IconChevronDown(props) {
   return (
-    <svg
-      className="h-4 w-4 shrink-0 text-slate-500"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      aria-hidden
-      {...props}
-    >
-      <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M7 10L11.1655 14.6284C11.3784 14.8649 11.6817 15 12 15C12.3183 15 12.6216 14.8649 12.8345 14.6284L17 10" stroke="#141B34" stroke-width="1.5" stroke-miterlimit="16" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+
   )
 }

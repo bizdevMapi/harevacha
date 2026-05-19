@@ -4,14 +4,19 @@ import {
   getCityCenterAreaSelectValue,
   GOVMAP_DEFAULT_VIEW_LEVEL,
   JERUSALEM_CITY_CENTER_AREA_OPTION,
-  TIRAT_CARMEL_CITY_CENTER_AREA_OPTION,
   SITE,
+  TIRAT_CARMEL_CITY_AREA_OPTION,
 } from '../../constants'
 import type { NeighborhoodMapOption } from '../../context/DashboardUiContext'
 import MapFiltersPanel from './MapFiltersPanel'
 import MapPointInfoCard from './MapPointInfoCard'
+import { mapGovmapEntityToPointInfo, type MapPointInfo } from './mapPointInfoData'
 import MapPointTooltip from './MapPointTooltip'
 import MapProfileInsightsCard from './profile-insights/MapProfileInsightsCard'
+import {
+  mapIntersectFeaturesToServicesList,
+  SERVICE_TABLE_LAYER_FIELDS,
+} from '../../data/servicesListTypes'
 
 const GOVMAP_TOKEN = import.meta.env.VITE_GOVMAP_TOKEN
 const AREA_POINTS: Record<string, Array<{ x: number; y: number }>> = {
@@ -33,13 +38,19 @@ const AREA_POINTS: Record<string, Array<{ x: number; y: number }>> = {
 }
 
 const GovMapView = () => {
-  const { selectedArea, setNeighborhoodsList } = useDashboardUi()
+  const {
+    selectedArea,
+    servicesQueryGeometry,
+    setNeighborhoodsList,
+    setServicesList,
+    setServicesListLoading,
+  } = useDashboardUi()
   const mapRef = useRef<HTMLDivElement | null>(null)
   const lastHoverIdentifyAtRef = useRef(0)
   const isHoverIdentifyInFlightRef = useRef(false)
   const [isFiltersOpen, setIsFiltersOpen] = useState(true)
   const [isMapReady, setIsMapReady] = useState(false)
-  const [selectedPointInfo, setSelectedPointInfo] = useState<Record<string, unknown> | null>(null)
+  const [selectedPointInfo, setSelectedPointInfo] = useState<MapPointInfo | null>(null)
   const [hoverPointInfo, setHoverPointInfo] = useState<{ title: string; subtitle?: string } | null>(null)
   const [hoverTooltipPosition, setHoverTooltipPosition] = useState<{ left: number; top: number } | null>(null)
 
@@ -126,13 +137,17 @@ const GovMapView = () => {
         {
           label: JERUSALEM_CITY_CENTER_AREA_OPTION.label,
           value: { ...JERUSALEM_CITY_CENTER_AREA_OPTION.value },
+          cityObjectId:'1',
           optionValue: getCityCenterAreaSelectValue(JERUSALEM_CITY_CENTER_AREA_OPTION.value),
+          geometry: JERUSALEM_CITY_CENTER_AREA_OPTION.geometry,
         },
         ...jerusalemNeighborhoods,
         {
-          label: TIRAT_CARMEL_CITY_CENTER_AREA_OPTION.label,
-          value: { ...TIRAT_CARMEL_CITY_CENTER_AREA_OPTION.value },
-          optionValue: getCityCenterAreaSelectValue(TIRAT_CARMEL_CITY_CENTER_AREA_OPTION.value),
+          label: TIRAT_CARMEL_CITY_AREA_OPTION.label,
+          value: { ...TIRAT_CARMEL_CITY_AREA_OPTION.value },
+          cityObjectId:'2',
+          optionValue: getCityCenterAreaSelectValue(TIRAT_CARMEL_CITY_AREA_OPTION.value),
+          geometry: TIRAT_CARMEL_CITY_AREA_OPTION.geometry,
         },
         ...tiratNeighborhoods,
       ])
@@ -149,21 +164,17 @@ const GovMapView = () => {
     govmap.onEvent?.(clickEventType).progress((payload: any) => {
       console.log('map click', payload)
 
-      govmap.identifyByXYAndLayer(payload.mapPoint.x, payload.mapPoint.y, ['layer_232641', 'layer_208094'])
+      govmap.identifyByXYAndLayer(payload.mapPoint.x, payload.mapPoint.y, [SITE.layers.servicesLayer])
         .then((response: any) => {
           console.log('response', response)
           const rawEntity = response?.data?.[0]?.entities?.[0] ?? response?.data?.[0]?.fields ?? null
           console.log('rawEntity', rawEntity)
-          if (!rawEntity || typeof rawEntity !== 'object') {
-            setSelectedPointInfo(null)
-            return
-          }
-          setSelectedPointInfo({
-            title: rawEntity.fields?.find((field: any) => field.name === 'servicenam')?.fieldValue,
-            subtitle: rawEntity.fields?.find((field: any) => field.name === 'serviceid')?.value,
-            description: rawEntity.fields?.find((field: any) => field.name === 'address')?.value,
-            details: rawEntity.fields?.filter((field: any) => field.name !== 'servicenam' && field.name !== 'serviceid' && field.name !== 'address').map((field: any) => ({ label: field.name, value: field.value })),
-          })
+          //const pointInfo = mapGovmapEntityToPointInfo(rawEntity)
+          setSelectedPointInfo(rawEntity.fields)
+        })
+        .catch((error: unknown) => {
+          console.error('failed identifying map point', error)
+          setSelectedPointInfo(null)
         })
     })
 
@@ -218,17 +229,40 @@ const GovMapView = () => {
     // }
   }
 
-  console.log('selectedPointInfo', selectedPointInfo)
-
   const getLayerFilters = () => {
-    console.log('getting layer filters')
-    window.govmap?.getLayerFilterFields("layer_208094", GOVMAP_TOKEN).then((response: any) => {
-      console.log('response', response)
+    return;
+    console.log('getting layer filters',SITE.layers.servicesLayer, GOVMAP_TOKEN)
+    window.govmap?.getLayerFilterFields(SITE.layers.servicesLayer, GOVMAP_TOKEN).then((response: any) => {
+      console.log('response-----', response)
+    }).catch((error: any) => {
+      console.error('failed getting layer filters', error)
     })
   }
 
+  const fetchServicesList = (geometry: string) => {
+    const intersectFeatures = window.govmap?.intersectFeatures
+    if (!intersectFeatures || !geometry) return
+
+    const params = {
+      geometry,
+      layerName: SITE.layers.servicesLayer,
+      fields: [...SERVICE_TABLE_LAYER_FIELDS],
+    }
+
+    setServicesListLoading(true)
+    window.govmap?.intersectFeatures(params).then(function (response) {
+       const rows = mapIntersectFeaturesToServicesList(response?.data, SERVICE_TABLE_LAYER_FIELDS)
+        setServicesList(rows)
+      }).catch(function (error) {
+        console.error('failed loading services list', error)
+        setServicesList([])
+      }).finally(function () {
+        setServicesListLoading(false)
+      })
+  }
+
   useEffect(() => {
-    const scriptSrc = 'https://govmap.gov.il/govmap/api/govmap.api.js'
+    const scriptSrc = import.meta.env.VITE_GOVMAP_URL || 'https://govmap.gov.il/govmap/api/govmap.api.js'
 
     const initMap = () => {
       const govmap = window.govmap
@@ -245,22 +279,17 @@ const GovMapView = () => {
           SITE.layers.municipalitiesLayer,
           SITE.layers.neighborhoodsLayer,
           SITE.layers.servicesLayer,
-          "layer_208094",//stage
-
         ],
         visibleLayers: [
           SITE.layers.municipalitiesLayer,
           SITE.layers.neighborhoodsLayer,
-          SITE.layers.servicesLayer,
-          "layer_208094",//stage
-
+          SITE.layers.servicesLayer
         ],
         onLoad: () => {
           registerMapInteractionEvents()
-          // fetchFeaturesByArea(selectedArea)
-          // getLayerFilters()
+          getLayerFilters()
           getNeighborhoods()
-          //setIsMapReady(true)
+          setIsMapReady(true)
         }
 
       })
@@ -281,6 +310,11 @@ const GovMapView = () => {
 
   useEffect(() => {
     if (!isMapReady) return
+    fetchServicesList(servicesQueryGeometry)
+  }, [isMapReady, servicesQueryGeometry])
+
+  useEffect(() => {
+    if (!isMapReady) return
     fetchFeaturesByArea(selectedArea)
   }, [isMapReady, selectedArea])
 
@@ -291,6 +325,8 @@ const GovMapView = () => {
 
     return () => window.clearTimeout(resizeTimer)
   }, [isFiltersOpen])
+
+  console.log('selectedPointInfo--------:', selectedPointInfo)
 
   return (
     <section className="h-full w-full overflow-hidden rounded-md border border-brand-lightBlue bg-brand-bgLight">
@@ -309,15 +345,7 @@ const GovMapView = () => {
           <MapProfileInsightsCard />
         </div>
         {selectedPointInfo && (
-          <MapPointInfoCard
-            title={selectedPointInfo.title as string}
-            subtitle={selectedPointInfo.subtitle as string}
-            description={selectedPointInfo.description as string}
-            details={selectedPointInfo.details as Array<{ label: string; value: string }>}
-            onClose={() => {
-              setSelectedPointInfo(null)
-            }}
-          />
+          <MapPointInfoCard data={selectedPointInfo} onClose={() => setSelectedPointInfo(null)} />
         )}
       </div>
     </section>

@@ -1,74 +1,200 @@
-type ApiFilterItem = {
+import { useId, useState } from 'react'
+import { IconChevronDown, IconSearch } from '../../assets/icons'
+
+const DATA_COLORS = ['#042640', '#115b91', '#115b91', '#2a8ad4', '#80b3e6', '#cce1f5'] as const
+
+type FilterItem = {
   label: string
   count: number
+  color: string
 }
 
-type ApiFilterSection = {
+type FilterSectionData = {
   title: string
-  items: ApiFilterItem[]
+  titleClassName?: string
+  items: FilterItem[]
 }
 
-const apiFilterSections: ApiFilterSection[] = [
+const filterSections: FilterSectionData[] = [
   {
     title: 'מצב סיכון',
     items: [
-      { label: 'התעללות והזנחה', count: 56 },
-      { label: 'עוני', count: 87 },
-      { label: 'ניתוק חברתי', count: 28 },
-      { label: 'ירידה קוגנטיבית', count: 32 },
-      { label: 'בדידות', count: 14 },
-      { label: 'תפקוד פיזי', count: 46 },
+      { label: 'התעללות והזנחה', count: 56, color: DATA_COLORS[0] },
+      { label: 'עוני', count: 87, color: DATA_COLORS[1] },
+      { label: 'ניתוק חברתי', count: 28, color: DATA_COLORS[2] },
+      { label: 'ירידה קוגניטיבית', count: 32, color: DATA_COLORS[3] },
+      { label: 'ירידה חושית', count: 14, color: DATA_COLORS[4] },
+      { label: 'תפקוד פיזי', count: 46, color: DATA_COLORS[5] },
     ],
   },
   {
     title: 'סוג אוכלוסיה',
     items: [
-      { label: 'כללית', count: 134 },
-      { label: 'דתיים', count: 87 },
-      { label: 'ערבים', count: 30 },
-      { label: 'עולים חדשים', count: 25 },
-      { label: 'חרדים', count: 15 },
+      { label: 'כללית', count: 134, color: DATA_COLORS[0] },
+      { label: 'דתיים', count: 87, color: DATA_COLORS[1] },
+      { label: 'ערבים', count: 30, color: DATA_COLORS[2] },
+      { label: 'עולים חדשים', count: 25, color: DATA_COLORS[3] },
+      { label: 'חרדים', count: 15, color: DATA_COLORS[5] },
     ],
   },
   {
     title: 'שפה',
+    titleClassName: 'text-[#06365a]',
     items: [
-      { label: 'עברית', count: 87 },
-      { label: 'ערבית', count: 87 },
-      { label: 'רוסית', count: 87 },
-      { label: 'יידיש', count: 87 },
+      { label: 'עברית', count: 87, color: DATA_COLORS[0] },
+      { label: 'ערבית', count: 87, color: DATA_COLORS[1] },
+      { label: 'רוסית', count: 87, color: DATA_COLORS[3] },
+      { label: 'יידיש', count: 87, color: DATA_COLORS[5] },
     ],
   },
 ]
 
-const categoryPalette = ['#0f3f69', '#1f6ea8', '#3f88be', '#6fa4cd', '#9ec2df', '#c9ddec']
+function DistributionBar({ items }: { items: FilterItem[] }) {
+  const total = items.reduce((sum, item) => sum + item.count, 0)
+  if (total === 0) return null
 
-const withCategoryColors = (sections: ApiFilterSection[]) =>
-  sections.map((section) => ({
-    ...section,
-    items: section.items.map((item, index) => ({
-      ...item,
-      color: categoryPalette[index % categoryPalette.length],
-    })),
-  }))
+  return (
+    <div
+      className="flex h-1.5 w-full max-w-[312px] overflow-hidden rounded-full bg-[#cce1f5]"
+      aria-hidden
+    >
+      {items.map((item) => {
+        const widthPercent = (item.count / total) * 100
+        if (widthPercent <= 0) return null
+        return (
+          <span
+            key={item.label}
+            className="h-full shrink-0 first:rounded-s-full last:rounded-e-full"
+            style={{ width: `${widthPercent}%`, backgroundColor: item.color }}
+          />
+        )
+      })}
+    </div>
+  )
+}
 
-const sectionsWithColors = withCategoryColors(apiFilterSections)
+function FilterListItem({
+  item,
+  checked,
+  onChange,
+}: {
+  item: FilterItem
+  checked: boolean
+  onChange: (checked: boolean) => void
+}) {
+  const id = useId()
+
+  return (
+    <label
+      htmlFor={id}
+      className="flex cursor-pointer items-center justify-between border-b border-[#e0e5eb] p-2"
+    >
+      <div className="flex min-w-0 items-center gap-2">
+        <span
+          className="size-2 shrink-0 rounded-[2px]"
+          style={{ backgroundColor: item.color }}
+          aria-hidden
+        />
+        <span className="truncate text-sm leading-[18px] text-[#34404f]">{item.label}</span>
+        <span className="shrink-0 text-xs leading-[18px] text-[#5f708a] tabular-nums">
+          ({item.count})
+        </span>
+      </div>
+      <input
+        id={id}
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="size-5 shrink-0 cursor-pointer rounded border border-[#e0e5eb] bg-white accent-brand-darkBlue"
+      />
+    </label>
+  )
+}
+
+function FilterSection({
+  section,
+  selectedKeys,
+  onToggle,
+}: {
+  section: FilterSectionData
+  selectedKeys: Set<string>
+  onToggle: (key: string, checked: boolean) => void
+}) {
+  const sectionKey = (label: string) => `${section.title}::${label}`
+
+  return (
+    <section className="flex w-full flex-col items-end gap-3.5">
+      <div className="flex w-full max-w-[312px] flex-col items-end gap-2.5">
+        <h3
+          className={`w-full text-right text-base font-bold leading-5 ${section.titleClassName ?? 'text-[#084878]'}`}
+        >
+          {section.title}
+        </h3>
+        <DistributionBar items={section.items} />
+      </div>
+      <div className="w-full max-w-[312px]">
+        {section.items.map((item) => {
+          const key = sectionKey(item.label)
+          return (
+            <FilterListItem
+              key={key}
+              item={item}
+              checked={selectedKeys.has(key)}
+              onChange={(checked) => onToggle(key, checked)}
+            />
+          )
+        })}
+      </div>
+    </section>
+  )
+}
 
 type MapFiltersPanelProps = {
   isOpen: boolean
   onToggle: () => void
+  hideToggle?: boolean
+  searchQuery?: string
+  onSearchQueryChange?: (value: string) => void
 }
 
-const MapFiltersPanel = ({ isOpen, onToggle }: MapFiltersPanelProps) => {
-  const toggleButton = (
+const MapFiltersPanel = ({
+  isOpen,
+  onToggle,
+  hideToggle = false,
+  searchQuery: controlledSearchQuery,
+  onSearchQueryChange,
+}: MapFiltersPanelProps) => {
+  const searchId = useId()
+  const [internalSearchQuery, setInternalSearchQuery] = useState('')
+  const searchQuery = controlledSearchQuery ?? internalSearchQuery
+  const setSearchQuery = onSearchQueryChange ?? setInternalSearchQuery
+  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(() => new Set())
+
+  const handleClear = () => {
+    setSearchQuery('')
+    setSelectedKeys(new Set())
+  }
+
+  const handleToggle = (key: string, checked: boolean) => {
+    setSelectedKeys((prev) => {
+      const next = new Set(prev)
+      if (checked) next.add(key)
+      else next.delete(key)
+      return next
+    })
+  }
+
+  const toggleButton = hideToggle ? null : (
     <button
       type="button"
       onClick={onToggle}
-      className="absolute left-0 top-6 z-30 flex h-9 w-9 -translate-x-1/2 items-center justify-center rounded-full border border-[#b9cde1] bg-white text-lg font-semibold text-[#1f6ea8] shadow-sm transition-colors hover:bg-[#f2f7fb]"
+      className="absolute top-0 left-0 z-30 flex size-6 items-center justify-center rounded-bl-[4px] rounded-br-[11px] border border-b border-l border-[#cbd5e3] bg-[#fafbfd] py-0.5 text-brand-darkBlue shadow-[-2px_1px_1.5px_rgba(121,136,157,0.2)] transition-colors hover:bg-white"
       aria-label={isOpen ? 'סגירת פנל סינון' : 'פתיחת פנל סינון'}
       title={isOpen ? 'סגירת פנל סינון' : 'פתיחת פנל סינון'}
     >
-      {isOpen ? '›' : '‹'}
+      <span className={`inline-flex transition-transform ${isOpen ? '-rotate-90' : 'rotate-90'}`}>
+        <IconChevronDown className="size-5" />
+      </span>
     </button>
   )
 
@@ -81,66 +207,49 @@ const MapFiltersPanel = ({ isOpen, onToggle }: MapFiltersPanelProps) => {
   }
 
   return (
-    <aside className="relative h-full w-[280px] max-w-[88vw] shrink-0 border-l border-[#d7e1ee] bg-white/95 shadow-[-8px_0_18px_rgba(21,58,97,0.08)] backdrop-blur-[1px]">
+    <aside className="relative h-full w-[376px] max-w-[min(100vw,376px)] shrink-0 border-l border-[#e0e5eb] bg-[#f5f8fc]">
       {toggleButton}
-      <div className="h-full overflow-y-auto px-5 pb-5 pt-6">
-        <div className="mb-5 flex items-center justify-between">
-          <h2 className="text-[27px] font-bold leading-none text-[#1e2f47]">סינון מענים</h2>
-          <button type="button" className="text-sm font-semibold text-[#2e6eac] hover:text-[#1f598f]">
-            ניקוי
-          </button>
-        </div>
+      <div className="flex h-full flex-col gap-[26px] overflow-y-auto px-8 pb-6 pt-7">
+        <div className="flex w-full max-w-[312px] flex-col gap-8">
+          {/* כותרת + חיפוש */}
+          <div className="flex w-full flex-col gap-4">
+            <div className="flex w-full items-center justify-between">
+              <h2 className="text-lg font-bold leading-5 text-[#161a20]">סינון מענים</h2>
+              <button
+                type="button"
+                onClick={handleClear}
+                className="text-sm font-bold leading-5 text-brand-darkBlue underline decoration-solid underline-offset-2 hover:text-[#0f62a8]"
+              >
+                ניקוי
+              </button>
+            </div>
 
-        <div className="relative mb-5">
-          <input
-            type="text"
-            placeholder="איתור מענה לפי שם או כתובת"
-            className="w-full border-0 border-b border-[#d6e2ef] bg-transparent px-0 pb-2 pl-8 pt-1 text-sm text-[#173a5d] placeholder:text-[#90a8c3] focus:border-[#4a87c2] focus:outline-none"
-          />
-          <span className="pointer-events-none absolute left-1 top-1 text-[#6f8daf]">⌕</span>
-        </div>
+            <div className="flex h-12 w-full items-center gap-2 border-b border-[#cbd5e3] px-1 py-3">
+              <input
+                id={searchId}
+                type="search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="איתור מענה לפי שם או כתובת"
+                className="min-w-0 flex-1 border-0 bg-transparent text-base leading-6 text-[#161a20] placeholder:text-[#8695a7] focus:outline-none"
+              />
+              <span className="shrink-0 text-[#5f708a]">
+                <IconSearch />
+              </span>
+            </div>
+          </div>
 
-        <div className="space-y-7">
-          {sectionsWithColors.map((section) => {
-            const sectionTotal = section.items.reduce((sum, item) => sum + item.count, 0)
-
-            return (
-              <section key={section.title}>
-                <div className="mb-2 flex h-1 w-full overflow-hidden rounded bg-[#dde8f3]">
-                  {section.items.map((item) => {
-                    const itemPercent = sectionTotal > 0 ? (item.count / sectionTotal) * 100 : 0
-                    return (
-                      <span
-                        key={`${section.title}-${item.label}-bar`}
-                        className="h-full"
-                        style={{ width: `${itemPercent}%`, backgroundColor: item.color }}
-                        aria-hidden
-                      />
-                    )
-                  })}
-                </div>
-
-                <h3 className="mb-3 text-[24px] font-bold leading-tight text-[#24384f]">{section.title}</h3>
-                <div className="space-y-2">
-                  {section.items.map((item) => (
-                    <label
-                      key={item.label}
-                      className="flex cursor-pointer items-center justify-between gap-2 rounded-md px-1 py-1 text-[15px] text-[#5c7188] hover:bg-[#f2f7fb]"
-                    >
-                      <span className="flex items-center gap-2.5">
-                        <input type="checkbox" className="h-4 w-4 rounded border-[#bfd0e1] accent-[#2c6fa8]" />
-                        <span>{item.label}</span>
-                      </span>
-                      <span className="flex items-center gap-2">
-                        <span className="text-[13px] tabular-nums text-[#7d92aa]">({item.count})</span>
-                        <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} aria-hidden />
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </section>
-            )
-          })}
+          {/* קטגוריות סינון */}
+          <div className="flex flex-col gap-8">
+            {filterSections.map((section) => (
+              <FilterSection
+                key={section.title}
+                section={section}
+                selectedKeys={selectedKeys}
+                onToggle={handleToggle}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </aside>

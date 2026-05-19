@@ -1,38 +1,83 @@
+import type { MapPointInfo, MapPointInfoDetail } from './mapPointInfoData'
+import { IconClose, IconExpand, IconMapPinLarge, MapPointInfoIcon } from './MapPointInfoIcons'
+
 type MapPointInfoCardProps = {
-  title: string
-  subtitle?: string
-  description?: string
-  details: Array<{ label: string; value: string }>
+  data: MapPointInfo
   onClose: () => void
 }
 
-const MapPointInfoCard = ({ title, subtitle, description, details, onClose }: MapPointInfoCardProps) => {
+function DetailRow({ detail }: { detail: MapPointInfoDetail }) {
+  return (
+    <div className="flex w-full items-center justify-end gap-3">
+      <MapPointInfoIcon icon={detail.icon} />
+      <p className="min-w-0 flex-1 text-right text-sm leading-[23px] text-[#5f708a]">{detail.value}</p>
+    </div>
+  )
+}
+
+
+
+const MapPointInfoCard = ({ data, onClose }: any) => {
+  const getFieldValue = (fieldName: string) => {
+    return data.find((item:any) => item.fieldName === fieldName).fieldValue
+  }
   return (
     <aside
-      className="absolute left-3 top-3 z-40 h-[calc(100%-1.5rem)] w-[260px] max-w-[calc(100%-1.5rem)] overflow-hidden rounded-xl border border-[#d6e2ef] bg-[#f2f5f9] shadow-[0_12px_26px_rgba(22,53,88,0.2)]"
+      className="flex h-full w-[404px] max-w-[min(100vw,404px)] shrink-0 flex-col bg-white shadow-[2px_0_4px_rgba(164,177,192,0.2)]"
+      dir="rtl"
+      aria-label={`פרטי מענה: ${getFieldValue('servicename')}`}
     >
-      <button
-        type="button"
-        onClick={onClose}
-        className="absolute left-2 top-2 z-10 h-7 w-7 rounded-full text-[#6f8299] transition hover:bg-[#e8eef5] hover:text-[#3e5f81]"
-        aria-label="סגירה"
-      >
-        ✕
-      </button>
+      <div className="flex min-h-0 flex-1 flex-col gap-4 px-8 pt-0">
+        {/* כותרת + סגירה */}
+        <div className="flex h-16 shrink-0 items-end justify-between pb-0">
+          <h2 className="pb-3 text-[22px] font-bold leading-[21px] text-[#084878]">{getFieldValue('servicename')}</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="mb-1 flex size-12 shrink-0 items-center justify-center rounded-3xl transition-colors hover:bg-[#f0f4f8]"
+            aria-label="סגירה"
+          >
+            <IconClose />
+          </button>
+        </div>
 
-      <div className="h-full overflow-y-auto px-4 pb-4 pt-6">
-        <h3 className="mb-3 text-[34px] font-bold leading-none text-[#1f5d8f]">{title}</h3>
-        {description ? <p className="mb-3 text-[12px] leading-5 text-[#4f6984]">{description}</p> : null}
-        <div className="mb-4 h-[112px] rounded-lg bg-[#d8dde6]" />
-        {subtitle ? <p className="mb-3 text-[12px] text-[#6f8299]">{subtitle}</p> : null}
+        {/* תיאור */}
+        <p className="shrink-0 py-4 text-right text-sm leading-[22px] text-[#34404f]">{getFieldValue('servicedescription')}</p>
 
-        <div className="grid grid-cols-1 gap-y-2 border-t border-[#dce6f1] pt-3">
-          {details.map((item) => (
-            <div key={`${item.label}-${item.value}`}>
-              <p className="text-[11px] text-[#8ca1b7]">{item.label}</p>
-              <p className="text-[12px] font-semibold text-[#4f6883]">{item.value || '-'}</p>
+        {/* גלילה: מפה + פרטים */}
+        <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto overflow-x-hidden pb-6">
+          {/* תצוגת מפה */}
+          <div className="relative h-[196px] w-full shrink-0 overflow-hidden rounded-2xl bg-[#e8eef4]">
+            {data.mapPreviewUrl ? (
+              <img
+                src={data.mapPreviewUrl}
+                alt=""
+                className="absolute inset-0 size-full object-cover opacity-60"
+              />
+            ) : (
+              <div
+                className="absolute inset-0 bg-gradient-to-b from-[#dce8f4] via-[#e8eef4] to-[#f0f4f8]"
+                aria-hidden
+              />
+            )}
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+              <IconMapPinLarge />
             </div>
-          ))}
+            <button
+              type="button"
+              className="absolute start-2 top-2 flex size-6 items-center justify-center rounded-[7px] bg-white p-0.5 shadow-sm transition-colors hover:bg-[#f5f8fc]"
+              aria-label="הרחבת מפה"
+            >
+              <IconExpand />
+            </button>
+          </div>
+
+          {/* רשימת פרטים */}
+          <div className="flex w-full flex-col items-end gap-3.5">
+            {data?.map((detail) => (
+              <DetailRow key={detail.id} detail={detail} />
+            ))}
+          </div>
         </div>
       </div>
     </aside>

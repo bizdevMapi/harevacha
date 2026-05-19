@@ -25,6 +25,7 @@ interface GovMapCreateOptions {
   language?: string
   isRTL?: boolean
   zoom?: number
+  onLoad?: () => void
 }
 
 interface GovMapLayerDataParams {
@@ -63,6 +64,26 @@ interface GovMapApi {
   onEvent?: (eventType: number | string) => GovMapOnEventChain
   unbindEvent?: (eventType: number | string, handler: (payload: GovMapClickPayload) => void) => void
   zoomToXY?: (params: { x: number; y: number; level?: number; marker?: boolean }) => void
+  intersectFeatures?: (params: {
+    geometry: string
+    layerName: string
+    fields: string[]
+    whereClause?: string
+    getShapes?: boolean
+  }) => Promise<{ data?: Array<{ ObjectId?: number; Values?: unknown[] }> }>
+  getLayerFilterFields?: (layerName: string, token: string) => Promise<unknown>
+  searchInLayer?: (params: {
+    layerName: string
+    fieldName: string
+    fieldValues: string[]
+    highlight?: boolean
+  }) => void
+  identifyByXYAndLayer?: (x: number, y: number, layers: string[]) => Promise<unknown>
+  filterLayers?: (params: {
+    layerName: string
+    whereClause: string
+    zoomToExtent?: boolean
+  }) => void
 }
 
 interface Window {
