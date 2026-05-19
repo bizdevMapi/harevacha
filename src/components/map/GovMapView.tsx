@@ -4,8 +4,8 @@ import {
   getCityCenterAreaSelectValue,
   GOVMAP_DEFAULT_VIEW_LEVEL,
   JERUSALEM_CITY_CENTER_AREA_OPTION,
-  TIRAT_CARMEL_CITY_CENTER_AREA_OPTION,
   SITE,
+  TIRAT_CARMEL_CITY_AREA_OPTION,
 } from '../../constants'
 import type { NeighborhoodMapOption } from '../../context/DashboardUiContext'
 import MapFiltersPanel from './MapFiltersPanel'
@@ -42,7 +42,13 @@ const AREA_POINTS: Record<string, Array<{ x: number; y: number }>> = {
 }
 
 const GovMapView = () => {
-  const { selectedArea, setNeighborhoodsList, setServicesList, setServicesListLoading } = useDashboardUi()
+  const {
+    selectedArea,
+    servicesQueryGeometry,
+    setNeighborhoodsList,
+    setServicesList,
+    setServicesListLoading,
+  } = useDashboardUi()
   const mapRef = useRef<HTMLDivElement | null>(null)
   const lastHoverIdentifyAtRef = useRef(0)
   const isHoverIdentifyInFlightRef = useRef(false)
@@ -135,13 +141,17 @@ const GovMapView = () => {
         {
           label: JERUSALEM_CITY_CENTER_AREA_OPTION.label,
           value: { ...JERUSALEM_CITY_CENTER_AREA_OPTION.value },
+          cityObjectId:'1',
           optionValue: getCityCenterAreaSelectValue(JERUSALEM_CITY_CENTER_AREA_OPTION.value),
+          geometry: JERUSALEM_CITY_CENTER_AREA_OPTION.geometry,
         },
         ...jerusalemNeighborhoods,
         {
-          label: TIRAT_CARMEL_CITY_CENTER_AREA_OPTION.label,
-          value: { ...TIRAT_CARMEL_CITY_CENTER_AREA_OPTION.value },
-          optionValue: getCityCenterAreaSelectValue(TIRAT_CARMEL_CITY_CENTER_AREA_OPTION.value),
+          label: TIRAT_CARMEL_CITY_AREA_OPTION.label,
+          value: { ...TIRAT_CARMEL_CITY_AREA_OPTION.value },
+          cityObjectId:'2',
+          optionValue: getCityCenterAreaSelectValue(TIRAT_CARMEL_CITY_AREA_OPTION.value),
+          geometry: TIRAT_CARMEL_CITY_AREA_OPTION.geometry,
         },
         ...tiratNeighborhoods,
       ])
@@ -158,7 +168,7 @@ const GovMapView = () => {
     govmap.onEvent?.(clickEventType).progress((payload: any) => {
       console.log('map click', payload)
 
-      govmap.identifyByXYAndLayer(payload.mapPoint.x, payload.mapPoint.y, ['layer_232641', 'layer_208094'])
+      govmap.identifyByXYAndLayer(payload.mapPoint.x, payload.mapPoint.y, [SITE.layers.servicesLayer])
         .then((response: any) => {
           console.log('response', response)
           const rawEntity = response?.data?.[0]?.entities?.[0] ?? response?.data?.[0]?.fields ?? null
@@ -234,12 +244,12 @@ const GovMapView = () => {
     })
   }
 
-  const fetchServicesList = () => {
+  const fetchServicesList = (geometry: string) => {
     const intersectFeatures = window.govmap?.intersectFeatures
-    if (!intersectFeatures) return
+    if (!intersectFeatures || !geometry) return
 
     const params = {
-      geometry: `POLYGON ((196500 739500, 199500 739500, 199500 744000, 196500 744000, 196500 739500))`,
+      geometry,
       layerName: SITE.layers.servicesLayer,
       fields: [...SERVICE_TABLE_LAYER_FIELDS],
     }
@@ -286,10 +296,9 @@ const GovMapView = () => {
         ],
         onLoad: () => {
           registerMapInteractionEvents()
-          fetchServicesList()
-         getLayerFilters()
+          getLayerFilters()
           getNeighborhoods()
-          //setIsMapReady(true)
+          setIsMapReady(true)
         }
 
       })
@@ -307,6 +316,11 @@ const GovMapView = () => {
     script.onload = initMap
     document.body.appendChild(script)
   }, [])
+
+  useEffect(() => {
+    if (!isMapReady) return
+    fetchServicesList(servicesQueryGeometry)
+  }, [isMapReady, servicesQueryGeometry])
 
   useEffect(() => {
     if (!isMapReady) return

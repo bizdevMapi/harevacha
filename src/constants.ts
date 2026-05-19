@@ -31,12 +31,14 @@ export const DASHBOARD_ALL_CITY_AREA_VALUE = 'jerusalem-all'
 export const JERUSALEM_CITY_CENTER_AREA_OPTION = {
   label: 'ירושלים - מרכז העיר',
   value: { x: 220000, y: 630000 },
+  geometry: 'POLYGON ((211000 621000, 227000 621000, 227000 643000, 211000 643000, 211000 621000))'
 } as const
 
 /** מרכז טירת כרמל — אחרי שכונות ירושלים ולפני שכונות טירת כרמל מהשכבה */
-export const TIRAT_CARMEL_CITY_CENTER_AREA_OPTION = {
+export const TIRAT_CARMEL_CITY_AREA_OPTION = {
   label: 'טירת כרמל - מרכז העיר',
   value: { x: 199580, y: 743467 },
+  geometry: 'POLYGON ((196500 739500, 199500 739500, 199500 744000, 196500 744000, 196500 739500))'
 } as const
 
 /** רמת זום ל-GovMap — ערכים גבוהים מדי (למשל 10+) עלולים להציג מפה לבנה ללא אריחי בסיס */
@@ -87,18 +89,6 @@ export const SITE = Object.freeze({
     neighborhoodsLayer: 'layer_22',
     servicesLayer: import.meta.env.VITE_SERVICES_LAYER || 'layer_233404',
   }),
-  /**
-   * ניתוח מרחבי (standalone) — govmap.getLayerFeaturesByLocation
-   * @see https://api.govmap.gov.il/docs/standalone/get-layer-features-by-location
-   */
-  spatialAnalysis: Object.freeze({
-    radiusMeters: 150,
-    layers: Object.freeze<SpatialLayerQuery[]>([
-      Object.freeze({
-        name: 'layer_125',
-        /** החלף בשמות שדות אמיתיים מהשכבה; לדוגמה: ['שם_ישוב'] וכו׳ */
-        fields: Object.freeze(['OBJECTID']),
-      }),
-    ]),
-  }),
+
+  
 })

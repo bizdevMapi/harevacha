@@ -9,6 +9,7 @@ import {
   type SetStateAction,
 } from 'react'
 import type { ServiceListItem } from '../data/servicesListTypes'
+import { JERUSALEM_CITY_CENTER_AREA_OPTION } from '../constants'
 
 export type DashboardViewMode = 'map' | 'list'
 
@@ -21,6 +22,7 @@ export type NeighborhoodMapOption = {
   /** מזהה ישות בשכבה 22 (ל־searchInLayer), אופציונלי לפריט קבוע בלי שכבה */
   layerObjectId?: number,
   geometry?: string,
+  cityObjectId?: string,
 }
 
 export type DashboardUiValue = {
@@ -40,6 +42,8 @@ export type DashboardUiValue = {
   setServicesList: Dispatch<SetStateAction<ServiceListItem[]>>
   servicesListLoading: boolean
   setServicesListLoading: Dispatch<SetStateAction<boolean>>
+  servicesQueryGeometry: string
+  setServicesQueryGeometry: (geometry: string) => void
 }
 
 const DashboardUiContext = createContext<DashboardUiValue | null>(null)
@@ -56,6 +60,9 @@ export function DashboardUiProvider({ children }: { children: ReactNode }) {
   const [neighborhoodsList, setNeighborhoodsList] = useState<NeighborhoodMapOption[]>([])
   const [servicesList, setServicesList] = useState<ServiceListItem[]>([])
   const [servicesListLoading, setServicesListLoading] = useState(false)
+  const [servicesQueryGeometry, setServicesQueryGeometry] = useState(
+    JERUSALEM_CITY_CENTER_AREA_OPTION.geometry,
+  )
 
   const setPopulationSegment = useCallback((value: string) => {
     setPopulationSegmentState(value)
@@ -85,6 +92,8 @@ export function DashboardUiProvider({ children }: { children: ReactNode }) {
       setServicesList,
       servicesListLoading,
       setServicesListLoading,
+      servicesQueryGeometry,
+      setServicesQueryGeometry,
     }),
     [
       viewMode,
@@ -96,6 +105,7 @@ export function DashboardUiProvider({ children }: { children: ReactNode }) {
       neighborhoodsList,
       servicesList,
       servicesListLoading,
+      servicesQueryGeometry,
     ],
   )
 

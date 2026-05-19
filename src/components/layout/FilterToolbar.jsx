@@ -43,6 +43,7 @@ const FilterToolbar = ({ onBack = () => { } }) => {
     setProfileKey,
     neighborhoodsList,
     servicesList,
+    setServicesQueryGeometry,
   } = useDashboardUi()
   const matchCount = servicesList.length
   const [selectedNeighborhoodOptionValue, setSelectedNeighborhoodOptionValue] = useState(() =>
@@ -67,14 +68,12 @@ const FilterToolbar = ({ onBack = () => { } }) => {
         const govmap = window.govmap
         if (!opt || !govmap) return
 
+        const geometry = opt.geometry
+        if (geometry) {
+          setServicesQueryGeometry(geometry)
+        }
+
         if (opt.layerObjectId != null) {
-          console.log('opt.layerObjectId', opt.layerObjectId)
-          console.log('search in layer: ', {
-            layerName: SITE.layers.neighborhoodsLayer,
-            fieldName: 'objectid',
-            fieldValues: [opt.layerObjectId?.toString()],
-            highlight: false,
-          })
           // התמקדות בשכונה
           govmap.searchInLayer?.({
             layerName: '22',
@@ -82,29 +81,6 @@ const FilterToolbar = ({ onBack = () => { } }) => {
             fieldValues: [opt.layerObjectId?.toString()],
             highlight: false,
           })
-
-          // קבלת המענים בשכונה הנבחרת
-          // var params = {
-          //   geometry: opt.geometry,
-          //   layerName: SITE.layers.servicesLayer,
-          //   fields: ['objectId'],
-          // }
-          // govmap.intersectFeatures(params).then(function (response) {
-          //   console.log('response', response)
-          //   if (response.data?.length > 0) {
-          //     var params = {
-          //       layerName: SITE.layers.servicesLayer,
-          //       whereClause:
-          //         'objectid in (' +
-          //         response.data?.map((item) => item.ObjectId?.toString()).join(',') +
-          //         ')',
-          //       zoomToExtent: true,
-          //     }
-          //     govmap.filterLayers(params)
-          //   }
-          // }).catch(function (error) {
-          //   console.error('failed intersecting features', error)
-          // })
         } else {
           govmap.zoomToXY?.({
             x: opt.value.x,
