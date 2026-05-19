@@ -1,11 +1,12 @@
 import { useId } from 'react'
+import { IconChevronDown } from '../../assets/icons'
 
 const selectBaseClass = [
-  'h-11 min-h-11 cursor-pointer appearance-none rounded-xl border border-slate-200/90',
-  'bg-white py-2 pl-10 pr-11 text-[13px] font-semibold text-slate-900',
-  'shadow-toolbarField outline-none transition-shadow duration-150',
-  'hover:border-slate-300 hover:shadow-md',
-  'focus:border-white focus:ring-2 focus:ring-white/95 focus:ring-offset-2 focus:ring-offset-brand-toolbarBar',
+  'min-h-12 cursor-pointer appearance-none rounded-xl',
+  'bg-white py-2.5 pl-10 pr-11 text-[18px]',
+  // 'shadow-toolbarField outline-none transition-shadow duration-150',
+  // 'hover:border-slate-300 hover:shadow-md',
+  // 'focus:border-white focus:ring-2 focus:ring-white/95 focus:ring-offset-2 focus:ring-offset-brand-darkBlue',
 ].join(' ')
 
 
@@ -14,7 +15,6 @@ export default function ToolbarSelect({
   value,
   onChange,
   options,
-  leftIcon,
   rightIcon,
   className = '',
 }) {
@@ -23,7 +23,7 @@ export default function ToolbarSelect({
   return (
     <div className="relative pt-3">
       <span
-        className="pointer-events-none absolute right-3 top-[14px] z-20 -translate-y-1/2 rounded bg-brand-toolbarBar px-1.5 text-[11px] font-bold leading-tight text-white"
+        className="pointer-events-none absolute right-3 top-[13px] z-20 -translate-y-1/2 rounded bg-brand-darkBlue px-1.5 text-[12px] leading-tight text-white"
         style={{ textShadow: '0 1px 0 rgba(0,0,0,0.12)' }}
       >
         {label}
@@ -41,8 +41,8 @@ export default function ToolbarSelect({
             </option>
           ))}
         </select>
-        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 opacity-80">{leftIcon}</span>
-        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 opacity-90">{rightIcon}</span>
+        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 opacity-80">{rightIcon}</span>
+        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 opacity-90"><IconChevronDown /></span>
       </div>
     </div>
   )

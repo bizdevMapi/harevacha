@@ -1,16 +1,8 @@
 export default function IconPin(props) {
   return (
-    <svg
-      className="h-4 w-4 shrink-0 text-slate-600"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      aria-hidden
-      {...props}
-    >
-      <path d="M12 21s7-4.35 7-11a7 7 0 10-14 0c0 6.65 7 11 7 11z" strokeLinejoin="round" />
-      <circle cx="12" cy="10" r="1.75" />
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M14.5 11C14.5 12.3807 13.3807 13.5 12 13.5C10.6193 13.5 9.5 12.3807 9.5 11C9.5 9.61929 10.6193 8.5 12 8.5C13.3807 8.5 14.5 9.61929 14.5 11Z" stroke="#687384" />
+      <path d="M13.2574 19.4936C12.9201 19.8184 12.4693 20 12.0002 20C11.531 20 11.0802 19.8184 10.7429 19.4936C7.6543 16.5008 3.51519 13.1575 5.53371 8.30373C6.6251 5.67932 9.24494 4 12.0002 4C14.7554 4 17.3752 5.67933 18.4666 8.30373C20.4826 13.1514 16.3536 16.5111 13.2574 19.4936Z" stroke="#687384" />
     </svg>
   )
 }

@@ -8,6 +8,7 @@ import {
   type ReactNode,
   type SetStateAction,
 } from 'react'
+import type { ServiceListItem } from '../data/servicesListTypes'
 
 export type DashboardViewMode = 'map' | 'list'
 
@@ -35,6 +36,10 @@ export type DashboardUiValue = {
   setProfileInsightsOpen: (open: boolean) => void
   neighborhoodsList: NeighborhoodMapOption[]
   setNeighborhoodsList: Dispatch<SetStateAction<NeighborhoodMapOption[]>>
+  servicesList: ServiceListItem[]
+  setServicesList: Dispatch<SetStateAction<ServiceListItem[]>>
+  servicesListLoading: boolean
+  setServicesListLoading: Dispatch<SetStateAction<boolean>>
 }
 
 const DashboardUiContext = createContext<DashboardUiValue | null>(null)
@@ -49,6 +54,8 @@ export function DashboardUiProvider({ children }: { children: ReactNode }) {
   const [profileKey, setProfileKey] = useState('none')
   const [profileInsightsOpen, setProfileInsightsOpen] = useState(false)
   const [neighborhoodsList, setNeighborhoodsList] = useState<NeighborhoodMapOption[]>([])
+  const [servicesList, setServicesList] = useState<ServiceListItem[]>([])
+  const [servicesListLoading, setServicesListLoading] = useState(false)
 
   const setPopulationSegment = useCallback((value: string) => {
     setPopulationSegmentState(value)
@@ -74,8 +81,22 @@ export function DashboardUiProvider({ children }: { children: ReactNode }) {
       setProfileInsightsOpen,
       neighborhoodsList,
       setNeighborhoodsList,
+      servicesList,
+      setServicesList,
+      servicesListLoading,
+      setServicesListLoading,
     }),
-    [viewMode, selectedArea, populationSegment, profileKey, profileInsightsOpen, setPopulationSegment, neighborhoodsList, setNeighborhoodsList],
+    [
+      viewMode,
+      selectedArea,
+      populationSegment,
+      profileKey,
+      profileInsightsOpen,
+      setPopulationSegment,
+      neighborhoodsList,
+      servicesList,
+      servicesListLoading,
+    ],
   )
 
   return <DashboardUiContext.Provider value={value}>{children}</DashboardUiContext.Provider>
