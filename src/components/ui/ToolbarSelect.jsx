@@ -21,9 +21,9 @@ export default function ToolbarSelect({
   const id = useId()
 
   return (
-    <div className="relative pt-3">
+    <div className="relative">
       <span
-        className="pointer-events-none absolute right-3 top-[13px] z-20 -translate-y-1/2 rounded bg-brand-darkBlue px-1.5 text-[12px] leading-tight text-white"
+        className="pointer-events-none absolute right-3 top-1 z-20 -translate-y-1/2 rounded bg-brand-darkBlue px-1.5 text-[12px] leading-tight text-white"
         style={{ textShadow: '0 1px 0 rgba(0,0,0,0.12)' }}
       >
         {label}
