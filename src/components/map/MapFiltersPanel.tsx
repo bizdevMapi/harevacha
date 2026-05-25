@@ -1,53 +1,6 @@
 import { useId, useState } from 'react'
 import { IconChevronDown, IconSearch } from '../../assets/icons'
-
-const DATA_COLORS = ['#042640', '#115b91', '#115b91', '#2a8ad4', '#80b3e6', '#cce1f5'] as const
-
-type FilterItem = {
-  label: string
-  count: number
-  color: string
-}
-
-type FilterSectionData = {
-  title: string
-  titleClassName?: string
-  items: FilterItem[]
-}
-
-const filterSections: FilterSectionData[] = [
-  {
-    title: 'מצב סיכון',
-    items: [
-      { label: 'התעללות והזנחה', count: 56, color: DATA_COLORS[0] },
-      { label: 'עוני', count: 87, color: DATA_COLORS[1] },
-      { label: 'ניתוק חברתי', count: 28, color: DATA_COLORS[2] },
-      { label: 'ירידה קוגניטיבית', count: 32, color: DATA_COLORS[3] },
-      { label: 'ירידה חושית', count: 14, color: DATA_COLORS[4] },
-      { label: 'תפקוד פיזי', count: 46, color: DATA_COLORS[5] },
-    ],
-  },
-  {
-    title: 'סוג אוכלוסיה',
-    items: [
-      { label: 'כללית', count: 134, color: DATA_COLORS[0] },
-      { label: 'דתיים', count: 87, color: DATA_COLORS[1] },
-      { label: 'ערבים', count: 30, color: DATA_COLORS[2] },
-      { label: 'עולים חדשים', count: 25, color: DATA_COLORS[3] },
-      { label: 'חרדים', count: 15, color: DATA_COLORS[5] },
-    ],
-  },
-  {
-    title: 'שפה',
-    titleClassName: 'text-[#06365a]',
-    items: [
-      { label: 'עברית', count: 87, color: DATA_COLORS[0] },
-      { label: 'ערבית', count: 87, color: DATA_COLORS[1] },
-      { label: 'רוסית', count: 87, color: DATA_COLORS[3] },
-      { label: 'יידיש', count: 87, color: DATA_COLORS[5] },
-    ],
-  },
-]
+import type { FilterItem, FilterSectionData } from './mapLayerFilters'
 
 function DistributionBar({ items }: { items: FilterItem[] }) {
   const total = items.reduce((sum, item) => sum + item.count, 0)
@@ -155,6 +108,9 @@ type MapFiltersPanelProps = {
   hideToggle?: boolean
   searchQuery?: string
   onSearchQueryChange?: (value: string) => void
+  filterSections?: FilterSectionData[]
+  filtersLoading?: boolean
+  onFilterSelectionChange?: (selectedKeys: Set<string>) => void
 }
 
 const MapFiltersPanel = ({
@@ -163,6 +119,9 @@ const MapFiltersPanel = ({
   hideToggle = false,
   searchQuery: controlledSearchQuery,
   onSearchQueryChange,
+  filterSections = [],
+  filtersLoading = false,
+  onFilterSelectionChange,
 }: MapFiltersPanelProps) => {
   const searchId = useId()
   const [internalSearchQuery, setInternalSearchQuery] = useState('')
@@ -172,7 +131,9 @@ const MapFiltersPanel = ({
 
   const handleClear = () => {
     setSearchQuery('')
-    setSelectedKeys(new Set())
+    const next = new Set<string>()
+    setSelectedKeys(next)
+    onFilterSelectionChange?.(next)
   }
 
   const handleToggle = (key: string, checked: boolean) => {
@@ -180,6 +141,7 @@ const MapFiltersPanel = ({
       const next = new Set(prev)
       if (checked) next.add(key)
       else next.delete(key)
+      onFilterSelectionChange?.(next)
       return next
     })
   }
@@ -241,6 +203,12 @@ const MapFiltersPanel = ({
 
           {/* קטגוריות סינון */}
           <div className="flex flex-col gap-8">
+            {filtersLoading && filterSections.length === 0 ? (
+              <p className="text-right text-sm text-[#5f708a]">טוען אפשרויות סינון…</p>
+            ) : null}
+            {!filtersLoading && filterSections.length === 0 ? (
+              <p className="text-right text-sm text-[#5f708a]">אין אפשרויות סינון זמינות</p>
+            ) : null}
             {filterSections.map((section) => (
               <FilterSection
                 key={section.title}

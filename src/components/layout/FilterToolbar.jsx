@@ -118,6 +118,8 @@ const FilterToolbar = ({ onBack = () => { } }) => {
               className={toolbarSelectWidthClass}
             />
             {populationSegment !== 'none' && (
+              <>
+              {divider}
               <ToolbarSelect
                 label="פרופיל"
                 value={profileKey}
@@ -126,18 +128,21 @@ const FilterToolbar = ({ onBack = () => { } }) => {
                 rightIcon={<IconPerson />}
                 className={toolbarSelectWidthClass}
               />
+              </>
+             
             )}
           </div>
+          {divider}
 
-          <div className="flex shrink-0 flex-wrap items-center gap-3 sm:gap-4">
-            <p
-              className="min-w-0 text-center text-[15px] font-semibold tracking-tight text-white drop-shadow-sm sm:text-right"
+          <p
+              className="min-w-0 flex-1 text-center text-[15px] tracking-tight text-white drop-shadow-sm sm:text-right"
               style={{ textShadow: '0 1px 1px rgba(0,0,0,0.15)' }}
             >
               מענים מותאמים:{' '}
-              <span className="tabular-nums font-bold text-white">{matchCount}</span>
+              <span className="tabular-nums font-bold">{matchCount}</span>
             </p>
-            {divider}
+          <div className="flex shrink-0 flex-wrap items-center gap-3 sm:gap-4">
+          
             <div
               className="flex items-center gap-1 bg-[#2A8AD4] rounded-[39px] p-1"
               role="group"
@@ -160,7 +165,7 @@ const FilterToolbar = ({ onBack = () => { } }) => {
                 )
               })}
             </div>
-
+{divider}
             <button
               type="button"
               onClick={onBack}

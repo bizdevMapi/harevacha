@@ -26,6 +26,8 @@ jobs:
         run: npm run build
         env:
           VITE_GOVMAP_TOKEN: ${{ secrets.VITE_GOVMAP_TOKEN }}
+          VITE_GOVMAP_URL: ${{ secrets.VITE_GOVMAP_URL }}
+          VITE_SERVICES_LAYER: ${{ secrets.VITE_SERVICES_LAYER }}
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2

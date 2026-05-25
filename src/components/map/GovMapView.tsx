@@ -9,6 +9,13 @@ import {
 } from '../../constants'
 import type { NeighborhoodMapOption } from '../../context/DashboardUiContext'
 import MapFiltersPanel from './MapFiltersPanel'
+import {
+  buildFilterSectionsFromLayerFields,
+  buildFullServicesLayerWhereClause,
+  buildServicesLayerWhereClause,
+  type FilterSectionData,
+  type LayerFilterField,
+} from './mapLayerFilters'
 import MapPointInfoCard from './MapPointInfoCard'
 import { mapGovmapEntityToPointInfo, type MapPointInfo } from './mapPointInfoData'
 import MapPointTooltip from './MapPointTooltip'
@@ -48,46 +55,15 @@ const GovMapView = () => {
   const mapRef = useRef<HTMLDivElement | null>(null)
   const lastHoverIdentifyAtRef = useRef(0)
   const isHoverIdentifyInFlightRef = useRef(false)
+  const mapFilterSelectedKeysRef = useRef<Set<string>>(new Set())
+  const filterApplyGenerationRef = useRef(0)
   const [isFiltersOpen, setIsFiltersOpen] = useState(true)
   const [isMapReady, setIsMapReady] = useState(false)
+  const [filterSections, setFilterSections] = useState<FilterSectionData[]>([])
+  const [filtersLoading, setFiltersLoading] = useState(true)
   const [selectedPointInfo, setSelectedPointInfo] = useState<MapPointInfo | null>(null)
   const [hoverPointInfo, setHoverPointInfo] = useState<{ title: string; subtitle?: string } | null>(null)
   const [hoverTooltipPosition, setHoverTooltipPosition] = useState<{ left: number; top: number } | null>(null)
-
-  const fetchFeaturesByArea = (areaKey: string) => {
-    console.log('fetching features by area', areaKey)
-    const govmap = window.govmap
-    const getLayerFeaturesByLocation = govmap?.getLayerFeaturesByLocation
-    if (!govmap || typeof getLayerFeaturesByLocation !== 'function') return
-
-    const points = AREA_POINTS[areaKey] ?? AREA_POINTS['jerusalem-all']
-    const requests = points.map((point) =>
-      getLayerFeaturesByLocation.call(
-        govmap,
-        {
-          geometry: `POINT(${point.x} ${point.y})`,
-          radius: 3000,
-          layers: [
-            {
-              // name: 'layer_232641',
-              name: '22',
-              fields: ['fname'],
-              //fields: ['servicenam', 'serviceid'],
-            },
-          ],
-        },
-        GOVMAP_TOKEN,
-      ),
-    )
-
-    Promise.all(requests)
-      .then((results) => {
-        console.log('features by selected area', areaKey, results)
-      })
-      .catch((error) => {
-        console.error('failed fetching features by area', areaKey, error)
-      })
-  }
 
   const getNeighborhoods = () => {
     const params = {
@@ -137,7 +113,7 @@ const GovMapView = () => {
         {
           label: JERUSALEM_CITY_CENTER_AREA_OPTION.label,
           value: { ...JERUSALEM_CITY_CENTER_AREA_OPTION.value },
-          cityObjectId:'1',
+          cityObjectId: '1',
           optionValue: getCityCenterAreaSelectValue(JERUSALEM_CITY_CENTER_AREA_OPTION.value),
           geometry: JERUSALEM_CITY_CENTER_AREA_OPTION.geometry,
         },
@@ -145,7 +121,7 @@ const GovMapView = () => {
         {
           label: TIRAT_CARMEL_CITY_AREA_OPTION.label,
           value: { ...TIRAT_CARMEL_CITY_AREA_OPTION.value },
-          cityObjectId:'2',
+          cityObjectId: '2',
           optionValue: getCityCenterAreaSelectValue(TIRAT_CARMEL_CITY_AREA_OPTION.value),
           geometry: TIRAT_CARMEL_CITY_AREA_OPTION.geometry,
         },
@@ -178,65 +154,93 @@ const GovMapView = () => {
         })
     })
 
-    // const hoverEventType = govmap.events?.MOUSE_MOVE
-    // if (hoverEventType !== undefined) {
-    //   govmap.onEvent?.(hoverEventType).progress((payload: any) => {
-    //     const now = Date.now()
-    //     if (now - lastHoverIdentifyAtRef.current < HOVER_IDENTIFY_THROTTLE_MS) return
-    //     if (isHoverIdentifyInFlightRef.current) return
+    const hoverEventType = govmap.events?.MOUSE_MOVE
+    if (hoverEventType !== undefined) {
+      govmap.onEvent?.(hoverEventType).progress((payload: any) => {
+        const now = Date.now()
+        if (now - lastHoverIdentifyAtRef.current < HOVER_IDENTIFY_THROTTLE_MS) return
+        if (isHoverIdentifyInFlightRef.current) return
 
-    //     lastHoverIdentifyAtRef.current = now
-    //     isHoverIdentifyInFlightRef.current = true
+        lastHoverIdentifyAtRef.current = now
+        isHoverIdentifyInFlightRef.current = true
 
-    //     console.log('map point hover', payload)
-    //     govmap
-    //       .identifyByXYAndLayer(payload.mapPoint.x, payload.mapPoint.y, ['layer_232641'])
-    //       .then((response: any) => {
-    //         console.log('response', response)
-    //         const rawEntity = response?.data?.[0]?.entities?.[0] ?? response?.data?.[0]?.fields ?? null
-    //         console.log('rawEntity', rawEntity)
-    //         if (!rawEntity || typeof rawEntity !== 'object') {
-    //           setHoverPointInfo(null)
-    //           setHoverTooltipPosition(null)
-    //           return
-    //         }
-    //         const left =
-    //           typeof payload?.screenPoint?.x === 'number'
-    //             ? payload.screenPoint.x
-    //             : typeof payload?.x === 'number'
-    //               ? payload.x
-    //               : null
-    //         const top =
-    //           typeof payload?.screenPoint?.y === 'number'
-    //             ? payload.screenPoint.y
-    //             : typeof payload?.y === 'number'
-    //               ? payload.y
-    //               : null
+        console.log('map point hover', payload)
+        govmap
+          .identifyByXYAndLayer(payload.mapPoint.x, payload.mapPoint.y, [SITE.layers.servicesLayer])
+          .then((response: any) => {
+            console.log('response', response)
+            const rawEntity = response?.data?.[0]?.entities?.[0] ?? response?.data?.[0]?.fields ?? null
+            console.log('rawEntity', rawEntity)
+            if (!rawEntity || typeof rawEntity !== 'object') {
+              setHoverPointInfo(null)
+              setHoverTooltipPosition(null)
+              return
+            }
+            const left =
+              typeof payload?.screenPoint?.x === 'number'
+                ? payload.screenPoint.x
+                : typeof payload?.x === 'number'
+                  ? payload.x
+                  : null
+            const top =
+              typeof payload?.screenPoint?.y === 'number'
+                ? payload.screenPoint.y
+                : typeof payload?.y === 'number'
+                  ? payload.y
+                  : null
 
-    //         if (left !== null && top !== null) {
-    //           setHoverTooltipPosition({ left, top })
-    //         }
+            if (left !== null && top !== null) {
+              setHoverTooltipPosition({ left, top })
+            }
+            const fields = Array.isArray(rawEntity.fields) ? rawEntity.fields : []
+            const getFieldValue = (fieldName: string) =>
+              fields.find((f: { fieldName?: string; fieldValue?: string }) => f?.fieldName === fieldName)
+                ?.fieldValue ?? ''
 
-    //         setHoverPointInfo({
-    //           title: rawEntity?.servicenam ?? 'מענה ללא שם',
-    //           subtitle: rawEntity?.serviceid,
-    //         })
-    //       })
-    //       .finally(() => {
-    //         isHoverIdentifyInFlightRef.current = false
-    //       })
-    //   })
-    // }
+            setHoverPointInfo({
+              title: getFieldValue('servicename'),
+              subtitle: getFieldValue('servicedescription'),
+            })
+          })
+          .finally(() => {
+            isHoverIdentifyInFlightRef.current = false
+          })
+      })
+    }
   }
 
   const getLayerFilters = () => {
-    return;
-    console.log('getting layer filters',SITE.layers.servicesLayer, GOVMAP_TOKEN)
-    window.govmap?.getLayerFilterFields(SITE.layers.servicesLayer, GOVMAP_TOKEN).then((response: any) => {
-      console.log('response-----', response)
-    }).catch((error: any) => {
-      console.error('failed getting layer filters', error)
-    })
+    const getLayerFilterFields = window.govmap?.getLayerFilterFields
+    if (!getLayerFilterFields) {
+      setFiltersLoading(false)
+      return
+    }
+
+    setFiltersLoading(true)
+    getLayerFilterFields(SITE.layers.servicesLayer, GOVMAP_TOKEN)
+      .then((response) => {
+        const fields = Array.isArray(response) ? (response as LayerFilterField[]) : []
+        setFilterSections(buildFilterSectionsFromLayerFields(fields))
+      })
+      .catch((error: unknown) => {
+        console.error('failed getting layer filters', error)
+        setFilterSections([])
+      })
+      .finally(() => {
+        setFiltersLoading(false)
+      })
+  }
+
+  const applyServicesLayerFilter = (selectedKeys: Set<string>) => {
+
+    const whereClause = buildServicesLayerWhereClause(selectedKeys)
+    console.log('whereClause--------:', whereClause)
+    var params = {
+      layerName: SITE.layers.servicesLayer,
+      whereClause: whereClause ?? '1=1',
+      zoomToExtent: true
+    };
+    window.govmap?.filterLayers(params);
   }
 
   const fetchServicesList = (geometry: string) => {
@@ -251,14 +255,14 @@ const GovMapView = () => {
 
     setServicesListLoading(true)
     window.govmap?.intersectFeatures(params).then(function (response) {
-       const rows = mapIntersectFeaturesToServicesList(response?.data, SERVICE_TABLE_LAYER_FIELDS)
-        setServicesList(rows)
-      }).catch(function (error) {
-        console.error('failed loading services list', error)
-        setServicesList([])
-      }).finally(function () {
-        setServicesListLoading(false)
-      })
+      const rows = mapIntersectFeaturesToServicesList(response?.data, SERVICE_TABLE_LAYER_FIELDS)
+      setServicesList(rows)
+    }).catch(function (error) {
+      console.error('failed loading services list', error)
+      setServicesList([])
+    }).finally(function () {
+      setServicesListLoading(false)
+    })
   }
 
   useEffect(() => {
@@ -270,9 +274,10 @@ const GovMapView = () => {
       govmap.createMap('map-container', {
         token: GOVMAP_TOKEN,
         level: GOVMAP_DEFAULT_VIEW_LEVEL,
-        center: { 
-           x: JERUSALEM_CITY_CENTER_AREA_OPTION.value.x,
-           y: JERUSALEM_CITY_CENTER_AREA_OPTION.value.y },
+        center: {
+          x: JERUSALEM_CITY_CENTER_AREA_OPTION.value.x,
+          y: JERUSALEM_CITY_CENTER_AREA_OPTION.value.y
+        },
         layersMode: 1,
         identifyOnClick: false,
         layers: [
@@ -314,11 +319,6 @@ const GovMapView = () => {
   }, [isMapReady, servicesQueryGeometry])
 
   useEffect(() => {
-    if (!isMapReady) return
-    fetchFeaturesByArea(selectedArea)
-  }, [isMapReady, selectedArea])
-
-  useEffect(() => {
     const resizeTimer = window.setTimeout(() => {
       window.dispatchEvent(new Event('resize'))
     }, 120)
@@ -331,7 +331,13 @@ const GovMapView = () => {
   return (
     <section className="h-full w-full overflow-hidden rounded-md border border-brand-lightBlue bg-brand-bgLight">
       <div className="relative flex h-full w-full">
-        <MapFiltersPanel isOpen={isFiltersOpen} onToggle={() => setIsFiltersOpen((prev) => !prev)} />
+        <MapFiltersPanel
+          isOpen={isFiltersOpen}
+          onToggle={() => setIsFiltersOpen((prev) => !prev)}
+          filterSections={filterSections}
+          filtersLoading={filtersLoading}
+          onFilterSelectionChange={applyServicesLayerFilter}
+        />
 
         <div className="relative min-w-0 flex-1">
           <div ref={mapRef} id="map-container" className="h-full w-full" style={{ direction: 'rtl' }} />
