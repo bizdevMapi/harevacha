@@ -4,6 +4,7 @@ export const SERVICE_TABLE_LAYER_FIELDS = [
   'ServiceTypeDescription',
   'RiskStatusDescription_Agg',
   'TargetPopulations',
+  'Language',
   'Phone',
   'OpenHours',
   'Accessibility',
@@ -21,6 +22,7 @@ export type ServiceListItem = {
   ServiceTypeDescription: string
   RiskStatusDescription_Agg: string
   TargetPopulations: string
+  Language: string
   Phone: string
   OpenHours: string
   Accessibility: string
@@ -120,6 +122,7 @@ export function mapIntersectFeaturesToServicesList(
         ServiceTypeDescription: String(row.ServiceTypeDescription ?? ''),
         RiskStatusDescription_Agg: String(row.RiskStatusDescription_Agg ?? ''),
         TargetPopulations: String(row.TargetPopulations ?? ''),
+        Language: String(row.Language ?? ''),
         Phone: String(row.Phone ?? ''),
         OpenHours: String(row.OpenHours ?? ''),
         Accessibility: String(row.Accessibility ?? ''),

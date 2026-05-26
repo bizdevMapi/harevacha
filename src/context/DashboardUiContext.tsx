@@ -44,6 +44,8 @@ export type DashboardUiValue = {
   setNeighborhoodsList: Dispatch<SetStateAction<NeighborhoodMapOption[]>>
   servicesList: ServiceListItem[]
   setServicesList: Dispatch<SetStateAction<ServiceListItem[]>>
+  matchedServicesCount: number
+  setMatchedServicesCount: Dispatch<SetStateAction<number>>
   servicesListLoading: boolean
   setServicesListLoading: Dispatch<SetStateAction<boolean>>
   servicesQueryGeometry: string
@@ -63,6 +65,7 @@ export function DashboardUiProvider({ children }: { children: ReactNode }) {
   const [profileInsightsOpen, setProfileInsightsOpen] = useState(false)
   const [neighborhoodsList, setNeighborhoodsList] = useState<NeighborhoodMapOption[]>([])
   const [servicesList, setServicesList] = useState<ServiceListItem[]>([])
+  const [matchedServicesCount, setMatchedServicesCount] = useState(0)
   const [servicesListLoading, setServicesListLoading] = useState(false)
   const [servicesQueryGeometry, setServicesQueryGeometry] = useState(
     JERUSALEM_CITY_CENTER_AREA_OPTION.geometry,
@@ -94,6 +97,8 @@ export function DashboardUiProvider({ children }: { children: ReactNode }) {
       setNeighborhoodsList,
       servicesList,
       setServicesList,
+      matchedServicesCount,
+      setMatchedServicesCount,
       servicesListLoading,
       setServicesListLoading,
       servicesQueryGeometry,
@@ -108,6 +113,7 @@ export function DashboardUiProvider({ children }: { children: ReactNode }) {
       setPopulationSegment,
       neighborhoodsList,
       servicesList,
+      matchedServicesCount,
       servicesListLoading,
       servicesQueryGeometry,
     ],

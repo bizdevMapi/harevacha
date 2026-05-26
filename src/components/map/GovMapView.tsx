@@ -10,11 +10,10 @@ import {
 import type { NeighborhoodMapOption } from '../../context/DashboardUiContext'
 import MapFiltersPanel from './MapFiltersPanel'
 import {
-  buildFilterSectionsFromLayerFields,
+  buildFilterSectionsFromServiceList,
   buildFullServicesLayerWhereClause,
-  buildServicesLayerWhereClause,
+  filterServicesBySelectedKeys,
   type FilterSectionData,
-  type LayerFilterField,
 } from './mapLayerFilters'
 import MapPointInfoCard from './MapPointInfoCard'
 import { mapGovmapEntityToPointInfo, type MapPointInfo } from './mapPointInfoData'
@@ -26,41 +25,24 @@ import {
 } from '../../data/servicesListTypes'
 
 const GOVMAP_TOKEN = import.meta.env.VITE_GOVMAP_TOKEN
-const AREA_POINTS: Record<string, Array<{ x: number; y: number }>> = {
-  'jerusalem-all': [
-    { x: 220000, y: 630000 },
-    { x: 216500, y: 632500 },
-    { x: 224000, y: 626500 },
-  ],
-  'jerusalem-center': [
-    { x: 220350, y: 631150 },
-    { x: 219800, y: 630600 },
-    { x: 221050, y: 630250 },
-  ],
-  'jerusalem-south': [
-    { x: 221200, y: 626300 },
-    { x: 220100, y: 625600 },
-    { x: 222150, y: 627050 },
-  ],
-}
 
 const GovMapView = () => {
   const {
-    selectedArea,
     servicesQueryGeometry,
+    servicesList,
+    servicesListLoading,
     setNeighborhoodsList,
     setServicesList,
     setServicesListLoading,
+    setMatchedServicesCount,
   } = useDashboardUi()
   const mapRef = useRef<HTMLDivElement | null>(null)
   const lastHoverIdentifyAtRef = useRef(0)
   const isHoverIdentifyInFlightRef = useRef(false)
-  const mapFilterSelectedKeysRef = useRef<Set<string>>(new Set())
-  const filterApplyGenerationRef = useRef(0)
+  const areaServiceObjectIdsRef = useRef<number[]>([])
   const [isFiltersOpen, setIsFiltersOpen] = useState(true)
   const [isMapReady, setIsMapReady] = useState(false)
   const [filterSections, setFilterSections] = useState<FilterSectionData[]>([])
-  const [filtersLoading, setFiltersLoading] = useState(true)
   const [selectedPointInfo, setSelectedPointInfo] = useState<MapPointInfo | null>(null)
   const [hoverPointInfo, setHoverPointInfo] = useState<{ title: string; subtitle?: string } | null>(null)
   const [hoverTooltipPosition, setHoverTooltipPosition] = useState<{ left: number; top: number } | null>(null)
@@ -248,38 +230,19 @@ const GovMapView = () => {
     }
   }
 
-  const getLayerFilters = () => {
-    const getLayerFilterFields = window.govmap?.getLayerFilterFields
-    if (!getLayerFilterFields) {
-      setFiltersLoading(false)
-      return
-    }
-
-    setFiltersLoading(true)
-    getLayerFilterFields(SITE.layers.servicesLayer, GOVMAP_TOKEN)
-      .then((response) => {
-        const fields = Array.isArray(response) ? (response as LayerFilterField[]) : []
-        setFilterSections(buildFilterSectionsFromLayerFields(fields))
-      })
-      .catch((error: unknown) => {
-        console.error('failed getting layer filters', error)
-        setFilterSections([])
-      })
-      .finally(() => {
-        setFiltersLoading(false)
-      })
-  }
-
   const applyServicesLayerFilter = (selectedKeys: Set<string>) => {
+    const filtered = filterServicesBySelectedKeys(servicesList, selectedKeys)
+    setMatchedServicesCount(filtered.length)
 
-    const whereClause = buildServicesLayerWhereClause(selectedKeys)
-    console.log('whereClause--------:', whereClause)
-    var params = {
+    const whereClause = buildFullServicesLayerWhereClause(
+      areaServiceObjectIdsRef.current,
+      selectedKeys,
+    )
+    window.govmap?.filterLayers({
       layerName: SITE.layers.servicesLayer,
-      whereClause: whereClause ?? '1=1',
-      zoomToExtent: true
-    };
-    window.govmap?.filterLayers(params);
+      whereClause,
+      zoomToExtent: true,
+    })
   }
 
   const fetchServicesList = (geometry: string) => {
@@ -331,7 +294,6 @@ const GovMapView = () => {
         ],
         onLoad: () => {
           registerMapInteractionEvents()
-          getLayerFilters()
           getNeighborhoods()
           setIsMapReady(true)
         }
@@ -358,6 +320,12 @@ const GovMapView = () => {
   }, [isMapReady, servicesQueryGeometry])
 
   useEffect(() => {
+    areaServiceObjectIdsRef.current = servicesList.map((service) => service.objectId)
+    setFilterSections(buildFilterSectionsFromServiceList(servicesList))
+    setMatchedServicesCount(servicesList.length)
+  }, [servicesList, setMatchedServicesCount])
+
+  useEffect(() => {
     const resizeTimer = window.setTimeout(() => {
       window.dispatchEvent(new Event('resize'))
     }, 120)
@@ -371,10 +339,11 @@ const GovMapView = () => {
     <section className="h-full w-full overflow-hidden rounded-md border border-brand-lightBlue bg-brand-bgLight">
       <div className="relative flex h-full w-full">
         <MapFiltersPanel
+          key={servicesQueryGeometry}
           isOpen={isFiltersOpen}
           onToggle={() => setIsFiltersOpen((prev) => !prev)}
           filterSections={filterSections}
-          filtersLoading={filtersLoading}
+          filtersLoading={servicesListLoading}
           onFilterSelectionChange={applyServicesLayerFilter}
         />
 

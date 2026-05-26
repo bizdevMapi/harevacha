@@ -42,10 +42,10 @@ const FilterToolbar = ({ onBack = () => { } }) => {
     profileKey,
     setProfileKey,
     neighborhoodsList,
-    servicesList,
+    matchedServicesCount,
     setServicesQueryGeometry,
   } = useDashboardUi()
-  const matchCount = servicesList.length
+  const matchCount = matchedServicesCount
   const [selectedNeighborhoodOptionValue, setSelectedNeighborhoodOptionValue] = useState(() =>
     getCityCenterAreaSelectValue(JERUSALEM_CITY_CENTER_AREA_OPTION.value),
   )
