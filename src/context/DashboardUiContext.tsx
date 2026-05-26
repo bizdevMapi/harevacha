@@ -21,6 +21,10 @@ export type NeighborhoodMapOption = {
   optionValue: string
   /** מזהה ישות בשכבה 22 (ל־searchInLayer), אופציונלי לפריט קבוע בלי שכבה */
   layerObjectId?: number,
+  /** קוד שכונה אחיד בשכבה 22 — לקיבוץ ולחיפוש */
+  nbrCode?: string
+  /** שם שכונה — חיפוש בשכבה כשאין nbr_code */
+  fname?: string
   geometry?: string,
   cityObjectId?: string,
 }

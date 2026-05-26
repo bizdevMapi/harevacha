@@ -69,41 +69,80 @@ const GovMapView = () => {
     const params = {
       geometry: `POLYGON ((130000 380000, 285000 380000, 285000 805000, 130000 805000, 130000 380000))`,
       layerName: '22',
-      fields: ['fname', 'setl_name'],
+      fields: ['fname', 'setl_name', 'nbr_code'],
       whereClause: "setl_name IN ('ירושלים', 'טירת כרמל')",
       getShapes: true,
     }
     window.govmap?.intersectFeatures?.(params)?.then(function (response: {
       data?: Array<{ ObjectId?: number; Values?: unknown[] }>
     }) {
-      const raw =
-        response?.data
-          ?.map((item) => {
-            const id = item.ObjectId
-            const vals = item.Values
-            const fname = String(vals?.[0] ?? '')
-            const setlName = String(vals?.[1] ?? '')
-            const x = typeof vals?.[2] === 'number' ? vals[2] : Number.NaN
-            const y = typeof vals?.[3] === 'number' ? vals[3] : Number.NaN
-            const geometry = typeof vals?.[4] === 'string' ? vals[4] : undefined
-            if (id == null || !Number.isFinite(x) || !Number.isFinite(y)) return null
-            return { id, fname, setlName, x, y, geometry }
-          })
-          .filter((n): n is NonNullable<typeof n> => n != null) ?? []
+      type NeighborhoodRow = {
+        id: number
+        fname: string
+        setlName: string
+        nbrCode: string
+        x: number
+        y: number
+        geometry?: string
+      }
+      const normalizeNbrCode = (value: unknown): string => {
+        const text = String(value ?? '').trim()
+        if (!text || text.toUpperCase() === 'NULL') return ''
+        return text
+      }
 
-      const toOption = (n: (typeof raw)[number]): NeighborhoodMapOption => ({
-        label: `${n.setlName} - ${n.fname}`,
-        value: { x: n.x, y: n.y },
-        geometry: n.geometry,
-        optionValue: String(n.id),
-        layerObjectId: n.id,
-      })
+      const raw: NeighborhoodRow[] = []
+      for (const item of response?.data ?? []) {
+        const id = item.ObjectId
+        const vals = item.Values
+        const fname = String(vals?.[0] ?? '')
+        const setlName = String(vals?.[1] ?? '')
+        const nbrCode = normalizeNbrCode(vals?.[2])
+        const x = typeof vals?.[3] === 'number' ? vals[3] : Number.NaN
+        const y = typeof vals?.[4] === 'number' ? vals[4] : Number.NaN
+        const geometry = typeof vals?.[5] === 'string' ? vals[5] : undefined
+        if (id == null || !Number.isFinite(x) || !Number.isFinite(y)) continue
+        raw.push({ id, fname, setlName, nbrCode, x, y, geometry })
+      }
 
-      const byFname = (a: (typeof raw)[number], b: (typeof raw)[number]) =>
+      const neighborhoodGroupKey = (row: NeighborhoodRow): string => {
+        if (row.nbrCode) return row.nbrCode
+        return `name:${row.setlName}\u0000${row.fname}`
+      }
+
+      const groupByNbrCode = (rows: NeighborhoodRow[]): NeighborhoodRow[] => {
+        const byKey = new Map<string, NeighborhoodRow>()
+        for (const row of rows) {
+          const key = neighborhoodGroupKey(row)
+          const existing = byKey.get(key)
+          if (!existing || (!existing.geometry && row.geometry)) {
+            byKey.set(key, row)
+          }
+        }
+        return [...byKey.values()]
+      }
+
+      const toOption = (n: NeighborhoodRow): NeighborhoodMapOption => {
+        return {
+          label: `${n.setlName} - ${n.fname}`,
+          value: { x: n.x, y: n.y },
+          geometry: n.geometry,
+          optionValue: String(n.id),
+          layerObjectId: n.id,
+          nbrCode: n.nbrCode || undefined,
+          fname: n.fname,
+        }
+      }
+
+      const byFname = (a: NeighborhoodRow, b: NeighborhoodRow) =>
         a.fname.localeCompare(b.fname, 'he')
 
-      const jerusalemRows = raw.filter((r) => r.setlName === 'ירושלים').sort(byFname)
-      const tiratRows = raw.filter((r) => r.setlName === 'טירת כרמל').sort(byFname)
+      const jerusalemRows = groupByNbrCode(raw.filter((r) => r.setlName === 'ירושלים')).sort(
+        byFname,
+      )
+      const tiratRows = groupByNbrCode(raw.filter((r) => r.setlName === 'טירת כרמל')).sort(
+        byFname,
+      )
 
       const jerusalemNeighborhoods = jerusalemRows.map(toOption)
       const tiratNeighborhoods = tiratRows.map(toOption)
