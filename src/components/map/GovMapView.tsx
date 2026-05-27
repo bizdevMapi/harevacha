@@ -15,8 +15,7 @@ import {
   filterServicesBySelectedKeys,
   type FilterSectionData,
 } from './mapLayerFilters'
-import MapPointInfoCard from './MapPointInfoCard'
-import type { MapPointInfo } from './mapPointInfoData'
+import MapPointInfoCard, { type MapPointInfoField } from './MapPointInfoCard'
 import MapPointTooltip from './MapPointTooltip'
 import MapProfileInsightsCard from './profile-insights/MapProfileInsightsCard'
 import {
@@ -112,11 +111,12 @@ const GovMapView = () => {
   const lastHoverIdentifyScreenRef = useRef<{ x: number; y: number } | null>(null)
   const lastHoverIdentifyMapRef = useRef<{ x: number; y: number } | null>(null)
   const hoverPointInfoRef = useRef<HoverPointTooltipInfo | null>(null)
+  const hoverSessionRef = useRef(0)
   const areaServiceObjectIdsRef = useRef<number[]>([])
   const [isFiltersOpen, setIsFiltersOpen] = useState(true)
   const [isMapReady, setIsMapReady] = useState(false)
   const [filterSections, setFilterSections] = useState<FilterSectionData[]>([])
-  const [selectedPointInfo, setSelectedPointInfo] = useState<MapPointInfo | null>(null)
+  const [selectedPointInfo, setSelectedPointInfo] = useState<MapPointInfoField[] | null>(null)
   const [hoverPointInfo, setHoverPointInfo] = useState<HoverPointTooltipInfo | null>(null)
   const [hoverTooltipPosition, setHoverTooltipPosition] = useState<{ left: number; top: number } | null>(null)
 
@@ -131,6 +131,20 @@ const GovMapView = () => {
       }
     }
   }, [])
+
+  const clearHoverTooltip = () => {
+    hoverSessionRef.current += 1
+    if (hoverDebounceTimerRef.current) {
+      clearTimeout(hoverDebounceTimerRef.current)
+      hoverDebounceTimerRef.current = null
+    }
+    pendingHoverPayloadRef.current = null
+    lastHoverIdentifyScreenRef.current = null
+    lastHoverIdentifyMapRef.current = null
+    hoverPointInfoRef.current = null
+    setHoverPointInfo(null)
+    setHoverTooltipPosition(null)
+  }
 
   const getNeighborhoods = () => {
     const params = {
@@ -244,6 +258,7 @@ const GovMapView = () => {
     const screenPoint = getPayloadScreenPoint(payload)
     if (!govmap || !mapPoint) return
 
+    const hoverSession = hoverSessionRef.current
     isHoverIdentifyInFlightRef.current = true
     lastHoverIdentifyScreenRef.current = screenPoint
     lastHoverIdentifyMapRef.current = mapPoint
@@ -251,6 +266,8 @@ const GovMapView = () => {
     govmap
       .identifyByXYAndLayer?.(mapPoint.x, mapPoint.y, [SITE.layers.servicesLayer])
       ?.then((response: any) => {
+        if (hoverSession !== hoverSessionRef.current) return
+
         const rawEntity = response?.data?.[0]?.entities?.[0] ?? response?.data?.[0]?.fields ?? null
         if (!rawEntity || typeof rawEntity !== 'object') {
           lastHoverIdentifyScreenRef.current = null
@@ -366,8 +383,7 @@ const GovMapView = () => {
     if (!govmap || clickEventType === undefined) return
     const clickEvent = govmap.onEvent?.(clickEventType)
     clickEvent?.progress((payload: any) => {
-      console.log('map click', payload)
-
+      clearHoverTooltip()
       govmap.identifyByXYAndLayer?.(payload.mapPoint.x, payload.mapPoint.y, [SITE.layers.servicesLayer])
         ?.then((response: any) => {
           console.log('response', response)

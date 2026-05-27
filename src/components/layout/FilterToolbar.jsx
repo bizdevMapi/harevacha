@@ -18,7 +18,7 @@ import { useDashboardUi } from '../../context/DashboardUiContext'
 import { ToolbarSelect } from '../ui'
 
 const toolbarSelectWidthClass =
-  'w-[min(100%,200px)]  xl:w-[240px] 2xl:w-[312px] 2xl:max-w-[312px]'
+  'w-full max-w-[200px] sm:w-[200px] sm:max-w-[200px] xl:w-[240px] xl:max-w-[240px] 2xl:w-[312px] 2xl:max-w-[312px]'
 
 const viewModeOptions = [
   { mode: 'map', label: 'מפה', Icon: IconMap },
