@@ -16,7 +16,7 @@ import {
   type FilterSectionData,
 } from './mapLayerFilters'
 import MapPointInfoCard from './MapPointInfoCard'
-import { mapGovmapEntityToPointInfo, type MapPointInfo } from './mapPointInfoData'
+import type { MapPointInfo } from './mapPointInfoData'
 import MapPointTooltip from './MapPointTooltip'
 import MapProfileInsightsCard from './profile-insights/MapProfileInsightsCard'
 import {
@@ -25,6 +25,18 @@ import {
 } from '../../data/servicesListTypes'
 
 const GOVMAP_TOKEN = import.meta.env.VITE_GOVMAP_TOKEN
+
+type HoverPointTooltipInfo = {
+  address?: string
+  title: string
+  description?: string
+  audiences?: string
+  price?: string
+  provider?: string
+  languages?: string
+  risk?: string
+  accessibility?: string
+}
 
 const GovMapView = () => {
   const {
@@ -44,7 +56,7 @@ const GovMapView = () => {
   const [isMapReady, setIsMapReady] = useState(false)
   const [filterSections, setFilterSections] = useState<FilterSectionData[]>([])
   const [selectedPointInfo, setSelectedPointInfo] = useState<MapPointInfo | null>(null)
-  const [hoverPointInfo, setHoverPointInfo] = useState<{ title: string; subtitle?: string } | null>(null)
+  const [hoverPointInfo, setHoverPointInfo] = useState<HoverPointTooltipInfo | null>(null)
   const [hoverTooltipPosition, setHoverTooltipPosition] = useState<{ left: number; top: number } | null>(null)
 
   const getNeighborhoods = () => {
@@ -52,7 +64,7 @@ const GovMapView = () => {
       geometry: `POLYGON ((130000 380000, 285000 380000, 285000 805000, 130000 805000, 130000 380000))`,
       layerName: '22',
       fields: ['fname', 'setl_name', 'nbr_code'],
-      whereClause: "setl_name IN ('ירושלים', 'טירת כרמל')",
+      whereClause: "setl_name IN ( 'טירת כרמל')",
       getShapes: true,
     }
     window.govmap?.intersectFeatures?.(params)?.then(function (response: {
@@ -158,18 +170,19 @@ const GovMapView = () => {
     const govmap = window.govmap
     const clickEventType = govmap?.events?.CLICK
     if (!govmap || clickEventType === undefined) return
-    govmap.onEvent?.(clickEventType).progress((payload: any) => {
+    const clickEvent = govmap.onEvent?.(clickEventType)
+    clickEvent?.progress((payload: any) => {
       console.log('map click', payload)
 
-      govmap.identifyByXYAndLayer(payload.mapPoint.x, payload.mapPoint.y, [SITE.layers.servicesLayer])
-        .then((response: any) => {
+      govmap.identifyByXYAndLayer?.(payload.mapPoint.x, payload.mapPoint.y, [SITE.layers.servicesLayer])
+        ?.then((response: any) => {
           console.log('response', response)
           const rawEntity = response?.data?.[0]?.entities?.[0] ?? response?.data?.[0]?.fields ?? null
           console.log('rawEntity', rawEntity)
           //const pointInfo = mapGovmapEntityToPointInfo(rawEntity)
           setSelectedPointInfo(rawEntity.fields)
         })
-        .catch((error: unknown) => {
+        ?.catch((error: unknown) => {
           console.error('failed identifying map point', error)
           setSelectedPointInfo(null)
         })
@@ -177,7 +190,8 @@ const GovMapView = () => {
 
     const hoverEventType = govmap.events?.MOUSE_MOVE
     if (hoverEventType !== undefined) {
-      govmap.onEvent?.(hoverEventType).progress((payload: any) => {
+      const hoverEvent = govmap.onEvent?.(hoverEventType)
+      hoverEvent?.progress((payload: any) => {
         const now = Date.now()
         if (now - lastHoverIdentifyAtRef.current < HOVER_IDENTIFY_THROTTLE_MS) return
         if (isHoverIdentifyInFlightRef.current) return
@@ -187,8 +201,8 @@ const GovMapView = () => {
 
         console.log('map point hover', payload)
         govmap
-          .identifyByXYAndLayer(payload.mapPoint.x, payload.mapPoint.y, [SITE.layers.servicesLayer])
-          .then((response: any) => {
+          .identifyByXYAndLayer?.(payload.mapPoint.x, payload.mapPoint.y, [SITE.layers.servicesLayer])
+          ?.then((response: any) => {
             console.log('response', response)
             const rawEntity = response?.data?.[0]?.entities?.[0] ?? response?.data?.[0]?.fields ?? null
             console.log('rawEntity', rawEntity)
@@ -215,15 +229,35 @@ const GovMapView = () => {
             }
             const fields = Array.isArray(rawEntity.fields) ? rawEntity.fields : []
             const getFieldValue = (fieldName: string) =>
-              fields.find((f: { fieldName?: string; fieldValue?: string }) => f?.fieldName === fieldName)
-                ?.fieldValue ?? ''
+              String(
+                fields.find((f: { fieldName?: string; fieldValue?: string }) => f?.fieldName === fieldName)
+                  ?.fieldValue ?? ''
+              )
+            const cleanValue = (value: string) => {
+              const normalized = value.trim()
+              if (!normalized || normalized.toLowerCase() === 'null') return ''
+              return normalized
+            }
+            const paymentAmount = cleanValue(getFieldValue('requirespaymentamount'))
+            const requiresPayment = cleanValue(getFieldValue('requirespayment'))
+            const price =
+              paymentAmount && requiresPayment
+                ? `${paymentAmount}${requiresPayment === 'כן' ? '' : ` (${requiresPayment})`}`
+                : paymentAmount || requiresPayment
 
             setHoverPointInfo({
-              title: getFieldValue('servicename'),
-              subtitle: getFieldValue('servicedescription'),
+              address: cleanValue(getFieldValue('fulladdress')),
+              title: cleanValue(getFieldValue('servicename')),
+              description: cleanValue(getFieldValue('servicedescription')),
+              audiences: cleanValue(getFieldValue('targetpopulations')),
+              price,
+              provider: cleanValue(getFieldValue('serviceproviderorganizationtype')),
+              languages: cleanValue(getFieldValue('language')),
+              risk: cleanValue(getFieldValue('riskstatusdescription_agg')),
+              accessibility: cleanValue(getFieldValue('accessibility')),
             })
           })
-          .finally(() => {
+          ?.finally(() => {
             isHoverIdentifyInFlightRef.current = false
           })
       })
@@ -238,7 +272,7 @@ const GovMapView = () => {
       areaServiceObjectIdsRef.current,
       selectedKeys,
     )
-    window.govmap?.filterLayers({
+    window.govmap?.filterLayers?.({
       layerName: SITE.layers.servicesLayer,
       whereClause,
       zoomToExtent: true,
@@ -256,15 +290,18 @@ const GovMapView = () => {
     }
 
     setServicesListLoading(true)
-    window.govmap?.intersectFeatures(params).then(function (response) {
-      const rows = mapIntersectFeaturesToServicesList(response?.data, SERVICE_TABLE_LAYER_FIELDS)
-      setServicesList(rows)
-    }).catch(function (error) {
-      console.error('failed loading services list', error)
-      setServicesList([])
-    }).finally(function () {
-      setServicesListLoading(false)
-    })
+    window.govmap?.intersectFeatures?.(params)
+      ?.then(function (response) {
+        const rows = mapIntersectFeaturesToServicesList(response?.data, SERVICE_TABLE_LAYER_FIELDS)
+        setServicesList(rows)
+      })
+      .catch(function (error) {
+        console.error('failed loading services list', error)
+        setServicesList([])
+      })
+      .finally(function () {
+        setServicesListLoading(false)
+      })
   }
 
   useEffect(() => {
@@ -333,7 +370,6 @@ const GovMapView = () => {
     return () => window.clearTimeout(resizeTimer)
   }, [isFiltersOpen])
 
-  console.log('selectedPointInfo--------:', selectedPointInfo)
 
   return (
     <section className="h-full w-full overflow-hidden rounded-md border border-brand-lightBlue bg-brand-bgLight">
@@ -351,8 +387,7 @@ const GovMapView = () => {
           <div ref={mapRef} id="map-container" className="h-full w-full" style={{ direction: 'rtl' }} />
           {hoverPointInfo && hoverTooltipPosition && (
             <MapPointTooltip
-              title={hoverPointInfo.title}
-              subtitle={hoverPointInfo.subtitle}
+              data={hoverPointInfo}
               position={hoverTooltipPosition}
             />
           )}
