@@ -81,6 +81,18 @@ const FilterToolbar = ({ onBack = () => { } }) => {
             fieldValues: [opt.layerObjectId?.toString()],
             highlight: false,
           })
+          govmap.intersectFeatures({
+            geometry: opt.geometry,
+            layerName: SITE.layers.servicesLayer,
+            fields: ['servicename' ],
+          }).then((response) => {
+            govmap.filterLayers?.({
+              layerName: SITE.layers.servicesLayer,
+              whereClause: `objectid in (${response.data.map((item) => item.ObjectId).join(',')})`,
+              zoomToExtent: true,
+            })
+          });
+          
         } else {
           govmap.zoomToXY?.({
             x: opt.value.x,
