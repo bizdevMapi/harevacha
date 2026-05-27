@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef, useState } from 'react'
 import { MapPointInfoIcon } from './MapPointInfoIcons'
 
 type MapPointTooltipData = {
@@ -16,6 +17,11 @@ type MapPointTooltipProps = {
   data: MapPointTooltipData
   position: { left: number; top: number }
 }
+
+type TooltipPlacement = 'above' | 'below'
+
+const TOOLTIP_GAP_PX = 12
+const VIEWPORT_EDGE_PADDING_PX = 8
 
 const cleanValue = (value?: string) => {
   if (!value) return ''
@@ -44,7 +50,24 @@ const InfoRow = ({ icon, value }: { icon: DetailIcon; value: string }) => (
   </div>
 )
 
+function resolveTooltipPlacement(
+  anchorTop: number,
+  tooltipHeight: number,
+  containerHeight: number,
+): TooltipPlacement {
+  const requiredSpace = tooltipHeight + TOOLTIP_GAP_PX + VIEWPORT_EDGE_PADDING_PX
+  const spaceAbove = anchorTop
+  const spaceBelow = containerHeight - anchorTop
+
+  if (spaceAbove >= requiredSpace) return 'above'
+  if (spaceBelow >= requiredSpace) return 'below'
+  return spaceBelow >= spaceAbove ? 'below' : 'above'
+}
+
 const MapPointTooltip = ({ data, position }: MapPointTooltipProps) => {
+  const tooltipRef = useRef<HTMLDivElement>(null)
+  const [placement, setPlacement] = useState<TooltipPlacement>('above')
+
   const address = cleanValue(data.address)
   const title = cleanValue(data.title)
   const description = cleanValue(data.description)
@@ -58,18 +81,48 @@ const MapPointTooltip = ({ data, position }: MapPointTooltipProps) => {
     { row: 3, col: 2, icon: 'accessibility', value: cleanValue(data.accessibility) },
   ]
 
+  useLayoutEffect(() => {
+    const tooltipEl = tooltipRef.current
+    if (!tooltipEl) return
+
+    const parentEl = tooltipEl.offsetParent instanceof HTMLElement ? tooltipEl.offsetParent : null
+    const containerHeight = parentEl?.clientHeight ?? window.innerHeight
+    const nextPlacement = resolveTooltipPlacement(
+      position.top,
+      tooltipEl.offsetHeight,
+      containerHeight,
+    )
+    setPlacement((current) => (current === nextPlacement ? current : nextPlacement))
+  }, [position.left, position.top, address, title, description, data])
+
+  const transform =
+    placement === 'above'
+      ? `translate(-50%, calc(-100% - ${TOOLTIP_GAP_PX}px))`
+      : `translate(-50%, ${TOOLTIP_GAP_PX}px)`
+
   return (
     <div
+      ref={tooltipRef}
       dir="rtl"
       className="pointer-events-none absolute z-30 w-[420px]"
       style={{
         left: `${position.left}px`,
         top: `${position.top}px`,
-        transform: 'translate(-50%, calc(-100% - 12px))',
+        transform,
       }}
     >
-      <div className="relative drop-shadow-[0_2px_7px_rgba(164,177,192,0.35)]">
-        <div className="rounded-[20px] bg-white p-6">
+      <div className="relative flex w-full flex-col items-center">
+        {placement === 'below' && (
+          <div
+            aria-hidden
+            className="relative z-10 h-0 w-0 shrink-0 border-x-[14px] border-x-transparent border-b-[12px] border-b-white"
+          />
+        )}
+        <div
+          className={`w-full rounded-[20px] bg-white p-6 drop-shadow-[0_2px_7px_rgba(164,177,192,0.35)] ${
+            placement === 'below' ? '-mt-px' : ''
+          }`}
+        >
           <div className="flex flex-col items-end gap-4">
             <div className="w-full text-right text-[14px] font-medium leading-normal text-[#5f708a]">
               {address || '-'}
@@ -91,10 +144,12 @@ const MapPointTooltip = ({ data, position }: MapPointTooltipProps) => {
             ))}
           </div>
         </div>
-        <div
-          aria-hidden
-          className="absolute left-1/2 top-[calc(100%-1px)] h-0 w-0 -translate-x-1/2 border-x-[14px] border-x-transparent border-t-[12px] border-t-white"
-        />
+        {placement === 'above' && (
+          <div
+            aria-hidden
+            className="relative z-10 -mt-px h-0 w-0 shrink-0 border-x-[14px] border-x-transparent border-t-[12px] border-t-white"
+          />
+        )}
       </div>
     </div>
   )
