@@ -26,6 +26,63 @@ import {
 
 const GOVMAP_TOKEN = import.meta.env.VITE_GOVMAP_TOKEN
 
+/** המתנה אחרי תזוזת עכבר לפני קריאת identify */
+const HOVER_IDENTIFY_DEBOUNCE_MS = 300
+/** תזוזה מינימלית בפיקסלים במסך לפני identify חדש */
+const HOVER_MIN_SCREEN_MOVE_PX = 12
+/** תזוזה מינימלית בקואורדינטות מפה לפני identify חדש */
+const HOVER_MIN_MAP_MOVE = 25
+
+type MapPointerPayload = {
+  mapPoint?: { x?: number; y?: number }
+  screenPoint?: { x?: number; y?: number }
+  x?: number
+  y?: number
+}
+
+const getPayloadScreenPoint = (payload: MapPointerPayload) => {
+  const x =
+    typeof payload.screenPoint?.x === 'number'
+      ? payload.screenPoint.x
+      : typeof payload.x === 'number'
+        ? payload.x
+        : null
+  const y =
+    typeof payload.screenPoint?.y === 'number'
+      ? payload.screenPoint.y
+      : typeof payload.y === 'number'
+        ? payload.y
+        : null
+  if (x === null || y === null) return null
+  return { x, y }
+}
+
+const getPayloadMapPoint = (payload: MapPointerPayload) => {
+  const x = payload.mapPoint?.x
+  const y = payload.mapPoint?.y
+  if (typeof x !== 'number' || typeof y !== 'number') return null
+  return { x, y }
+}
+
+const distance2d = (a: { x: number; y: number }, b: { x: number; y: number }) =>
+  Math.hypot(a.x - b.x, a.y - b.y)
+
+const isSignificantHoverMove = (
+  screen: { x: number; y: number } | null,
+  map: { x: number; y: number } | null,
+  lastScreen: { x: number; y: number } | null,
+  lastMap: { x: number; y: number } | null,
+) => {
+  if (!lastScreen && !lastMap) return true
+  if (screen && lastScreen && distance2d(screen, lastScreen) >= HOVER_MIN_SCREEN_MOVE_PX) {
+    return true
+  }
+  if (map && lastMap && distance2d(map, lastMap) >= HOVER_MIN_MAP_MOVE) {
+    return true
+  }
+  return false
+}
+
 type HoverPointTooltipInfo = {
   address?: string
   title: string
@@ -49,8 +106,12 @@ const GovMapView = () => {
     setMatchedServicesCount,
   } = useDashboardUi()
   const mapRef = useRef<HTMLDivElement | null>(null)
-  const lastHoverIdentifyAtRef = useRef(0)
   const isHoverIdentifyInFlightRef = useRef(false)
+  const hoverDebounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const pendingHoverPayloadRef = useRef<MapPointerPayload | null>(null)
+  const lastHoverIdentifyScreenRef = useRef<{ x: number; y: number } | null>(null)
+  const lastHoverIdentifyMapRef = useRef<{ x: number; y: number } | null>(null)
+  const hoverPointInfoRef = useRef<HoverPointTooltipInfo | null>(null)
   const areaServiceObjectIdsRef = useRef<number[]>([])
   const [isFiltersOpen, setIsFiltersOpen] = useState(true)
   const [isMapReady, setIsMapReady] = useState(false)
@@ -58,6 +119,18 @@ const GovMapView = () => {
   const [selectedPointInfo, setSelectedPointInfo] = useState<MapPointInfo | null>(null)
   const [hoverPointInfo, setHoverPointInfo] = useState<HoverPointTooltipInfo | null>(null)
   const [hoverTooltipPosition, setHoverTooltipPosition] = useState<{ left: number; top: number } | null>(null)
+
+  useEffect(() => {
+    hoverPointInfoRef.current = hoverPointInfo
+  }, [hoverPointInfo])
+
+  useEffect(() => {
+    return () => {
+      if (hoverDebounceTimerRef.current) {
+        clearTimeout(hoverDebounceTimerRef.current)
+      }
+    }
+  }, [])
 
   const getNeighborhoods = () => {
     const params = {
@@ -165,8 +238,129 @@ const GovMapView = () => {
     })
   }
 
+  const runHoverIdentify = (payload: MapPointerPayload) => {
+    const govmap = window.govmap
+    const mapPoint = getPayloadMapPoint(payload)
+    const screenPoint = getPayloadScreenPoint(payload)
+    if (!govmap || !mapPoint) return
+
+    isHoverIdentifyInFlightRef.current = true
+    lastHoverIdentifyScreenRef.current = screenPoint
+    lastHoverIdentifyMapRef.current = mapPoint
+
+    govmap
+      .identifyByXYAndLayer?.(mapPoint.x, mapPoint.y, [SITE.layers.servicesLayer])
+      ?.then((response: any) => {
+        const rawEntity = response?.data?.[0]?.entities?.[0] ?? response?.data?.[0]?.fields ?? null
+        if (!rawEntity || typeof rawEntity !== 'object') {
+          lastHoverIdentifyScreenRef.current = null
+          lastHoverIdentifyMapRef.current = null
+          setHoverPointInfo(null)
+          setHoverTooltipPosition(null)
+          return
+        }
+
+        if (screenPoint) {
+          setHoverTooltipPosition({ left: screenPoint.x, top: screenPoint.y })
+        }
+
+        const fields = Array.isArray(rawEntity.fields) ? rawEntity.fields : []
+        const getFieldValue = (fieldName: string) =>
+          String(
+            fields.find((f: { fieldName?: string; fieldValue?: string }) => f?.fieldName === fieldName)
+              ?.fieldValue ?? '',
+          )
+        const cleanValue = (value: string) => {
+          const normalized = value.trim()
+          if (!normalized || normalized.toLowerCase() === 'null') return ''
+          return normalized
+        }
+        const paymentAmount = cleanValue(getFieldValue('requirespaymentamount'))
+        const requiresPayment = cleanValue(getFieldValue('requirespayment'))
+        const price =
+          paymentAmount && requiresPayment
+            ? `${paymentAmount}${requiresPayment === 'כן' ? '' : ` (${requiresPayment})`}`
+            : paymentAmount || requiresPayment
+
+        setHoverPointInfo({
+          address: cleanValue(getFieldValue('fulladdress')),
+          title: cleanValue(getFieldValue('servicename')),
+          description: cleanValue(getFieldValue('servicedescription')),
+          audiences: cleanValue(getFieldValue('targetpopulations')),
+          price,
+          provider: cleanValue(getFieldValue('serviceproviderorganizationtype')),
+          languages: cleanValue(getFieldValue('language')),
+          risk: cleanValue(getFieldValue('riskstatusdescription_agg')),
+          accessibility: cleanValue(getFieldValue('accessibility')),
+        })
+      })
+      ?.catch((error: unknown) => {
+        console.error('failed identifying map point on hover', error)
+      })
+      ?.finally(() => {
+        isHoverIdentifyInFlightRef.current = false
+      })
+  }
+
+  const scheduleHoverIdentify = (payload: MapPointerPayload) => {
+    const screenPoint = getPayloadScreenPoint(payload)
+    const mapPoint = getPayloadMapPoint(payload)
+
+    if (
+      screenPoint &&
+      hoverPointInfoRef.current &&
+      !isSignificantHoverMove(
+        screenPoint,
+        mapPoint,
+        lastHoverIdentifyScreenRef.current,
+        lastHoverIdentifyMapRef.current,
+      )
+    ) {
+      setHoverTooltipPosition({ left: screenPoint.x, top: screenPoint.y })
+      return
+    }
+
+    if (
+      !isSignificantHoverMove(
+        screenPoint,
+        mapPoint,
+        lastHoverIdentifyScreenRef.current,
+        lastHoverIdentifyMapRef.current,
+      )
+    ) {
+      return
+    }
+
+    pendingHoverPayloadRef.current = payload
+    if (hoverDebounceTimerRef.current) {
+      clearTimeout(hoverDebounceTimerRef.current)
+    }
+
+    hoverDebounceTimerRef.current = setTimeout(() => {
+      hoverDebounceTimerRef.current = null
+      if (isHoverIdentifyInFlightRef.current) return
+
+      const pending = pendingHoverPayloadRef.current
+      if (!pending) return
+
+      const pendingScreen = getPayloadScreenPoint(pending)
+      const pendingMap = getPayloadMapPoint(pending)
+      if (
+        !isSignificantHoverMove(
+          pendingScreen,
+          pendingMap,
+          lastHoverIdentifyScreenRef.current,
+          lastHoverIdentifyMapRef.current,
+        )
+      ) {
+        return
+      }
+
+      runHoverIdentify(pending)
+    }, HOVER_IDENTIFY_DEBOUNCE_MS)
+  }
+
   const registerMapInteractionEvents = () => {
-    const HOVER_IDENTIFY_THROTTLE_MS = 250
     const govmap = window.govmap
     const clickEventType = govmap?.events?.CLICK
     if (!govmap || clickEventType === undefined) return
@@ -191,75 +385,8 @@ const GovMapView = () => {
     const hoverEventType = govmap.events?.MOUSE_MOVE
     if (hoverEventType !== undefined) {
       const hoverEvent = govmap.onEvent?.(hoverEventType)
-      hoverEvent?.progress((payload: any) => {
-        const now = Date.now()
-        if (now - lastHoverIdentifyAtRef.current < HOVER_IDENTIFY_THROTTLE_MS) return
-        if (isHoverIdentifyInFlightRef.current) return
-
-        lastHoverIdentifyAtRef.current = now
-        isHoverIdentifyInFlightRef.current = true
-
-        console.log('map point hover', payload)
-        govmap
-          .identifyByXYAndLayer?.(payload.mapPoint.x, payload.mapPoint.y, [SITE.layers.servicesLayer])
-          ?.then((response: any) => {
-            console.log('response', response)
-            const rawEntity = response?.data?.[0]?.entities?.[0] ?? response?.data?.[0]?.fields ?? null
-            console.log('rawEntity', rawEntity)
-            if (!rawEntity || typeof rawEntity !== 'object') {
-              setHoverPointInfo(null)
-              setHoverTooltipPosition(null)
-              return
-            }
-            const left =
-              typeof payload?.screenPoint?.x === 'number'
-                ? payload.screenPoint.x
-                : typeof payload?.x === 'number'
-                  ? payload.x
-                  : null
-            const top =
-              typeof payload?.screenPoint?.y === 'number'
-                ? payload.screenPoint.y
-                : typeof payload?.y === 'number'
-                  ? payload.y
-                  : null
-
-            if (left !== null && top !== null) {
-              setHoverTooltipPosition({ left, top })
-            }
-            const fields = Array.isArray(rawEntity.fields) ? rawEntity.fields : []
-            const getFieldValue = (fieldName: string) =>
-              String(
-                fields.find((f: { fieldName?: string; fieldValue?: string }) => f?.fieldName === fieldName)
-                  ?.fieldValue ?? ''
-              )
-            const cleanValue = (value: string) => {
-              const normalized = value.trim()
-              if (!normalized || normalized.toLowerCase() === 'null') return ''
-              return normalized
-            }
-            const paymentAmount = cleanValue(getFieldValue('requirespaymentamount'))
-            const requiresPayment = cleanValue(getFieldValue('requirespayment'))
-            const price =
-              paymentAmount && requiresPayment
-                ? `${paymentAmount}${requiresPayment === 'כן' ? '' : ` (${requiresPayment})`}`
-                : paymentAmount || requiresPayment
-
-            setHoverPointInfo({
-              address: cleanValue(getFieldValue('fulladdress')),
-              title: cleanValue(getFieldValue('servicename')),
-              description: cleanValue(getFieldValue('servicedescription')),
-              audiences: cleanValue(getFieldValue('targetpopulations')),
-              price,
-              provider: cleanValue(getFieldValue('serviceproviderorganizationtype')),
-              languages: cleanValue(getFieldValue('language')),
-              risk: cleanValue(getFieldValue('riskstatusdescription_agg')),
-              accessibility: cleanValue(getFieldValue('accessibility')),
-            })
-          })
-          ?.finally(() => {
-            isHoverIdentifyInFlightRef.current = false
-          })
+      hoverEvent?.progress((payload: MapPointerPayload) => {
+        scheduleHoverIdentify(payload)
       })
     }
   }
