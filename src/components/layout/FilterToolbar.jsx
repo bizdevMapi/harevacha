@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import {
   IconBackCircle,
   IconList,
@@ -7,18 +6,14 @@ import {
   IconPin,
 } from '../../assets/icons'
 import {
-  getCityCenterAreaSelectValue,
-  GOVMAP_DEFAULT_VIEW_LEVEL,
-  JERUSALEM_CITY_CENTER_AREA_OPTION,
   POPULATION_SEGMENT_OPTIONS,
   PROFILE_FILTER_OPTIONS,
-  SITE,
 } from '../../constants'
 import { useDashboardUi } from '../../context/DashboardUiContext'
 import { ToolbarSelect } from '../ui'
 
 const toolbarSelectWidthClass =
-  'w-[min(100%,200px)]  xl:w-[240px] 2xl:w-[312px] 2xl:max-w-[312px]'
+  'w-full max-w-[200px] sm:w-[200px] sm:max-w-[200px] xl:w-[240px] xl:max-w-[240px] 2xl:w-[312px] 2xl:max-w-[312px]'
 
 const viewModeOptions = [
   { mode: 'map', label: 'מפה', Icon: IconMap },
@@ -37,18 +32,16 @@ const FilterToolbar = ({ onBack = () => { } }) => {
   const {
     viewMode,
     setViewMode,
+    selectedArea,
+    setSelectedArea,
     populationSegment,
     setPopulationSegment,
     profileKey,
     setProfileKey,
     neighborhoodsList,
-    servicesList,
-    setServicesQueryGeometry,
+    matchedServicesCount,
   } = useDashboardUi()
-  const matchCount = servicesList.length
-  const [selectedNeighborhoodOptionValue, setSelectedNeighborhoodOptionValue] = useState(() =>
-    getCityCenterAreaSelectValue(JERUSALEM_CITY_CENTER_AREA_OPTION.value),
-  )
+  const matchCount = matchedServicesCount
   const divider = (
     <div
       className="hidden h-11 w-px shrink-0 bg-white/55 sm:block"
@@ -59,37 +52,8 @@ const FilterToolbar = ({ onBack = () => { } }) => {
   const areaSelect = (
     <ToolbarSelect
       label="אזור"
-      value={selectedNeighborhoodOptionValue}
-      onChange={(e) => {
-        const v = e.target.value
-        setSelectedNeighborhoodOptionValue(v)
-        if (!v) return
-        const opt = neighborhoodsList.find((n) => n.optionValue === v)
-        const govmap = window.govmap
-        if (!opt || !govmap) return
-
-        const geometry = opt.geometry
-        if (geometry) {
-          setServicesQueryGeometry(geometry)
-        }
-
-        if (opt.layerObjectId != null) {
-          // התמקדות בשכונה
-          govmap.searchInLayer?.({
-            layerName: '22',
-            fieldName: 'objectid',
-            fieldValues: [opt.layerObjectId?.toString()],
-            highlight: false,
-          })
-        } else {
-          govmap.zoomToXY?.({
-            x: opt.value.x,
-            y: opt.value.y,
-            level: GOVMAP_DEFAULT_VIEW_LEVEL,
-            marker: false,
-          })
-        }
-      }}
+      value={selectedArea}
+      onChange={(e) => setSelectedArea(e.target.value)}
       options={[
         ...neighborhoodsList.map((n) => ({
           value: n.optionValue,

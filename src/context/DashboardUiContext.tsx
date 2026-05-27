@@ -9,7 +9,7 @@ import {
   type SetStateAction,
 } from 'react'
 import type { ServiceListItem } from '../data/servicesListTypes'
-import { JERUSALEM_CITY_CENTER_AREA_OPTION } from '../constants'
+import { getCityCenterAreaSelectValue, TIRAT_CARMEL_CITY_AREA_OPTION } from '../constants'
 
 export type DashboardViewMode = 'map' | 'list'
 
@@ -21,6 +21,10 @@ export type NeighborhoodMapOption = {
   optionValue: string
   /** מזהה ישות בשכבה 22 (ל־searchInLayer), אופציונלי לפריט קבוע בלי שכבה */
   layerObjectId?: number,
+  /** קוד שכונה אחיד בשכבה 22 — לקיבוץ ולחיפוש */
+  nbrCode?: string
+  /** שם שכונה — חיפוש בשכבה כשאין nbr_code */
+  fname?: string
   geometry?: string,
   cityObjectId?: string,
 }
@@ -40,6 +44,8 @@ export type DashboardUiValue = {
   setNeighborhoodsList: Dispatch<SetStateAction<NeighborhoodMapOption[]>>
   servicesList: ServiceListItem[]
   setServicesList: Dispatch<SetStateAction<ServiceListItem[]>>
+  matchedServicesCount: number
+  setMatchedServicesCount: Dispatch<SetStateAction<number>>
   servicesListLoading: boolean
   setServicesListLoading: Dispatch<SetStateAction<boolean>>
   servicesQueryGeometry: string
@@ -53,15 +59,18 @@ const DashboardUiContext = createContext<DashboardUiValue | null>(null)
  */
 export function DashboardUiProvider({ children }: { children: ReactNode }) {
   const [viewMode, setViewMode] = useState<DashboardViewMode>('map')
-  const [selectedArea, setSelectedArea] = useState('jerusalem-all')
+  const [selectedArea, setSelectedArea] = useState(
+    getCityCenterAreaSelectValue(TIRAT_CARMEL_CITY_AREA_OPTION.value),
+  )
   const [populationSegment, setPopulationSegmentState] = useState('none')
   const [profileKey, setProfileKey] = useState('none')
   const [profileInsightsOpen, setProfileInsightsOpen] = useState(false)
   const [neighborhoodsList, setNeighborhoodsList] = useState<NeighborhoodMapOption[]>([])
   const [servicesList, setServicesList] = useState<ServiceListItem[]>([])
+  const [matchedServicesCount, setMatchedServicesCount] = useState(0)
   const [servicesListLoading, setServicesListLoading] = useState(false)
-  const [servicesQueryGeometry, setServicesQueryGeometry] = useState(
-    JERUSALEM_CITY_CENTER_AREA_OPTION.geometry,
+  const [servicesQueryGeometry, setServicesQueryGeometry] = useState<string>(
+    TIRAT_CARMEL_CITY_AREA_OPTION.geometry || ''
   )
 
   const setPopulationSegment = useCallback((value: string) => {
@@ -90,6 +99,8 @@ export function DashboardUiProvider({ children }: { children: ReactNode }) {
       setNeighborhoodsList,
       servicesList,
       setServicesList,
+      matchedServicesCount,
+      setMatchedServicesCount,
       servicesListLoading,
       setServicesListLoading,
       servicesQueryGeometry,
@@ -104,6 +115,7 @@ export function DashboardUiProvider({ children }: { children: ReactNode }) {
       setPopulationSegment,
       neighborhoodsList,
       servicesList,
+      matchedServicesCount,
       servicesListLoading,
       servicesQueryGeometry,
     ],

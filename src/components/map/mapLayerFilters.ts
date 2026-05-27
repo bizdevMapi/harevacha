@@ -1,3 +1,5 @@
+import type { ServiceListItem } from '../../data/servicesListTypes'
+
 export const FILTER_DATA_COLORS = ['#042640', '#115b91', '#115b91', '#2a8ad4', '#80b3e6', '#cce1f5'] as const
 
 export type FilterItem = {
@@ -12,21 +14,6 @@ export type FilterSectionData = {
   items: FilterItem[]
 }
 
-export type LayerFilterTopValue = {
-  count: number
-  value?: string
-}
-
-export type LayerFilterField = {
-  name: string
-  displayName: string
-  fieldType: number
-  values?: {
-    fieldType?: number
-    topValues?: LayerFilterTopValue[]
-  }
-}
-
 export const FILTER_SECTIONS_CONFIG = [
   { fieldName: 'riskstatusdescription_agg', title: 'מצב סיכון' },
   { fieldName: 'targetpopulations', title: 'סוג אוכלוסיה' },
@@ -34,6 +21,31 @@ export const FILTER_SECTIONS_CONFIG = [
 ] as const
 
 const FILTER_FIELD_CONFIG = FILTER_SECTIONS_CONFIG
+
+type AreaServiceFilterRow = {
+  objectId: number
+  riskStatus: string
+  targetPopulations: string
+  language: string
+}
+
+const FILTER_FIELD_TO_ROW_KEY: Record<
+  (typeof FILTER_SECTIONS_CONFIG)[number]['fieldName'],
+  'riskStatus' | 'targetPopulations' | 'language'
+> = {
+  riskstatusdescription_agg: 'riskStatus',
+  targetpopulations: 'targetPopulations',
+  language: 'language',
+}
+
+const FILTER_FIELD_TO_SERVICE_KEY: Record<
+  (typeof FILTER_SECTIONS_CONFIG)[number]['fieldName'],
+  'RiskStatusDescription_Agg' | 'TargetPopulations' | 'Language'
+> = {
+  riskstatusdescription_agg: 'RiskStatusDescription_Agg',
+  targetpopulations: 'TargetPopulations',
+  language: 'Language',
+}
 
 export const SECTION_TITLE_TO_FIELD_NAME: Record<string, string> = Object.fromEntries(
   FILTER_SECTIONS_CONFIG.map((config) => [config.title, config.fieldName]),
@@ -84,7 +96,7 @@ export function buildServicesLayerWhereClause(selectedKeys: Iterable<string>): s
 }
 
 export function buildAreaObjectIdsClause(objectIds: number[]): string {
-  if (objectIds.length === 0) return '1=0'
+  if (objectIds.length === 0) return `objectid IN (999999999)`
   return `objectid IN (${objectIds.join(',')})`
 }
 
@@ -112,17 +124,14 @@ function splitFilterValue(value: string): string[] {
     .filter((part) => part.length > 0 && part !== 'NULL')
 }
 
-function aggregateTopValues(topValues: LayerFilterTopValue[]): FilterItem[] {
+function aggregateAreaFieldValues(rawValues: string[]): FilterItem[] {
   const counts = new Map<string, number>()
 
-  for (const entry of topValues) {
-    if (!entry.value || entry.value === 'NULL') continue
-
-    const parts = splitFilterValue(entry.value)
-    if (parts.length === 0) continue
-
+  for (const value of rawValues) {
+    if (!value) continue
+    const parts = splitFilterValue(value)
     for (const part of parts) {
-      counts.set(part, (counts.get(part) ?? 0) + entry.count)
+      counts.set(part, (counts.get(part) ?? 0) + 1)
     }
   }
 
@@ -135,15 +144,61 @@ function aggregateTopValues(topValues: LayerFilterTopValue[]): FilterItem[] {
     }))
 }
 
-export function buildFilterSectionsFromLayerFields(
-  fields: LayerFilterField[] | null | undefined,
+function serviceListToAreaRows(services: ServiceListItem[]): AreaServiceFilterRow[] {
+  return services.map((service) => ({
+    objectId: service.objectId,
+    riskStatus: service.RiskStatusDescription_Agg,
+    targetPopulations: service.TargetPopulations,
+    language: service.Language,
+  }))
+}
+
+export function buildFilterSectionsFromServiceList(
+  services: ServiceListItem[],
 ): FilterSectionData[] {
-  if (!fields?.length) return []
+  return buildFilterSectionsForArea(serviceListToAreaRows(services))
+}
+
+function fieldValueMatchesSelection(fieldValue: string, selectedValues: string[]): boolean {
+  return selectedValues.some((selected) => fieldValue.includes(selected))
+}
+
+/** סינון client-side — אותה לוגיקה כמו buildServicesLayerWhereClause (OR בשדה, AND בין שדות). */
+export function filterServicesBySelectedKeys(
+  services: ServiceListItem[],
+  selectedKeys: Iterable<string>,
+): ServiceListItem[] {
+  const valuesByField = new Map<string, string[]>()
+
+  for (const key of selectedKeys) {
+    const parsed = parseFilterSelectionKey(key)
+    if (!parsed) continue
+    const existing = valuesByField.get(parsed.fieldName) ?? []
+    existing.push(parsed.value)
+    valuesByField.set(parsed.fieldName, existing)
+  }
+
+  if (valuesByField.size === 0) return services
+
+  return services.filter((service) => {
+    for (const [fieldName, values] of valuesByField.entries()) {
+      if (!(fieldName in FILTER_FIELD_TO_SERVICE_KEY)) return false
+      const serviceKey =
+        FILTER_FIELD_TO_SERVICE_KEY[fieldName as keyof typeof FILTER_FIELD_TO_SERVICE_KEY]
+      const fieldValue = String(service[serviceKey] ?? '')
+      if (!fieldValueMatchesSelection(fieldValue, values)) return false
+    }
+    return true
+  })
+}
+
+function buildFilterSectionsForArea(areaRows: AreaServiceFilterRow[]): FilterSectionData[] {
+  if (areaRows.length === 0) return []
 
   return FILTER_FIELD_CONFIG.map((config) => {
-    const field = fields.find((f) => f.name === config.fieldName)
-    const topValues = field?.values?.topValues ?? []
-    const items = aggregateTopValues(topValues)
+    const rowKey = FILTER_FIELD_TO_ROW_KEY[config.fieldName]
+    const rawValues: string[] = areaRows.map((row) => row[rowKey])
+    const items = aggregateAreaFieldValues(rawValues)
 
     return {
       title: config.title,

@@ -1,80 +1,130 @@
-import type { MapPointInfo, MapPointInfoDetail } from './mapPointInfoData'
+import type { MapPointInfoIconId } from './mapPointInfoData'
 import { IconClose, IconExpand, IconMapPinLarge, MapPointInfoIcon } from './MapPointInfoIcons'
 
+export type MapPointInfoField = {
+  fieldName?: string
+  fieldValue?: unknown
+}
+
 type MapPointInfoCardProps = {
-  data: MapPointInfo
+  data: MapPointInfoField[]
   onClose: () => void
 }
 
-function DetailRow({ detail }: { detail: MapPointInfoDetail }) {
+type DetailRowData = {
+  id: string
+  icon: MapPointInfoIconId
+  value: string
+}
+
+function cleanFieldValue(value: unknown): string {
+  if (value == null) return ''
+  const text = String(value).trim()
+  if (!text || text.toUpperCase() === 'NULL') return ''
+  return text
+}
+
+function DetailRow({ detail }: { detail: DetailRowData }) {
   return (
-    <div className="flex w-full items-center justify-end gap-3">
-      <MapPointInfoIcon icon={detail.icon} />
-      <p className="min-w-0 flex-1 text-right text-sm leading-[23px] text-[#5f708a]">{detail.value}</p>
+    <div className="flex w-full shrink-0 items-center justify-start gap-3">
+      <span className="flex size-5 shrink-0 items-center justify-center">
+        <MapPointInfoIcon icon={detail.icon} />
+      </span>
+      <p className="min-w-0 flex-1 text-right text-[14px] leading-[22.871px] text-[#5f708a]">{detail.value}</p>
     </div>
   )
 }
 
+const DETAIL_SPECS: Array<{ id: string; icon: MapPointInfoIconId; field: string; fallbackField?: string }> = [
+  { id: 'address', icon: 'location', field: 'fulladdress' },
+  { id: 'audience', icon: 'group', field: 'targetpopulations' },
+  { id: 'language', icon: 'language', field: 'language' },
+  { id: 'risk', icon: 'target', field: 'riskstatusdescription_agg' },
+  { id: 'price', icon: 'price', field: 'requirespaymentamount' },
+  {
+    id: 'provider',
+    icon: 'building',
+    field: 'serviceproviderorganizationtype',
+    fallbackField: 'providername',
+  },
+  { id: 'accessibility', icon: 'accessibility', field: 'accessibility' },
+]
 
-
-const MapPointInfoCard = ({ data, onClose }: any) => {
-  const getFieldValue = (fieldName: string) => {
-    return data.find((item:any) => item.fieldName === fieldName).fieldValue
+const MapPointInfoCard = ({ data, onClose }: MapPointInfoCardProps) => {
+  const fieldMap = new Map<string, string>()
+  for (const row of data ?? []) {
+    if (!row?.fieldName) continue
+    const value = cleanFieldValue(row.fieldValue)
+    if (value) fieldMap.set(row.fieldName.toLowerCase(), value)
   }
+
+  const getFieldValue = (fieldName: string) => fieldMap.get(fieldName.toLowerCase()) ?? ''
+
+  const getPaymentValue = () => {
+    const amount = getFieldValue('requirespaymentamount')
+    const requiresPayment = getFieldValue('requirespayment')
+    if (amount && requiresPayment && requiresPayment !== 'כן') return `${amount} (${requiresPayment})`
+    return amount || requiresPayment
+  }
+
+  const details: DetailRowData[] = DETAIL_SPECS.map((spec) => {
+    let value = spec.field === 'requirespaymentamount' ? getPaymentValue() : getFieldValue(spec.field)
+    if (!value && spec.fallbackField) value = getFieldValue(spec.fallbackField)
+    return { id: spec.id, icon: spec.icon, value }
+  }).filter((item) => item.value)
+
+  const title = getFieldValue('servicename')
+  const description = getFieldValue('servicedescription')
+
   return (
     <aside
       className="flex h-full w-[404px] max-w-[min(100vw,404px)] shrink-0 flex-col bg-white shadow-[2px_0_4px_rgba(164,177,192,0.2)]"
       dir="rtl"
-      aria-label={`פרטי מענה: ${getFieldValue('servicename')}`}
+      aria-label={`פרטי מענה: ${title}`}
     >
-      <div className="flex min-h-0 flex-1 flex-col gap-4 px-8 pt-0">
-        {/* כותרת + סגירה */}
-        <div className="flex h-16 shrink-0 items-end justify-between pb-0">
-          <h2 className="pb-3 text-[22px] font-bold leading-[21px] text-[#084878]">{getFieldValue('servicename')}</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="mb-1 flex size-12 shrink-0 items-center justify-center rounded-3xl transition-colors hover:bg-[#f0f4f8]"
-            aria-label="סגירה"
-          >
-            <IconClose />
-          </button>
+      <div className="flex min-h-0 flex-1 flex-col gap-4 px-8">
+        <div className="flex w-full max-w-[340px] flex-col gap-2">
+          <div className="flex pt-8 w-full items-center justify-between">
+            <h2 className="text-right text-[22px] font-bold leading-[21px] text-[#084878]">{title}</h2>
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex size-12 shrink-0 items-center justify-center rounded-3xl py-3 transition-colors hover:bg-[#f0f4f8]"
+              aria-label="סגירה"
+            >
+              <IconClose />
+            </button>
+          </div>
+
+          {!!description && (
+            <div className="flex w-full items-center justify-center py-4">
+              <p className="w-full text-right text-[14px] leading-[22px] text-[#34404f]">{description}</p>
+            </div>
+          )}
         </div>
 
-        {/* תיאור */}
-        <p className="shrink-0 py-4 text-right text-sm leading-[22px] text-[#34404f]">{getFieldValue('servicedescription')}</p>
-
-        {/* גלילה: מפה + פרטים */}
-        <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto overflow-x-hidden pb-6">
-          {/* תצוגת מפה */}
-          <div className="relative h-[196px] w-full shrink-0 overflow-hidden rounded-2xl bg-[#e8eef4]">
-            {data.mapPreviewUrl ? (
-              <img
-                src={data.mapPreviewUrl}
-                alt=""
-                className="absolute inset-0 size-full object-cover opacity-60"
-              />
-            ) : (
-              <div
-                className="absolute inset-0 bg-gradient-to-b from-[#dce8f4] via-[#e8eef4] to-[#f0f4f8]"
-                aria-hidden
-              />
-            )}
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+        <div className="flex min-h-0 w-full max-w-[340px] flex-1 flex-col items-end gap-6 overflow-y-auto overflow-x-clip pb-6">
+          <div className="relative h-[196px] w-full shrink-0 overflow-hidden rounded-2xl bg-white">
+            <div
+              className="absolute inset-0 bg-gradient-to-b from-[#dce8f4] via-[#e8eef4] to-[#f0f4f8] opacity-60"
+              aria-hidden
+            />
+            <div className="absolute left-1/2 top-[53px] size-9 -translate-x-1/2">
               <IconMapPinLarge />
             </div>
             <button
               type="button"
-              className="absolute start-2 top-2 flex size-6 items-center justify-center rounded-[7px] bg-white p-0.5 shadow-sm transition-colors hover:bg-[#f5f8fc]"
+              className="absolute left-[306px] top-2 flex items-center justify-center rounded-[7px] bg-white p-0.5 shadow-sm transition-colors hover:bg-[#f5f8fc]"
               aria-label="הרחבת מפה"
             >
-              <IconExpand />
+              <span className="flex size-5 items-center justify-center">
+                <IconExpand />
+              </span>
             </button>
           </div>
 
-          {/* רשימת פרטים */}
-          <div className="flex w-full flex-col items-end gap-3.5">
-            {data?.map((detail) => (
+          <div className="flex w-full flex-col items-end justify-center gap-3.5">
+            {details.map((detail) => (
               <DetailRow key={detail.id} detail={detail} />
             ))}
           </div>
