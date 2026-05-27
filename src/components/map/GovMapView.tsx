@@ -230,14 +230,7 @@ const GovMapView = () => {
 
       console.log('neighborhoods', { jerusalemNeighborhoods, tiratNeighborhoods })
       setNeighborhoodsList([
-        {
-          label: JERUSALEM_CITY_CENTER_AREA_OPTION.label,
-          value: { ...JERUSALEM_CITY_CENTER_AREA_OPTION.value },
-          cityObjectId: '1',
-          optionValue: getCityCenterAreaSelectValue(JERUSALEM_CITY_CENTER_AREA_OPTION.value),
-          geometry: JERUSALEM_CITY_CENTER_AREA_OPTION.geometry,
-        },
-        ...jerusalemNeighborhoods,
+        
         {
           label: TIRAT_CARMEL_CITY_AREA_OPTION.label,
           value: { ...TIRAT_CARMEL_CITY_AREA_OPTION.value },
@@ -246,6 +239,14 @@ const GovMapView = () => {
           geometry: TIRAT_CARMEL_CITY_AREA_OPTION.geometry,
         },
         ...tiratNeighborhoods,
+        {
+          label: JERUSALEM_CITY_CENTER_AREA_OPTION.label,
+          value: { ...JERUSALEM_CITY_CENTER_AREA_OPTION.value },
+          cityObjectId: '1',
+          optionValue: getCityCenterAreaSelectValue(JERUSALEM_CITY_CENTER_AREA_OPTION.value),
+          geometry: JERUSALEM_CITY_CENTER_AREA_OPTION.geometry,
+        },
+        ...jerusalemNeighborhoods
       ])
     }).catch(function (error) {
       console.error('failed getting neighborhoods', error)

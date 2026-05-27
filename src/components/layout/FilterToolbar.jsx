@@ -13,6 +13,7 @@ import {
   POPULATION_SEGMENT_OPTIONS,
   PROFILE_FILTER_OPTIONS,
   SITE,
+  TIRAT_CARMEL_CITY_AREA_OPTION,
 } from '../../constants'
 import { useDashboardUi } from '../../context/DashboardUiContext'
 import { ToolbarSelect } from '../ui'
@@ -47,7 +48,7 @@ const FilterToolbar = ({ onBack = () => { } }) => {
   } = useDashboardUi()
   const matchCount = matchedServicesCount
   const [selectedNeighborhoodOptionValue, setSelectedNeighborhoodOptionValue] = useState(() =>
-    getCityCenterAreaSelectValue(JERUSALEM_CITY_CENTER_AREA_OPTION.value),
+    getCityCenterAreaSelectValue(TIRAT_CARMEL_CITY_AREA_OPTION.value),
   )
   const divider = (
     <div

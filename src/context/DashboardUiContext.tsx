@@ -9,7 +9,7 @@ import {
   type SetStateAction,
 } from 'react'
 import type { ServiceListItem } from '../data/servicesListTypes'
-import { JERUSALEM_CITY_CENTER_AREA_OPTION } from '../constants'
+import { TIRAT_CARMEL_CITY_AREA_OPTION } from '../constants'
 
 export type DashboardViewMode = 'map' | 'list'
 
@@ -67,8 +67,8 @@ export function DashboardUiProvider({ children }: { children: ReactNode }) {
   const [servicesList, setServicesList] = useState<ServiceListItem[]>([])
   const [matchedServicesCount, setMatchedServicesCount] = useState(0)
   const [servicesListLoading, setServicesListLoading] = useState(false)
-  const [servicesQueryGeometry, setServicesQueryGeometry] = useState(
-    JERUSALEM_CITY_CENTER_AREA_OPTION.geometry,
+  const [servicesQueryGeometry, setServicesQueryGeometry] = useState<string>(
+    TIRAT_CARMEL_CITY_AREA_OPTION.geometry || ''
   )
 
   const setPopulationSegment = useCallback((value: string) => {

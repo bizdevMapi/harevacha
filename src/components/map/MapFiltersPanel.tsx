@@ -150,7 +150,9 @@ const MapFiltersPanel = ({
     <button
       type="button"
       onClick={onToggle}
-      className="absolute top-0 left-0 z-30 flex size-6 items-center justify-center rounded-bl-[4px] rounded-br-[11px] border border-b border-l border-[#cbd5e3] bg-[#fafbfd] py-0.5 text-brand-darkBlue shadow-[-2px_1px_1.5px_rgba(121,136,157,0.2)] transition-colors hover:bg-white"
+      className={`absolute top-0 z-30 flex size-6 items-center justify-center rounded-bl-[4px] rounded-br-[11px] border border-b border-l border-[#cbd5e3] bg-[#fafbfd] py-0.5 text-brand-darkBlue shadow-[-2px_1px_1.5px_rgba(121,136,157,0.2)] transition-colors hover:bg-white ${
+        isOpen ? 'left-0' : 'right-0'
+      }`}
       aria-label={isOpen ? 'סגירת פנל סינון' : 'פתיחת פנל סינון'}
       title={isOpen ? 'סגירת פנל סינון' : 'פתיחת פנל סינון'}
     >
