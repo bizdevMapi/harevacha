@@ -8,6 +8,7 @@ import {
   TIRAT_CARMEL_CITY_AREA_OPTION,
 } from '../../constants'
 import type { NeighborhoodMapOption } from '../../context/DashboardUiContext'
+import { applySelectedArea } from './applySelectedArea'
 import MapFiltersPanel from './MapFiltersPanel'
 import {
   buildFilterSectionsFromServiceList,
@@ -18,10 +19,6 @@ import {
 import MapPointInfoCard, { type MapPointInfoField } from './MapPointInfoCard'
 import MapPointTooltip from './MapPointTooltip'
 import MapProfileInsightsCard from './profile-insights/MapProfileInsightsCard'
-import {
-  mapIntersectFeaturesToServicesList,
-  SERVICE_TABLE_LAYER_FIELDS,
-} from '../../data/servicesListTypes'
 
 const GOVMAP_TOKEN = import.meta.env.VITE_GOVMAP_TOKEN
 
@@ -96,10 +93,13 @@ type HoverPointTooltipInfo = {
 
 const GovMapView = () => {
   const {
+    selectedArea,
     servicesQueryGeometry,
+    neighborhoodsList,
     servicesList,
     servicesListLoading,
     setNeighborhoodsList,
+    setServicesQueryGeometry,
     setServicesList,
     setServicesListLoading,
     setMatchedServicesCount,
@@ -423,31 +423,6 @@ const GovMapView = () => {
     })
   }
 
-  const fetchServicesList = (geometry: string) => {
-    const intersectFeatures = window.govmap?.intersectFeatures
-    if (!intersectFeatures || !geometry) return
-
-    const params = {
-      geometry,
-      layerName: SITE.layers.servicesLayer,
-      fields: [...SERVICE_TABLE_LAYER_FIELDS],
-    }
-
-    setServicesListLoading(true)
-    window.govmap?.intersectFeatures?.(params)
-      ?.then(function (response) {
-        const rows = mapIntersectFeaturesToServicesList(response?.data, SERVICE_TABLE_LAYER_FIELDS)
-        setServicesList(rows)
-      })
-      .catch(function (error) {
-        console.error('failed loading services list', error)
-        setServicesList([])
-      })
-      .finally(function () {
-        setServicesListLoading(false)
-      })
-  }
-
   useEffect(() => {
     const scriptSrc = import.meta.env.VITE_GOVMAP_URL || 'https://govmap.gov.il/govmap/api/govmap.api.js'
 
@@ -458,8 +433,8 @@ const GovMapView = () => {
         token: GOVMAP_TOKEN,
         level: GOVMAP_DEFAULT_VIEW_LEVEL,
         center: {
-          x: JERUSALEM_CITY_CENTER_AREA_OPTION.value.x,
-          y: JERUSALEM_CITY_CENTER_AREA_OPTION.value.y
+          x: TIRAT_CARMEL_CITY_AREA_OPTION.value.x,
+          y: TIRAT_CARMEL_CITY_AREA_OPTION.value.y
         },
         layersMode: 1,
         identifyOnClick: false,
@@ -496,9 +471,31 @@ const GovMapView = () => {
   }, [])
 
   useEffect(() => {
-    if (!isMapReady) return
-    fetchServicesList(servicesQueryGeometry)
-  }, [isMapReady, servicesQueryGeometry])
+    if (!isMapReady || !selectedArea) return
+
+    const option = neighborhoodsList.find((n) => n.optionValue === selectedArea)
+    if (!option?.geometry) return
+
+    let active = true
+    void applySelectedArea(option, {
+      setServicesQueryGeometry,
+      setServicesListLoading,
+      setServicesList: (rows) => {
+        if (active) setServicesList(rows)
+      },
+    })
+
+    return () => {
+      active = false
+    }
+  }, [
+    isMapReady,
+    selectedArea,
+    neighborhoodsList,
+    setServicesQueryGeometry,
+    setServicesList,
+    setServicesListLoading,
+  ])
 
   useEffect(() => {
     areaServiceObjectIdsRef.current = servicesList.map((service) => service.objectId)

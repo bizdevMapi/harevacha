@@ -9,7 +9,7 @@ import {
   type SetStateAction,
 } from 'react'
 import type { ServiceListItem } from '../data/servicesListTypes'
-import { TIRAT_CARMEL_CITY_AREA_OPTION } from '../constants'
+import { getCityCenterAreaSelectValue, TIRAT_CARMEL_CITY_AREA_OPTION } from '../constants'
 
 export type DashboardViewMode = 'map' | 'list'
 
@@ -59,7 +59,9 @@ const DashboardUiContext = createContext<DashboardUiValue | null>(null)
  */
 export function DashboardUiProvider({ children }: { children: ReactNode }) {
   const [viewMode, setViewMode] = useState<DashboardViewMode>('map')
-  const [selectedArea, setSelectedArea] = useState('jerusalem-all')
+  const [selectedArea, setSelectedArea] = useState(
+    getCityCenterAreaSelectValue(TIRAT_CARMEL_CITY_AREA_OPTION.value),
+  )
   const [populationSegment, setPopulationSegmentState] = useState('none')
   const [profileKey, setProfileKey] = useState('none')
   const [profileInsightsOpen, setProfileInsightsOpen] = useState(false)

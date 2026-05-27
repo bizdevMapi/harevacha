@@ -96,7 +96,7 @@ export function buildServicesLayerWhereClause(selectedKeys: Iterable<string>): s
 }
 
 export function buildAreaObjectIdsClause(objectIds: number[]): string {
-  if (objectIds.length === 0) return '1=0'
+  if (objectIds.length === 0) return `objectid IN (999999999)`
   return `objectid IN (${objectIds.join(',')})`
 }
 

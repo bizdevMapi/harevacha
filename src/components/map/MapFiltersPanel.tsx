@@ -137,13 +137,11 @@ const MapFiltersPanel = ({
   }
 
   const handleToggle = (key: string, checked: boolean) => {
-    setSelectedKeys((prev) => {
-      const next = new Set(prev)
-      if (checked) next.add(key)
-      else next.delete(key)
-      onFilterSelectionChange?.(next)
-      return next
-    })
+    const next = new Set(selectedKeys)
+    if (checked) next.add(key)
+    else next.delete(key)
+    setSelectedKeys(next)
+    onFilterSelectionChange?.(next)
   }
 
   const toggleButton = hideToggle ? null : (
