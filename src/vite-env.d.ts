@@ -71,7 +71,6 @@ interface GovMapApi {
     whereClause?: string
     getShapes?: boolean
   }) => Promise<{ data?: Array<{ ObjectId?: number; Values?: unknown[] }> }>
-  getLayerFilterFields?: (layerName: string, token: string) => Promise<unknown>
   searchInLayer?: (params: {
     layerName: string
     fieldName: string
