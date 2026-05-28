@@ -2,6 +2,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type Dispatch,
@@ -50,9 +51,15 @@ export type DashboardUiValue = {
   setServicesListLoading: Dispatch<SetStateAction<boolean>>
   servicesQueryGeometry: string
   setServicesQueryGeometry: (geometry: string) => void
+  serviceFilterSearchQuery: string
+  setServiceFilterSearchQuery: (query: string) => void
+  appliedServiceFilterSearchQuery: string
+  selectedServiceFilterKeys: Set<string>
+  setSelectedServiceFilterKeys: Dispatch<SetStateAction<Set<string>>>
 }
 
 const DashboardUiContext = createContext<DashboardUiValue | null>(null)
+const SEARCH_FILTER_DEBOUNCE_MS = 350
 
 /**
  * מצב UI משותף לסרגל המסננים, למפה ולכרטיסי מידע — בלי להעביר פרופס דרך App.
@@ -72,6 +79,19 @@ export function DashboardUiProvider({ children }: { children: ReactNode }) {
   const [servicesQueryGeometry, setServicesQueryGeometry] = useState<string>(
     TIRAT_CARMEL_CITY_AREA_OPTION.geometry || ''
   )
+  const [serviceFilterSearchQuery, setServiceFilterSearchQuery] = useState('')
+  const [appliedServiceFilterSearchQuery, setAppliedServiceFilterSearchQuery] = useState('')
+  const [selectedServiceFilterKeys, setSelectedServiceFilterKeys] = useState<Set<string>>(
+    () => new Set(),
+  )
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setAppliedServiceFilterSearchQuery(serviceFilterSearchQuery)
+    }, SEARCH_FILTER_DEBOUNCE_MS)
+
+    return () => window.clearTimeout(timer)
+  }, [serviceFilterSearchQuery])
 
   const setPopulationSegment = useCallback((value: string) => {
     setPopulationSegmentState(value)
@@ -105,6 +125,11 @@ export function DashboardUiProvider({ children }: { children: ReactNode }) {
       setServicesListLoading,
       servicesQueryGeometry,
       setServicesQueryGeometry,
+      serviceFilterSearchQuery,
+      setServiceFilterSearchQuery,
+      appliedServiceFilterSearchQuery,
+      selectedServiceFilterKeys,
+      setSelectedServiceFilterKeys,
     }),
     [
       viewMode,
@@ -118,6 +143,9 @@ export function DashboardUiProvider({ children }: { children: ReactNode }) {
       matchedServicesCount,
       servicesListLoading,
       servicesQueryGeometry,
+      serviceFilterSearchQuery,
+      appliedServiceFilterSearchQuery,
+      selectedServiceFilterKeys,
     ],
   )
 

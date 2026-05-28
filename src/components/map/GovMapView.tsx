@@ -13,6 +13,7 @@ import MapFiltersPanel from './MapFiltersPanel'
 import {
   buildFilterSectionsFromServiceList,
   buildFullServicesLayerWhereClause,
+  filterServicesBySearchQuery,
   filterServicesBySelectedKeys,
   type FilterSectionData,
 } from './mapLayerFilters'
@@ -21,7 +22,6 @@ import MapPointTooltip from './MapPointTooltip'
 import MapProfileInsightsCard from './profile-insights/MapProfileInsightsCard'
 
 const GOVMAP_TOKEN = import.meta.env.VITE_GOVMAP_TOKEN
-
 /** המתנה אחרי תזוזת עכבר לפני קריאת identify */
 const HOVER_IDENTIFY_DEBOUNCE_MS = 300
 /** תזוזה מינימלית בפיקסלים במסך לפני identify חדש */
@@ -93,6 +93,7 @@ type HoverPointTooltipInfo = {
 
 const GovMapView = () => {
   const {
+    viewMode,
     selectedArea,
     servicesQueryGeometry,
     neighborhoodsList,
@@ -103,6 +104,11 @@ const GovMapView = () => {
     setServicesList,
     setServicesListLoading,
     setMatchedServicesCount,
+    serviceFilterSearchQuery,
+    setServiceFilterSearchQuery,
+    appliedServiceFilterSearchQuery,
+    selectedServiceFilterKeys,
+    setSelectedServiceFilterKeys,
   } = useDashboardUi()
   const mapRef = useRef<HTMLDivElement | null>(null)
   const isHoverIdentifyInFlightRef = useRef(false)
@@ -416,13 +422,15 @@ const GovMapView = () => {
     }
   }
 
-  const applyServicesLayerFilter = (selectedKeys: Set<string>) => {
-    const filtered = filterServicesBySelectedKeys(servicesList, selectedKeys)
+  const applyServicesLayerFilter = (selectedKeys: Set<string>, searchQuery: string) => {
+    const filteredByKeys = filterServicesBySelectedKeys(servicesList, selectedKeys)
+    const filtered = filterServicesBySearchQuery(filteredByKeys, searchQuery)
     setMatchedServicesCount(filtered.length)
 
     const whereClause = buildFullServicesLayerWhereClause(
       areaServiceObjectIdsRef.current,
       selectedKeys,
+      searchQuery,
     )
     window.govmap?.filterLayers?.({
       layerName: SITE.layers.servicesLayer,
@@ -506,10 +514,23 @@ const GovMapView = () => {
   ])
 
   useEffect(() => {
+    setSelectedServiceFilterKeys(new Set())
+    setServiceFilterSearchQuery('')
+  }, [servicesQueryGeometry])
+
+  useEffect(() => {
+    if (viewMode !== 'map') return
     areaServiceObjectIdsRef.current = servicesList.map((service) => service.objectId)
-    setFilterSections(buildFilterSectionsFromServiceList(servicesList))
-    setMatchedServicesCount(servicesList.length)
-  }, [servicesList, setMatchedServicesCount])
+    const relevantServices = filterServicesBySearchQuery(servicesList, appliedServiceFilterSearchQuery)
+    setFilterSections(buildFilterSectionsFromServiceList(relevantServices))
+    applyServicesLayerFilter(selectedServiceFilterKeys, appliedServiceFilterSearchQuery)
+  }, [
+    viewMode,
+    servicesList,
+    selectedServiceFilterKeys,
+    appliedServiceFilterSearchQuery,
+    setMatchedServicesCount,
+  ])
 
   useEffect(() => {
     const resizeTimer = window.setTimeout(() => {
@@ -527,9 +548,12 @@ const GovMapView = () => {
           key={servicesQueryGeometry}
           isOpen={isFiltersOpen}
           onToggle={() => setIsFiltersOpen((prev) => !prev)}
+          searchQuery={serviceFilterSearchQuery}
+          onSearchQueryChange={setServiceFilterSearchQuery}
           filterSections={filterSections}
           filtersLoading={servicesListLoading}
-          onFilterSelectionChange={applyServicesLayerFilter}
+          selectedKeys={selectedServiceFilterKeys}
+          onFilterSelectionChange={setSelectedServiceFilterKeys}
         />
 
         <div className="relative min-w-0 flex-1">

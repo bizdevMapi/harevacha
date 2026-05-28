@@ -95,6 +95,13 @@ export function buildServicesLayerWhereClause(selectedKeys: Iterable<string>): s
   return fieldClauses.length === 1 ? fieldClauses[0] : `(${fieldClauses.join(' AND ')})`
 }
 
+export function buildServicesSearchWhereClause(searchQuery: string): string | null {
+  const query = searchQuery.trim()
+  if (!query) return null
+  const escaped = escapeSqlLiteral(query)
+  return `(servicename LIKE '%${escaped}%' OR fulladdress LIKE '%${escaped}%')`
+}
+
 export function buildAreaObjectIdsClause(objectIds: number[]): string {
   if (objectIds.length === 0) return `objectid IN (999999999)`
   return `objectid IN (${objectIds.join(',')})`
@@ -111,10 +118,12 @@ export function combineWhereClauses(...clauses: Array<string | null | undefined>
 export function buildFullServicesLayerWhereClause(
   areaObjectIds: number[],
   selectedKeys: Iterable<string>,
+  searchQuery = '',
 ): string {
   const areaClause = buildAreaObjectIdsClause(areaObjectIds)
   const attributeClause = buildServicesLayerWhereClause(selectedKeys)
-  return combineWhereClauses(areaClause, attributeClause)
+  const searchClause = buildServicesSearchWhereClause(searchQuery)
+  return combineWhereClauses(areaClause, attributeClause, searchClause)
 }
 
 function splitFilterValue(value: string): string[] {
@@ -189,6 +198,19 @@ export function filterServicesBySelectedKeys(
       if (!fieldValueMatchesSelection(fieldValue, values)) return false
     }
     return true
+  })
+}
+
+export function filterServicesBySearchQuery(
+  services: ServiceListItem[],
+  searchQuery: string,
+): ServiceListItem[] {
+  const q = searchQuery.trim().toLowerCase()
+  if (!q) return services
+
+  return services.filter((service) => {
+    const haystack = [service.ServiceName, service.FullAddress].join(' ').toLowerCase()
+    return haystack.includes(q)
   })
 }
 
