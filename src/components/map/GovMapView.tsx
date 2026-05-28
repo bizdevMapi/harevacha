@@ -388,10 +388,7 @@ const GovMapView = () => {
       clearHoverTooltip()
       govmap.identifyByXYAndLayer?.(payload.mapPoint.x, payload.mapPoint.y, [SITE.layers.servicesLayer])
         ?.then((response: any) => {
-          console.log('response', response)
           const rawEntity = response?.data?.[0]?.entities?.[0] ?? response?.data?.[0]?.fields ?? null
-          console.log('rawEntity', rawEntity)
-          //const pointInfo = mapGovmapEntityToPointInfo(rawEntity)
           setSelectedPointInfo(rawEntity.fields)
         })
         ?.catch((error: unknown) => {
