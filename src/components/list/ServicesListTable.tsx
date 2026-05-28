@@ -1,18 +1,14 @@
 import { useMemo, useState } from 'react'
 import type { ServiceListColumn, ServiceListItem } from '../../data/servicesListTypes'
-import {
-  formatServiceCost,
-  SERVICE_LIST_COLUMNS,
-  splitCommaList,
-} from '../../data/servicesListTypes'
+import { formatServiceCost, SERVICE_LIST_COLUMNS } from '../../data/servicesListTypes'
 
 const TABLE_MIN_WIDTH = SERVICE_LIST_COLUMNS.reduce((sum, col) => sum + col.width, 0)
 
 function IconSort() {
   return (
-    <svg className="size-4 shrink-0 text-[#8695a7]" viewBox="0 0 16 16" fill="none" aria-hidden>
-      <path d="M5 6.5 8 3.5 11 6.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
-      <path d="M5 9.5 8 12.5 11 9.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+    <svg className="size-3 shrink-0 text-[#8a97a9]" viewBox="0 0 16 16" fill="none" aria-hidden>
+      <path d="M5 6.5 8 3.8 11 6.5" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" />
+      <path d="M5 9.5 8 12.2 11 9.5" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round" />
     </svg>
   )
 }
@@ -22,37 +18,10 @@ function TableHeaderCell({ column }: { column: ServiceListColumn }) {
     <th
       scope="col"
       style={{ width: column.width, minWidth: column.width, maxWidth: column.width }}
-      className="h-9 border-b border-l border-[#e0e5eb] bg-[#f5f8fc] px-2 text-right align-middle font-semibold text-xs leading-[18px] text-[#5f708a] first:border-l-0"
+      className="h-8 border-b border-l border-[#dce3ec] bg-[#f3f6fa] px-1.5 text-right align-middle text-[11px] font-semibold leading-[16px] text-[#5f708a] last:border-l-0"
     >
       <span className="block w-full truncate text-right">{column.label}</span>
     </th>
-  )
-}
-
-function RiskTagsCell({ value }: { value: string }) {
-  const tags = splitCommaList(value)
-  if (tags.length === 0) return <span className="text-[#8695a7]">—</span>
-
-  const visible = tags.slice(0, 2)
-  const hiddenCount = tags.length - visible.length
-
-  return (
-    <div className="flex items-center justify-start gap-2 overflow-hidden">
-      {visible.map((tag) => (
-        <span
-          key={tag}
-          className="max-w-[72px] truncate rounded border border-[#e0e5eb] bg-[#f5f8fc] px-2 py-0.5 text-xs leading-[18px] text-[#34404f]"
-          title={tag}
-        >
-          {tag}
-        </span>
-      ))}
-      {hiddenCount > 0 && (
-        <span className="shrink-0 rounded border border-[#e0e5eb] bg-white px-1 py-0.5 text-xs font-medium leading-[18px] text-[#1277c5]">
-          +{hiddenCount}
-        </span>
-      )}
-    </div>
   )
 }
 
@@ -64,7 +33,7 @@ function TableBodyCell({
   column: ServiceListColumn
 }) {
   const baseClass =
-    'h-9 border-b border-l border-[#e0e5eb] bg-white px-2 text-right align-middle text-xs leading-[18px] text-[#34404f] first:border-l-0'
+    'h-8 border-b border-l border-[#dce3ec] bg-white px-1.5 text-right align-middle text-[11px] leading-[16px] text-[#34404f] last:border-l-0'
 
   if (column.cellType === 'link') {
     return (
@@ -74,7 +43,7 @@ function TableBodyCell({
       >
         <button
           type="button"
-          className="block w-full truncate text-right font-medium text-[#1277c5] hover:underline"
+          className="block w-full truncate text-right font-medium text-[#1e6fb8] hover:underline"
           title={row.ServiceName}
         >
           {row.ServiceName || '—'}
@@ -84,12 +53,15 @@ function TableBodyCell({
   }
 
   if (column.cellType === 'tags') {
+    const value = String(row.RiskStatusDescription_Agg ?? '')
     return (
       <td
         style={{ width: column.width, minWidth: column.width, maxWidth: column.width }}
         className={baseClass}
       >
-        <RiskTagsCell value={row.RiskStatusDescription_Agg} />
+        <span className="block truncate" title={value}>
+          {value || '—'}
+        </span>
       </td>
     )
   }
@@ -153,9 +125,9 @@ const ServicesListTable = ({ rows, searchQuery = '' }: ServicesListTableProps) =
   }, [filteredRows, sortAsc])
 
   return (
-    <div className="flex min-h-0 flex-1 justify-start overflow-auto bg-white" dir="rtl">
+    <div className="flex min-h-0 flex-1 items-start justify-start overflow-auto border-t border-[#dce3ec] bg-white" dir="rtl">
       <table
-        className="shrink-0 table-fixed border-collapse text-right"
+        className="shrink-0 self-start table-fixed border-collapse text-right"
         style={{ width: TABLE_MIN_WIDTH }}
       >
         <thead className="sticky top-0 z-10">
@@ -166,12 +138,12 @@ const ServicesListTable = ({ rows, searchQuery = '' }: ServicesListTableProps) =
                   key={column.id}
                   scope="col"
                   style={{ width: column.width, minWidth: column.width, maxWidth: column.width }}
-                  className="h-9 border-b border-l border-[#e0e5eb] bg-[#f5f8fc] px-2 text-right align-middle font-semibold text-xs leading-[18px] text-[#5f708a] first:border-l-0"
+                  className="h-8 border-b border-l border-[#dce3ec] bg-[#f3f6fa] px-1.5 text-right align-middle text-[11px] font-semibold leading-[16px] text-[#5f708a] last:border-l-0"
                 >
                   <button
                     type="button"
                     onClick={() => setSortAsc((prev) => !prev)}
-                    className="flex h-full w-full items-center justify-start gap-2 overflow-hidden text-right"
+                    className="flex h-full w-full items-center justify-start gap-1.5 overflow-hidden text-right"
                   >
                     <span className="truncate">{column.label}</span>
                     <IconSort />
@@ -185,7 +157,7 @@ const ServicesListTable = ({ rows, searchQuery = '' }: ServicesListTableProps) =
         </thead>
         <tbody>
           {sortedRows.map((row) => (
-            <tr key={row.objectId} className="group transition-colors hover:bg-[#fafbfd]">
+            <tr key={row.objectId} className="group transition-colors hover:bg-[#f9fbfe]">
               {SERVICE_LIST_COLUMNS.map((column) => (
                 <TableBodyCell key={column.id} row={row} column={column} />
               ))}
