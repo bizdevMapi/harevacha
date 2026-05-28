@@ -119,6 +119,7 @@ const GovMapView = () => {
   const [selectedPointInfo, setSelectedPointInfo] = useState<MapPointInfoField[] | null>(null)
   const [hoverPointInfo, setHoverPointInfo] = useState<HoverPointTooltipInfo | null>(null)
   const [hoverTooltipPosition, setHoverTooltipPosition] = useState<{ left: number; top: number } | null>(null)
+  const selectedAreaOption = neighborhoodsList.find((n) => n.optionValue === selectedArea)
 
   useEffect(() => {
     hoverPointInfoRef.current = hoverPointInfo
@@ -535,7 +536,11 @@ const GovMapView = () => {
           <MapProfileInsightsCard />
         </div>
         {selectedPointInfo && (
-          <MapPointInfoCard data={selectedPointInfo} onClose={() => setSelectedPointInfo(null)} />
+          <MapPointInfoCard
+            data={selectedPointInfo}
+            onClose={() => setSelectedPointInfo(null)}
+            selectedAreaCenter={selectedAreaOption?.value ?? null}
+          />
         )}
       </div>
     </section>
