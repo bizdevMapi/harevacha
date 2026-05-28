@@ -229,7 +229,6 @@ const GovMapView = () => {
       const jerusalemNeighborhoods = jerusalemRows.map(toOption)
       const tiratNeighborhoods = tiratRows.map(toOption)
 
-      console.log('neighborhoods', { jerusalemNeighborhoods, tiratNeighborhoods })
       setNeighborhoodsList([
         
         {
