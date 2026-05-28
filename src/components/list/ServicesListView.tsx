@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useDashboardUi } from '../../context/DashboardUiContext'
 import MapFiltersPanel from '../map/MapFiltersPanel'
 import {
@@ -9,9 +9,17 @@ import {
 import ServicesListTable from './ServicesListTable'
 
 const ServicesListView = () => {
-  const { servicesList, servicesListLoading, setMatchedServicesCount } = useDashboardUi()
-  const [searchQuery, setSearchQuery] = useState('')
-  const [selectedFilterKeys, setSelectedFilterKeys] = useState<Set<string>>(() => new Set())
+  const {
+    viewMode,
+    servicesList,
+    servicesListLoading,
+    setMatchedServicesCount,
+    serviceFilterSearchQuery,
+    setServiceFilterSearchQuery,
+    appliedServiceFilterSearchQuery,
+    selectedServiceFilterKeys,
+    setSelectedServiceFilterKeys,
+  } = useDashboardUi()
 
   const filterSections = useMemo(
     () => buildFilterSectionsFromServiceList(servicesList),
@@ -19,13 +27,14 @@ const ServicesListView = () => {
   )
 
   const filteredRows = useMemo(() => {
-    const bySelectedKeys = filterServicesBySelectedKeys(servicesList, selectedFilterKeys)
-    return filterServicesBySearchQuery(bySelectedKeys, searchQuery)
-  }, [servicesList, selectedFilterKeys, searchQuery])
+    const bySelectedKeys = filterServicesBySelectedKeys(servicesList, selectedServiceFilterKeys)
+    return filterServicesBySearchQuery(bySelectedKeys, appliedServiceFilterSearchQuery)
+  }, [servicesList, selectedServiceFilterKeys, appliedServiceFilterSearchQuery])
 
   useEffect(() => {
+    if (viewMode !== 'list') return
     setMatchedServicesCount(filteredRows.length)
-  }, [filteredRows.length, setMatchedServicesCount])
+  }, [viewMode, filteredRows.length, setMatchedServicesCount])
 
   if (servicesListLoading) {
     return (
@@ -41,11 +50,12 @@ const ServicesListView = () => {
         isOpen
         hideToggle
         onToggle={() => {}}
-        searchQuery={searchQuery}
-        onSearchQueryChange={setSearchQuery}
+        searchQuery={serviceFilterSearchQuery}
+        onSearchQueryChange={setServiceFilterSearchQuery}
         filterSections={filterSections}
         filtersLoading={servicesListLoading}
-        onFilterSelectionChange={setSelectedFilterKeys}
+        selectedKeys={selectedServiceFilterKeys}
+        onFilterSelectionChange={setSelectedServiceFilterKeys}
       />
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">

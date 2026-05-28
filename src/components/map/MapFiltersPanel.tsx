@@ -112,6 +112,7 @@ type MapFiltersPanelProps = {
   filterSections?: FilterSectionData[]
   filtersLoading?: boolean
   onFilterSelectionChange?: (selectedKeys: Set<string>) => void
+  selectedKeys?: Set<string>
 }
 
 const MapFiltersPanel = ({
@@ -124,18 +125,20 @@ const MapFiltersPanel = ({
   filterSections = [],
   filtersLoading = false,
   onFilterSelectionChange,
+  selectedKeys: controlledSelectedKeys,
 }: MapFiltersPanelProps) => {
   const searchId = useId()
   const [internalSearchQuery, setInternalSearchQuery] = useState('')
   const searchQuery = controlledSearchQuery ?? internalSearchQuery
   const setSearchQuery = onSearchQueryChange ?? setInternalSearchQuery
-  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(() => new Set())
+  const [internalSelectedKeys, setInternalSelectedKeys] = useState<Set<string>>(() => new Set())
+  const selectedKeys = controlledSelectedKeys ?? internalSelectedKeys
+  const setSelectedKeys = onFilterSelectionChange ?? setInternalSelectedKeys
 
   const handleClear = () => {
     setSearchQuery('')
     const next = new Set<string>()
     setSelectedKeys(next)
-    onFilterSelectionChange?.(next)
   }
 
   const handleToggle = (key: string, checked: boolean) => {
@@ -143,7 +146,6 @@ const MapFiltersPanel = ({
     if (checked) next.add(key)
     else next.delete(key)
     setSelectedKeys(next)
-    onFilterSelectionChange?.(next)
   }
 
   const toggleButton = hideToggle ? null : (

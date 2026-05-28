@@ -22,8 +22,6 @@ import MapPointTooltip from './MapPointTooltip'
 import MapProfileInsightsCard from './profile-insights/MapProfileInsightsCard'
 
 const GOVMAP_TOKEN = import.meta.env.VITE_GOVMAP_TOKEN
-const SEARCH_FILTER_DEBOUNCE_MS = 350
-
 /** המתנה אחרי תזוזת עכבר לפני קריאת identify */
 const HOVER_IDENTIFY_DEBOUNCE_MS = 300
 /** תזוזה מינימלית בפיקסלים במסך לפני identify חדש */
@@ -95,6 +93,7 @@ type HoverPointTooltipInfo = {
 
 const GovMapView = () => {
   const {
+    viewMode,
     selectedArea,
     servicesQueryGeometry,
     neighborhoodsList,
@@ -105,6 +104,11 @@ const GovMapView = () => {
     setServicesList,
     setServicesListLoading,
     setMatchedServicesCount,
+    serviceFilterSearchQuery,
+    setServiceFilterSearchQuery,
+    appliedServiceFilterSearchQuery,
+    selectedServiceFilterKeys,
+    setSelectedServiceFilterKeys,
   } = useDashboardUi()
   const mapRef = useRef<HTMLDivElement | null>(null)
   const isHoverIdentifyInFlightRef = useRef(false)
@@ -118,9 +122,6 @@ const GovMapView = () => {
   const [isFiltersOpen, setIsFiltersOpen] = useState(true)
   const [isMapReady, setIsMapReady] = useState(false)
   const [filterSections, setFilterSections] = useState<FilterSectionData[]>([])
-  const [selectedFilterKeys, setSelectedFilterKeys] = useState<Set<string>>(() => new Set())
-  const [filterSearchQuery, setFilterSearchQuery] = useState('')
-  const [appliedSearchQuery, setAppliedSearchQuery] = useState('')
   const [selectedPointInfo, setSelectedPointInfo] = useState<MapPointInfoField[] | null>(null)
   const [hoverPointInfo, setHoverPointInfo] = useState<HoverPointTooltipInfo | null>(null)
   const [hoverTooltipPosition, setHoverTooltipPosition] = useState<{ left: number; top: number } | null>(null)
@@ -513,25 +514,23 @@ const GovMapView = () => {
   ])
 
   useEffect(() => {
-    setSelectedFilterKeys(new Set())
-    setFilterSearchQuery('')
-    setAppliedSearchQuery('')
+    setSelectedServiceFilterKeys(new Set())
+    setServiceFilterSearchQuery('')
   }, [servicesQueryGeometry])
 
   useEffect(() => {
-    const timer = window.setTimeout(() => {
-      setAppliedSearchQuery(filterSearchQuery)
-    }, SEARCH_FILTER_DEBOUNCE_MS)
-
-    return () => window.clearTimeout(timer)
-  }, [filterSearchQuery])
-
-  useEffect(() => {
+    if (viewMode !== 'map') return
     areaServiceObjectIdsRef.current = servicesList.map((service) => service.objectId)
-    const relevantServices = filterServicesBySearchQuery(servicesList, appliedSearchQuery)
+    const relevantServices = filterServicesBySearchQuery(servicesList, appliedServiceFilterSearchQuery)
     setFilterSections(buildFilterSectionsFromServiceList(relevantServices))
-    applyServicesLayerFilter(selectedFilterKeys, appliedSearchQuery)
-  }, [servicesList, selectedFilterKeys, appliedSearchQuery, setMatchedServicesCount])
+    applyServicesLayerFilter(selectedServiceFilterKeys, appliedServiceFilterSearchQuery)
+  }, [
+    viewMode,
+    servicesList,
+    selectedServiceFilterKeys,
+    appliedServiceFilterSearchQuery,
+    setMatchedServicesCount,
+  ])
 
   useEffect(() => {
     const resizeTimer = window.setTimeout(() => {
@@ -549,19 +548,12 @@ const GovMapView = () => {
           key={servicesQueryGeometry}
           isOpen={isFiltersOpen}
           onToggle={() => setIsFiltersOpen((prev) => !prev)}
-          searchQuery={filterSearchQuery}
-          onSearchQueryChange={(query) => {
-            setFilterSearchQuery(query)
-          }}
-          onSearchSubmit={(query) => {
-            setAppliedSearchQuery(query)
-          }}
+          searchQuery={serviceFilterSearchQuery}
+          onSearchQueryChange={setServiceFilterSearchQuery}
           filterSections={filterSections}
           filtersLoading={servicesListLoading}
-          onFilterSelectionChange={(nextSelectedKeys) => {
-            setSelectedFilterKeys(nextSelectedKeys)
-            setAppliedSearchQuery(filterSearchQuery)
-          }}
+          selectedKeys={selectedServiceFilterKeys}
+          onFilterSelectionChange={setSelectedServiceFilterKeys}
         />
 
         <div className="relative min-w-0 flex-1">
