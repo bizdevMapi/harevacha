@@ -3,6 +3,7 @@ import { useDashboardUi } from '../../context/DashboardUiContext'
 import MapFiltersPanel from '../map/MapFiltersPanel'
 import {
   buildFilterSectionsFromServiceList,
+  filterServicesBySearchQuery,
   filterServicesBySelectedKeys,
 } from '../map/mapLayerFilters'
 import ServicesListTable from './ServicesListTable'
@@ -18,8 +19,9 @@ const ServicesListView = () => {
   )
 
   const filteredRows = useMemo(() => {
-    return filterServicesBySelectedKeys(servicesList, selectedFilterKeys)
-  }, [servicesList, selectedFilterKeys])
+    const bySelectedKeys = filterServicesBySelectedKeys(servicesList, selectedFilterKeys)
+    return filterServicesBySearchQuery(bySelectedKeys, searchQuery)
+  }, [servicesList, selectedFilterKeys, searchQuery])
 
   useEffect(() => {
     setMatchedServicesCount(filteredRows.length)
@@ -55,7 +57,7 @@ const ServicesListView = () => {
             </p>
           </div>
         ) : (
-          <ServicesListTable rows={filteredRows} searchQuery={searchQuery} />
+          <ServicesListTable rows={filteredRows} />
         )}
       </div>
     </div>

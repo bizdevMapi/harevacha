@@ -13,6 +13,7 @@ import MapFiltersPanel from './MapFiltersPanel'
 import {
   buildFilterSectionsFromServiceList,
   buildFullServicesLayerWhereClause,
+  filterServicesBySearchQuery,
   filterServicesBySelectedKeys,
   type FilterSectionData,
 } from './mapLayerFilters'
@@ -21,6 +22,7 @@ import MapPointTooltip from './MapPointTooltip'
 import MapProfileInsightsCard from './profile-insights/MapProfileInsightsCard'
 
 const GOVMAP_TOKEN = import.meta.env.VITE_GOVMAP_TOKEN
+const SEARCH_FILTER_DEBOUNCE_MS = 350
 
 /** המתנה אחרי תזוזת עכבר לפני קריאת identify */
 const HOVER_IDENTIFY_DEBOUNCE_MS = 300
@@ -116,6 +118,9 @@ const GovMapView = () => {
   const [isFiltersOpen, setIsFiltersOpen] = useState(true)
   const [isMapReady, setIsMapReady] = useState(false)
   const [filterSections, setFilterSections] = useState<FilterSectionData[]>([])
+  const [selectedFilterKeys, setSelectedFilterKeys] = useState<Set<string>>(() => new Set())
+  const [filterSearchQuery, setFilterSearchQuery] = useState('')
+  const [appliedSearchQuery, setAppliedSearchQuery] = useState('')
   const [selectedPointInfo, setSelectedPointInfo] = useState<MapPointInfoField[] | null>(null)
   const [hoverPointInfo, setHoverPointInfo] = useState<HoverPointTooltipInfo | null>(null)
   const [hoverTooltipPosition, setHoverTooltipPosition] = useState<{ left: number; top: number } | null>(null)
@@ -416,13 +421,15 @@ const GovMapView = () => {
     }
   }
 
-  const applyServicesLayerFilter = (selectedKeys: Set<string>) => {
-    const filtered = filterServicesBySelectedKeys(servicesList, selectedKeys)
+  const applyServicesLayerFilter = (selectedKeys: Set<string>, searchQuery: string) => {
+    const filteredByKeys = filterServicesBySelectedKeys(servicesList, selectedKeys)
+    const filtered = filterServicesBySearchQuery(filteredByKeys, searchQuery)
     setMatchedServicesCount(filtered.length)
 
     const whereClause = buildFullServicesLayerWhereClause(
       areaServiceObjectIdsRef.current,
       selectedKeys,
+      searchQuery,
     )
     window.govmap?.filterLayers?.({
       layerName: SITE.layers.servicesLayer,
@@ -506,10 +513,25 @@ const GovMapView = () => {
   ])
 
   useEffect(() => {
+    setSelectedFilterKeys(new Set())
+    setFilterSearchQuery('')
+    setAppliedSearchQuery('')
+  }, [servicesQueryGeometry])
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setAppliedSearchQuery(filterSearchQuery)
+    }, SEARCH_FILTER_DEBOUNCE_MS)
+
+    return () => window.clearTimeout(timer)
+  }, [filterSearchQuery])
+
+  useEffect(() => {
     areaServiceObjectIdsRef.current = servicesList.map((service) => service.objectId)
-    setFilterSections(buildFilterSectionsFromServiceList(servicesList))
-    setMatchedServicesCount(servicesList.length)
-  }, [servicesList, setMatchedServicesCount])
+    const relevantServices = filterServicesBySearchQuery(servicesList, appliedSearchQuery)
+    setFilterSections(buildFilterSectionsFromServiceList(relevantServices))
+    applyServicesLayerFilter(selectedFilterKeys, appliedSearchQuery)
+  }, [servicesList, selectedFilterKeys, appliedSearchQuery, setMatchedServicesCount])
 
   useEffect(() => {
     const resizeTimer = window.setTimeout(() => {
@@ -527,9 +549,19 @@ const GovMapView = () => {
           key={servicesQueryGeometry}
           isOpen={isFiltersOpen}
           onToggle={() => setIsFiltersOpen((prev) => !prev)}
+          searchQuery={filterSearchQuery}
+          onSearchQueryChange={(query) => {
+            setFilterSearchQuery(query)
+          }}
+          onSearchSubmit={(query) => {
+            setAppliedSearchQuery(query)
+          }}
           filterSections={filterSections}
           filtersLoading={servicesListLoading}
-          onFilterSelectionChange={applyServicesLayerFilter}
+          onFilterSelectionChange={(nextSelectedKeys) => {
+            setSelectedFilterKeys(nextSelectedKeys)
+            setAppliedSearchQuery(filterSearchQuery)
+          }}
         />
 
         <div className="relative min-w-0 flex-1">

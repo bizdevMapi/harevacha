@@ -108,6 +108,7 @@ type MapFiltersPanelProps = {
   hideToggle?: boolean
   searchQuery?: string
   onSearchQueryChange?: (value: string) => void
+  onSearchSubmit?: (value: string) => void
   filterSections?: FilterSectionData[]
   filtersLoading?: boolean
   onFilterSelectionChange?: (selectedKeys: Set<string>) => void
@@ -119,6 +120,7 @@ const MapFiltersPanel = ({
   hideToggle = false,
   searchQuery: controlledSearchQuery,
   onSearchQueryChange,
+  onSearchSubmit,
   filterSections = [],
   filtersLoading = false,
   onFilterSelectionChange,
@@ -169,7 +171,10 @@ const MapFiltersPanel = ({
   }
 
   return (
-    <aside className="relative h-full w-[376px] max-w-[min(100vw,376px)] shrink-0 border-l border-[#e0e5eb] bg-[#f5f8fc]">
+    <aside
+      dir="rtl"
+      className="relative h-full w-[376px] max-w-[min(100vw,376px)] shrink-0 border-l border-[#e0e5eb] bg-[#f5f8fc]"
+    >
       {toggleButton}
       <div className="flex h-full flex-col gap-[26px] overflow-y-auto px-8 pb-6 pt-7">
         <div className="flex w-full max-w-[312px] flex-col gap-8">
@@ -192,6 +197,11 @@ const MapFiltersPanel = ({
                 type="search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key !== 'Enter') return
+                  e.preventDefault()
+                  onSearchSubmit?.(searchQuery)
+                }}
                 placeholder="איתור מענה לפי שם או כתובת"
                 className="min-w-0 flex-1 border-0 bg-transparent text-base leading-6 text-[#161a20] placeholder:text-[#8695a7] focus:outline-none"
               />
