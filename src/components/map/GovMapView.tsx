@@ -120,6 +120,17 @@ const GovMapView = () => {
   const [hoverPointInfo, setHoverPointInfo] = useState<HoverPointTooltipInfo | null>(null)
   const [hoverTooltipPosition, setHoverTooltipPosition] = useState<{ left: number; top: number } | null>(null)
   const selectedAreaOption = neighborhoodsList.find((n) => n.optionValue === selectedArea)
+  const handleExpandPointMap = (center: { x: number; y: number } | null) => {
+    const target = center ?? selectedAreaOption?.value ?? null
+    if (!target) return
+    window.govmap?.zoomToXY?.({
+      x: target.x,
+      y: target.y,
+      level: 12,
+      marker: true,
+    })
+    setSelectedPointInfo(null)
+  }
 
   useEffect(() => {
     hoverPointInfoRef.current = hoverPointInfo
@@ -536,6 +547,7 @@ const GovMapView = () => {
             data={selectedPointInfo}
             onClose={() => setSelectedPointInfo(null)}
             selectedAreaCenter={selectedAreaOption?.value ?? null}
+            onExpandMap={handleExpandPointMap}
           />
         )}
       </div>
