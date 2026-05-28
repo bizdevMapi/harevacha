@@ -11,6 +11,7 @@ type MapPointInfoCardProps = {
   data: MapPointInfoField[]
   onClose: () => void
   selectedAreaCenter?: { x: number; y: number } | null
+  onExpandMap?: (center: { x: number; y: number } | null) => void
 }
 
 type DetailRowData = {
@@ -64,7 +65,12 @@ const DETAIL_SPECS: Array<{ id: string; icon: MapPointInfoIconId; field: string;
   { id: 'accessibility', icon: 'accessibility', field: 'accessibility' },
 ]
 
-const MapPointInfoCard = ({ data, onClose, selectedAreaCenter }: MapPointInfoCardProps) => {
+const MapPointInfoCard = ({
+  data,
+  onClose,
+  selectedAreaCenter,
+  onExpandMap,
+}: MapPointInfoCardProps) => {
   const miniMapContainerId = useMemo(
     () => `point-info-map-${Math.random().toString(36).slice(2, 10)}`,
     [],
@@ -174,6 +180,7 @@ const MapPointInfoCard = ({ data, onClose, selectedAreaCenter }: MapPointInfoCar
             )}
             <button
               type="button"
+              onClick={() => onExpandMap?.(mapCenter)}
               className="absolute left-[306px] top-2 flex items-center justify-center rounded-[7px] bg-white p-0.5 shadow-sm transition-colors hover:bg-[#f5f8fc]"
               aria-label="הרחבת מפה"
             >

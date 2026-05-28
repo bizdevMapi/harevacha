@@ -134,10 +134,11 @@ function IconMapPinLarge() {
 
 function IconExpand() {
   return (
-    <svg className="size-5 text-[#34404f]" viewBox="0 0 20 20" fill="none" aria-hidden>
-      <path d="M11 4h5v5M4 16V11h5" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" />
-      <path d="M16 4 9 11M4 16l7-7" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" />
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M15.8333 9.99935V7.49932C15.8333 5.92797 15.8333 5.14231 15.3452 4.65416C14.857 4.16601 14.0713 4.16601 12.5 4.16602L10 4.16602" stroke="#A4B1C0" stroke-width="1.5" stroke-miterlimit="16" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M4.16675 10L4.16677 12.5C4.16678 14.0713 4.16679 14.857 4.65495 15.3452C5.14311 15.8333 5.92877 15.8333 7.50011 15.8333H10.0001" stroke="#A4B1C0" stroke-width="1.5" stroke-miterlimit="16" stroke-linecap="round" stroke-linejoin="round" />
     </svg>
+
   )
 }
 
