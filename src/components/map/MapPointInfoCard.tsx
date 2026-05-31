@@ -181,7 +181,7 @@ const MapPointInfoCard = ({
             <button
               type="button"
               onClick={() => onExpandMap?.(mapCenter)}
-              className="absolute left-[306px] top-2 flex items-center justify-center rounded-[7px] bg-white p-0.5 shadow-sm transition-colors hover:bg-[#f5f8fc]"
+              className="absolute right-2 top-2 flex items-center justify-center rounded-[7px] bg-white p-0.5 shadow-sm transition-colors hover:bg-[#f5f8fc]"
               aria-label="הרחבת מפה"
             >
               <span className="flex size-5 items-center justify-center">

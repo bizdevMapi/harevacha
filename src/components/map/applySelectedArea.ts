@@ -1,4 +1,8 @@
-import { GOVMAP_DEFAULT_VIEW_LEVEL, SITE } from '../../constants'
+import {
+  GOVMAP_DEFAULT_VIEW_LEVEL,
+  GOVMAP_MUNICIPALITIES_LAYER_ID,
+  SITE,
+} from '../../constants'
 import type { NeighborhoodMapOption } from '../../context/DashboardUiContext'
 import type { ServiceListItem } from '../../data/servicesListTypes'
 import {
@@ -33,6 +37,13 @@ export async function applySelectedArea(
       layerName: NEIGHBORHOODS_LAYER_NAME,
       fieldName: 'objectid',
       fieldValues: [String(option.layerObjectId)],
+      highlight: false,
+    })
+  } else if (option.municipalityObjectId != null) {
+    govmap.searchInLayer?.({
+      layerName: GOVMAP_MUNICIPALITIES_LAYER_ID,
+      fieldName: 'objectid',
+      fieldValues: [String(option.municipalityObjectId)],
       highlight: false,
     })
   } else {
