@@ -44,6 +44,13 @@ export const TIRAT_CARMEL_CITY_AREA_OPTION = {
 /** רמת זום ל-GovMap — ערכים גבוהים מדי (למשל 10+) עלולים להציג מפה לבנה ללא אריחי בסיס */
 export const GOVMAP_DEFAULT_VIEW_LEVEL = 7 as const
 
+/** מרמת זום זו ומעלה — קליק בוחר שכונה; מתחת — קליק בוחר יישוב */
+export const GOVMAP_NEIGHBORHOOD_CLICK_MIN_LEVEL = 8 as const
+
+/** מזהי שכבות ל-identify (ללא קידומת layer_) */
+export const GOVMAP_NEIGHBORHOODS_LAYER_ID = '22' as const
+export const GOVMAP_MUNICIPALITIES_LAYER_ID = '125' as const
+
 /** ערך ייחודי ל־<select> לפי קואורדינטות מרכז (פריטי «מרכז העיר» הקבועים) */
 export function getCityCenterAreaSelectValue(point: { x: number; y: number }): string {
   return `${point.x},${point.y}`

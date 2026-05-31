@@ -3,6 +3,9 @@ import { useDashboardUi } from '../../context/DashboardUiContext'
 import {
   getCityCenterAreaSelectValue,
   GOVMAP_DEFAULT_VIEW_LEVEL,
+  GOVMAP_MUNICIPALITIES_LAYER_ID,
+  GOVMAP_NEIGHBORHOOD_CLICK_MIN_LEVEL,
+  GOVMAP_NEIGHBORHOODS_LAYER_ID,
   JERUSALEM_CITY_CENTER_AREA_OPTION,
   SITE,
   TIRAT_CARMEL_CITY_AREA_OPTION,
@@ -32,8 +35,14 @@ const HOVER_MIN_MAP_MOVE = 25
 type MapPointerPayload = {
   mapPoint?: { x?: number; y?: number }
   screenPoint?: { x?: number; y?: number }
+  point?: { x?: number; y?: number }
   x?: number
   y?: number
+}
+
+type GovMapExtentChangePayload = {
+  levelChange?: boolean
+  lod?: { level?: number }
 }
 
 const getPayloadScreenPoint = (payload: MapPointerPayload) => {
@@ -91,10 +100,178 @@ type HoverPointTooltipInfo = {
   accessibility?: string
 }
 
+type IdentifyField = { fieldName?: string; fieldValue?: string | null }
+
+type IdentifyEntity = {
+  objectId?: number
+  fields?: IdentifyField[]
+  geom?: string
+  centroid?: number[]
+}
+
+type IdentifyLayerResult = {
+  name?: string
+  layerId?: string
+  fieldsMapping?: Record<string, string>
+  entities?: IdentifyEntity[]
+}
+
+const cleanIdentifyValue = (value: unknown): string => {
+  if (value == null) return ''
+  const text = String(value).trim()
+  if (!text || text.toUpperCase() === 'NULL') return ''
+  return text
+}
+
+const getEntityFieldByKey = (
+  entity: IdentifyEntity,
+  fieldsMapping: Record<string, string> | undefined,
+  technicalKey: string,
+): string => {
+  const fields = entity.fields ?? []
+  const displayName = fieldsMapping?.[technicalKey]
+  if (displayName) {
+    const mapped = fields.find((field) => field.fieldName === displayName)
+    const value = cleanIdentifyValue(mapped?.fieldValue)
+    if (value) return value
+  }
+
+  const direct = fields.find(
+    (field) => field.fieldName?.toLowerCase() === technicalKey.toLowerCase(),
+  )
+  return cleanIdentifyValue(direct?.fieldValue)
+}
+
+const normalizeNbrCode = (value: string) => {
+  if (!value || value.toUpperCase() === 'NULL') return ''
+  return value
+}
+
+const isNeighborhoodIdentifyLayer = (layer: IdentifyLayerResult) =>
+  layer.layerId === GOVMAP_NEIGHBORHOODS_LAYER_ID ||
+  layer.name === 'neighborhoods_area' ||
+  layer.fieldsMapping?.fname != null
+
+const isMunicipalityIdentifyLayer = (layer: IdentifyLayerResult) =>
+  layer.layerId === GOVMAP_MUNICIPALITIES_LAYER_ID ||
+  layer.name === 'regional_authorities' ||
+  layer.fieldsMapping?.muni_heb != null ||
+  layer.fieldsMapping?.setl_name != null
+
+const isServicesIdentifyLayer = (layer: IdentifyLayerResult, servicesLayerName: string) => {
+  const servicesLayerId = servicesLayerName.replace(/^layer_/, '')
+  return layer.layerId === servicesLayerId || layer.fieldsMapping?.servicename != null
+}
+
+const parseGovMapZoomLevel = (response: unknown, fallback = GOVMAP_DEFAULT_VIEW_LEVEL): number => {
+  if (typeof response === 'number' && Number.isFinite(response)) return response
+  if (response && typeof response === 'object') {
+    const lodLevel = (response as { lod?: { level?: number } }).lod?.level
+    if (typeof lodLevel === 'number' && Number.isFinite(lodLevel)) return lodLevel
+    const level = (response as { level?: number; z?: number }).level
+    if (typeof level === 'number' && Number.isFinite(level)) return level
+    const z = (response as { z?: number }).z
+    if (typeof z === 'number' && Number.isFinite(z)) return z
+  }
+  return fallback
+}
+
+const shouldUseNeighborhoodClick = (zoomLevel: number) =>
+  zoomLevel >= GOVMAP_NEIGHBORHOOD_CLICK_MIN_LEVEL
+
+const getAreaIdentifyLayerId = (zoomLevel: number) =>
+  shouldUseNeighborhoodClick(zoomLevel)
+    ? GOVMAP_NEIGHBORHOODS_LAYER_ID
+    : GOVMAP_MUNICIPALITIES_LAYER_ID
+
+const findNeighborhoodOptionFromIdentify = (
+  neighborhoods: NeighborhoodMapOption[],
+  entity: IdentifyEntity,
+  fieldsMapping: Record<string, string> | undefined,
+): NeighborhoodMapOption | undefined => {
+  const objectId = entity.objectId
+  const nbrCode = normalizeNbrCode(getEntityFieldByKey(entity, fieldsMapping, 'nbr_code'))
+  const fname = getEntityFieldByKey(entity, fieldsMapping, 'fname')
+
+  return neighborhoods.find((option) => {
+    if (objectId != null && option.layerObjectId === objectId) return true
+    if (nbrCode && option.nbrCode === nbrCode) return true
+    if (fname && option.fname === fname) return true
+    return false
+  })
+}
+
+const findCityCenterOptionBySettlementName = (
+  neighborhoods: NeighborhoodMapOption[],
+  settlementName: string,
+): NeighborhoodMapOption | undefined => {
+  const name = settlementName.trim()
+  if (!name) return undefined
+
+  return neighborhoods.find(
+    (option) => option.cityObjectId != null && option.label.startsWith(`${name} -`),
+  )
+}
+
+const normalizeServiceFieldsForCard = (
+  entity: IdentifyEntity,
+  fieldsMapping: Record<string, string> | undefined,
+): IdentifyField[] => {
+  const serviceKeys = [
+    'servicename',
+    'fulladdress',
+    'servicedescription',
+    'targetpopulations',
+    'requirespaymentamount',
+    'requirespayment',
+    'serviceproviderorganizationtype',
+    'language',
+    'riskstatusdescription_agg',
+    'accessibility',
+    'providername',
+    'x',
+    'y',
+  ] as const
+
+  const normalized: IdentifyField[] = []
+  for (const key of serviceKeys) {
+    const value = getEntityFieldByKey(entity, fieldsMapping, key)
+    if (value) normalized.push({ fieldName: key, fieldValue: value })
+  }
+
+  for (const field of entity.fields ?? []) {
+    const name = field.fieldName?.toLowerCase()
+    if (!name || normalized.some((row) => row.fieldName?.toLowerCase() === name)) continue
+    const value = cleanIdentifyValue(field.fieldValue)
+    if (value) normalized.push({ fieldName: field.fieldName, fieldValue: value })
+  }
+
+  return normalized
+}
+
+const getClickMapPoint = (payload: MapPointerPayload) => {
+  const mapPoint = payload.mapPoint ?? payload.point
+  const x =
+    typeof mapPoint?.x === 'number'
+      ? mapPoint.x
+      : typeof payload.x === 'number'
+        ? payload.x
+        : null
+  const y =
+    typeof mapPoint?.y === 'number'
+      ? mapPoint.y
+      : typeof payload.y === 'number'
+        ? payload.y
+        : null
+  if (x === null || y === null) return null
+  return { x, y }
+}
+
 const GovMapView = () => {
   const {
     viewMode,
     selectedArea,
+    setSelectedArea,
     servicesQueryGeometry,
     neighborhoodsList,
     servicesList,
@@ -119,6 +296,8 @@ const GovMapView = () => {
   const hoverPointInfoRef = useRef<HoverPointTooltipInfo | null>(null)
   const hoverSessionRef = useRef(0)
   const areaServiceObjectIdsRef = useRef<number[]>([])
+  const mapZoomLevelRef = useRef(GOVMAP_DEFAULT_VIEW_LEVEL)
+  const neighborhoodsListRef = useRef(neighborhoodsList)
   const [isFiltersOpen, setIsFiltersOpen] = useState(true)
   const [isMapReady, setIsMapReady] = useState(false)
   const [filterSections, setFilterSections] = useState<FilterSectionData[]>([])
@@ -141,6 +320,10 @@ const GovMapView = () => {
   useEffect(() => {
     hoverPointInfoRef.current = hoverPointInfo
   }, [hoverPointInfo])
+
+  useEffect(() => {
+    neighborhoodsListRef.current = neighborhoodsList
+  }, [neighborhoodsList])
 
   useEffect(() => {
     return () => {
@@ -169,7 +352,7 @@ const GovMapView = () => {
       geometry: `POLYGON ((130000 380000, 285000 380000, 285000 805000, 130000 805000, 130000 380000))`,
       layerName: '22',
       fields: ['fname', 'setl_name', 'nbr_code'],
-      whereClause: "setl_name IN ( 'טירת כרמל')",
+      whereClause: "setl_name IN ( 'טירת כרמל', 'ירושלים')",
       getShapes: true,
     }
     window.govmap?.intersectFeatures?.(params)?.then(function (response: {
@@ -399,16 +582,119 @@ const GovMapView = () => {
     const govmap = window.govmap
     const clickEventType = govmap?.events?.CLICK
     if (!govmap || clickEventType === undefined) return
+
+    const syncZoomLevelFromMap = () => {
+      void Promise.resolve(govmap.getZoomLevel?.())
+        .then((zoomResponse) => parseGovMapZoomLevel(zoomResponse))
+        .then((zoomLevel) => {
+          mapZoomLevelRef.current = zoomLevel
+        })
+        .catch(() => {
+          mapZoomLevelRef.current = GOVMAP_DEFAULT_VIEW_LEVEL
+        })
+    }
+
+    syncZoomLevelFromMap()
+
+    const extentChangeEventType = govmap.events?.EXTENT_CHANGE
+    if (extentChangeEventType !== undefined) {
+      const extentChangeEvent = govmap.onEvent?.(extentChangeEventType)
+      extentChangeEvent?.progress((payload: GovMapExtentChangePayload) => {
+        if (!payload.levelChange) return
+        mapZoomLevelRef.current = parseGovMapZoomLevel(payload)
+      })
+    }
+
     const clickEvent = govmap.onEvent?.(clickEventType)
-    clickEvent?.progress((payload: any) => {
+    clickEvent?.progress((payload: MapPointerPayload) => {
       clearHoverTooltip()
-      govmap.identifyByXYAndLayer?.(payload.mapPoint.x, payload.mapPoint.y, [SITE.layers.servicesLayer])
-        ?.then((response: any) => {
-          const rawEntity = response?.data?.[0]?.entities?.[0] ?? response?.data?.[0]?.fields ?? null
-          setSelectedPointInfo(rawEntity.fields)
+
+      const mapPoint = getClickMapPoint(payload)
+      if (!mapPoint) return
+
+      const zoomLevel = mapZoomLevelRef.current
+      const areaLayerId = getAreaIdentifyLayerId(zoomLevel)
+      const useNeighborhoodClick = shouldUseNeighborhoodClick(zoomLevel)
+
+      void govmap
+        .identifyByXYAndLayer?.(mapPoint.x, mapPoint.y, [
+          areaLayerId,
+          SITE.layers.servicesLayer,
+        ])
+        ?.then((response: any) => ({ response, useNeighborhoodClick }))
+        ?.then((result) => {
+          if (!result) return
+
+          const { response, useNeighborhoodClick } = result
+          let serviceFields: IdentifyField[] | null = null
+
+          for (const layerResult of response?.data ?? []) {
+            const layer = layerResult as IdentifyLayerResult
+            const entity = layer.entities?.[0]
+            if (!entity) continue
+
+            if (!useNeighborhoodClick && isMunicipalityIdentifyLayer(layer)) {
+              const settlementName =
+                getEntityFieldByKey(entity, layer.fieldsMapping, 'muni_heb') ||
+                getEntityFieldByKey(entity, layer.fieldsMapping, 'setl_name') ||
+                getEntityFieldByKey(entity, layer.fieldsMapping, 'name')
+              const selectedOption = findCityCenterOptionBySettlementName(
+                neighborhoodsListRef.current,
+                settlementName,
+              )
+              if (selectedOption) {
+                const centroid = entity.centroid
+                const center =
+                  Array.isArray(centroid) &&
+                  centroid.length >= 2 &&
+                  Number.isFinite(centroid[0]) &&
+                  Number.isFinite(centroid[1])
+                    ? { x: centroid[0], y: centroid[1] }
+                    : selectedOption.value
+
+                if (entity.geom) {
+                  setNeighborhoodsList((prev) =>
+                    prev.map((opt) =>
+                      opt.optionValue === selectedOption.optionValue
+                        ? {
+                            ...opt,
+                            geometry: entity.geom,
+                            value: center,
+                            municipalityObjectId: entity.objectId,
+                          }
+                        : opt,
+                    ),
+                  )
+                }
+                setSelectedArea(selectedOption.optionValue)
+              }
+              continue
+            }
+
+            if (useNeighborhoodClick && isNeighborhoodIdentifyLayer(layer)) {
+              const selectedOption = findNeighborhoodOptionFromIdentify(
+                neighborhoodsListRef.current,
+                entity,
+                layer.fieldsMapping,
+              )
+              if (selectedOption) {
+                setSelectedArea(selectedOption.optionValue)
+              }
+              continue
+            }
+
+            if (isServicesIdentifyLayer(layer, SITE.layers.servicesLayer)) {
+              const serviceName = getEntityFieldByKey(entity, layer.fieldsMapping, 'servicename')
+              if (serviceName) {
+                serviceFields = normalizeServiceFieldsForCard(entity, layer.fieldsMapping)
+              }
+            }
+          }
+
+          setSelectedPointInfo(serviceFields)
         })
         ?.catch((error: unknown) => {
-          console.error('failed identifying map point', error)
+          console.error('failed identifying map click', error)
           setSelectedPointInfo(null)
         })
     })

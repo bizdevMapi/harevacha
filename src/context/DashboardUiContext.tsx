@@ -28,6 +28,8 @@ export type NeighborhoodMapOption = {
   fname?: string
   geometry?: string,
   cityObjectId?: string,
+  /** מזהה ישות בשכבת רשויות (125) — להדגשת גבול הרשות */
+  municipalityObjectId?: number,
 }
 
 export type DashboardUiValue = {
