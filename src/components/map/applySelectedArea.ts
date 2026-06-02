@@ -9,7 +9,6 @@ import {
   mapIntersectFeaturesToServicesList,
   SERVICE_TABLE_LAYER_FIELDS,
 } from '../../data/servicesListTypes'
-import { buildAreaObjectIdsClause } from './mapLayerFilters'
 
 const NEIGHBORHOODS_LAYER_NAME = '22'
 
@@ -67,22 +66,9 @@ export async function applySelectedArea(
       SERVICE_TABLE_LAYER_FIELDS,
     )
     callbacks.setServicesList(rows)
-
-    const objectIds = rows
-      .map((row) => row.objectId)
-      .filter((value) => Number.isFinite(value))
-    govmap.filterLayers?.({
-      layerName: SITE.layers.servicesLayer,
-      whereClause: buildAreaObjectIdsClause(objectIds),
-      zoomToExtent: true,
-    })
   } catch (error) {
     console.error('failed applying selected area', error)
     callbacks.setServicesList([])
-    govmap.filterLayers?.({
-      layerName: SITE.layers.servicesLayer,
-      zoomToExtent: true,
-    })
   } finally {
     callbacks.setServicesListLoading(false)
   }

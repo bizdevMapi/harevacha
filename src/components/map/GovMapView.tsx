@@ -298,6 +298,7 @@ const GovMapView = () => {
   const areaServiceObjectIdsRef = useRef<number[]>([])
   const mapZoomLevelRef = useRef(GOVMAP_DEFAULT_VIEW_LEVEL)
   const neighborhoodsListRef = useRef(neighborhoodsList)
+  const selectedAreaRef = useRef(selectedArea)
   const [isFiltersOpen, setIsFiltersOpen] = useState(true)
   const [isMapReady, setIsMapReady] = useState(false)
   const [filterSections, setFilterSections] = useState<FilterSectionData[]>([])
@@ -305,6 +306,17 @@ const GovMapView = () => {
   const [hoverPointInfo, setHoverPointInfo] = useState<HoverPointTooltipInfo | null>(null)
   const [hoverTooltipPosition, setHoverTooltipPosition] = useState<{ left: number; top: number } | null>(null)
   const selectedAreaOption = neighborhoodsList.find((n) => n.optionValue === selectedArea)
+  const applyAreaSelection = (option: NeighborhoodMapOption) => {
+    if (option.optionValue === selectedAreaRef.current) {
+      void applySelectedArea(option, {
+        setServicesQueryGeometry,
+        setServicesListLoading,
+        setServicesList,
+      })
+      return
+    }
+    setSelectedArea(option.optionValue)
+  }
   const handleExpandPointMap = (center: { x: number; y: number } | null) => {
     const target = center ?? selectedAreaOption?.value ?? null
     if (!target) return
@@ -324,6 +336,10 @@ const GovMapView = () => {
   useEffect(() => {
     neighborhoodsListRef.current = neighborhoodsList
   }, [neighborhoodsList])
+
+  useEffect(() => {
+    selectedAreaRef.current = selectedArea
+  }, [selectedArea])
 
   useEffect(() => {
     return () => {
@@ -652,21 +668,25 @@ const GovMapView = () => {
                     ? { x: centroid[0], y: centroid[1] }
                     : selectedOption.value
 
-                if (entity.geom) {
-                  setNeighborhoodsList((prev) =>
-                    prev.map((opt) =>
-                      opt.optionValue === selectedOption.optionValue
-                        ? {
-                            ...opt,
-                            geometry: entity.geom,
-                            value: center,
-                            municipalityObjectId: entity.objectId,
-                          }
-                        : opt,
-                    ),
-                  )
+                const optionToApply: NeighborhoodMapOption = {
+                  ...selectedOption,
+                  // Keep the predefined city geometry for service queries.
+                  // Municipality identify geometry can be too broad/incompatible for intersectFeatures.
+                  value: center,
+                  municipalityObjectId: entity.objectId,
                 }
-                setSelectedArea(selectedOption.optionValue)
+                setNeighborhoodsList((prev) =>
+                  prev.map((opt) =>
+                    opt.optionValue === selectedOption.optionValue
+                      ? {
+                          ...opt,
+                          value: center,
+                          municipalityObjectId: entity.objectId,
+                        }
+                      : opt,
+                  ),
+                )
+                applyAreaSelection(optionToApply)
               }
               continue
             }
@@ -678,7 +698,7 @@ const GovMapView = () => {
                 layer.fieldsMapping,
               )
               if (selectedOption) {
-                setSelectedArea(selectedOption.optionValue)
+                applyAreaSelection(selectedOption)
               }
               continue
             }
@@ -729,6 +749,7 @@ const GovMapView = () => {
     const scriptSrc = import.meta.env.VITE_GOVMAP_URL || 'https://govmap.gov.il/govmap/api/govmap.api.js'
 
     const initMap = () => {
+      console.log('initMap')
       const govmap = window.govmap
       if (!govmap) return
       govmap.createMap('map-container', {
@@ -800,12 +821,13 @@ const GovMapView = () => {
   ])
 
   useEffect(() => {
-    setSelectedServiceFilterKeys(new Set())
-    setServiceFilterSearchQuery('')
+    setSelectedServiceFilterKeys((prev) => (prev.size === 0 ? prev : new Set()))
+    setServiceFilterSearchQuery((prev) => (prev === '' ? prev : ''))
   }, [servicesQueryGeometry])
 
   useEffect(() => {
     if (viewMode !== 'map') return
+    if (servicesListLoading) return
     areaServiceObjectIdsRef.current = servicesList.map((service) => service.objectId)
     const relevantServices = filterServicesBySearchQuery(servicesList, appliedServiceFilterSearchQuery)
     setFilterSections(buildFilterSectionsFromServiceList(relevantServices))
@@ -813,6 +835,7 @@ const GovMapView = () => {
   }, [
     viewMode,
     servicesList,
+    servicesListLoading,
     selectedServiceFilterKeys,
     appliedServiceFilterSearchQuery,
     setMatchedServicesCount,
