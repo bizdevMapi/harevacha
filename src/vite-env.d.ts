@@ -54,7 +54,12 @@ interface GovMapApi {
     options: GovMapCreateOptions,
     callback?: (map: GovMapInstance) => void,
   ) => void
-  events?: { CLICK?: number; [key: string]: number | undefined }
+  events?: {
+    CLICK?: number
+    EXTENT_CHANGE?: number
+    MOUSE_MOVE?: number
+    [key: string]: number | undefined
+  }
   getLayerData?: (params: GovMapLayerDataParams) => Promise<unknown>
   getLayerFeaturesByLocation?: (
     params: GovMapGetLayerFeaturesByLocationParams,
@@ -78,6 +83,7 @@ interface GovMapApi {
     highlight?: boolean
   }) => void
   identifyByXYAndLayer?: (x: number, y: number, layers: string[]) => Promise<unknown>
+  getZoomLevel?: () => Promise<number | { level?: number; z?: number }>
   filterLayers?: (params: {
     layerName: string
     whereClause: string
