@@ -6,6 +6,7 @@ import {
   filterServicesBySearchQuery,
   filterServicesBySelectedKeys,
 } from '../map/mapLayerFilters'
+import MapPointInfoCard from '../map/MapPointInfoCard'
 import ServicesListTable from './ServicesListTable'
 
 const ServicesListView = () => {
@@ -19,6 +20,10 @@ const ServicesListView = () => {
     appliedServiceFilterSearchQuery,
     selectedServiceFilterKeys,
     setSelectedServiceFilterKeys,
+    selectedPointInfo,
+    setSelectedPointInfo,
+    selectedArea,
+    neighborhoodsList,
   } = useDashboardUi()
 
   const filterSections = useMemo(
@@ -30,6 +35,8 @@ const ServicesListView = () => {
     const bySelectedKeys = filterServicesBySelectedKeys(servicesList, selectedServiceFilterKeys)
     return filterServicesBySearchQuery(bySelectedKeys, appliedServiceFilterSearchQuery)
   }, [servicesList, selectedServiceFilterKeys, appliedServiceFilterSearchQuery])
+
+  const selectedAreaOption = neighborhoodsList.find((n) => n.optionValue === selectedArea)
 
   useEffect(() => {
     if (viewMode !== 'list') return
@@ -67,9 +74,18 @@ const ServicesListView = () => {
             </p>
           </div>
         ) : (
-          <ServicesListTable rows={filteredRows} />
+          <ServicesListTable rows={filteredRows} onServiceClick={setSelectedPointInfo} />
         )}
       </div>
+
+      {selectedPointInfo && (
+        <MapPointInfoCard
+          data={selectedPointInfo}
+          onClose={() => setSelectedPointInfo(null)}
+          selectedAreaCenter={selectedAreaOption?.value ?? null}
+          onExpandMap={null}
+        />
+      )}
     </div>
   )
 }

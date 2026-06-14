@@ -11,6 +11,7 @@ import {
   TIRAT_CARMEL_CITY_AREA_OPTION,
 } from '../../constants'
 import type { NeighborhoodMapOption } from '../../context/DashboardUiContext'
+import { loadGovmapScript } from '../../utils/loadGovmapScript'
 import { applySelectedArea } from './applySelectedArea'
 import MapFiltersPanel from './MapFiltersPanel'
 import {
@@ -20,7 +21,7 @@ import {
   filterServicesBySelectedKeys,
   type FilterSectionData,
 } from './mapLayerFilters'
-import MapPointInfoCard, { type MapPointInfoField } from './MapPointInfoCard'
+import MapPointInfoCard from './MapPointInfoCard'
 import MapPointTooltip from './MapPointTooltip'
 import MapProfileInsightsCard from './profile-insights/MapProfileInsightsCard'
 
@@ -286,6 +287,8 @@ const GovMapView = () => {
     appliedServiceFilterSearchQuery,
     selectedServiceFilterKeys,
     setSelectedServiceFilterKeys,
+    selectedPointInfo,
+    setSelectedPointInfo,
   } = useDashboardUi()
   const mapRef = useRef<HTMLDivElement | null>(null)
   const isHoverIdentifyInFlightRef = useRef(false)
@@ -302,7 +305,6 @@ const GovMapView = () => {
   const [isFiltersOpen, setIsFiltersOpen] = useState(true)
   const [isMapReady, setIsMapReady] = useState(false)
   const [filterSections, setFilterSections] = useState<FilterSectionData[]>([])
-  const [selectedPointInfo, setSelectedPointInfo] = useState<MapPointInfoField[] | null>(null)
   const [hoverPointInfo, setHoverPointInfo] = useState<HoverPointTooltipInfo | null>(null)
   const [hoverTooltipPosition, setHoverTooltipPosition] = useState<{ left: number; top: number } | null>(null)
   const selectedAreaOption = neighborhoodsList.find((n) => n.optionValue === selectedArea)
@@ -746,8 +748,6 @@ const GovMapView = () => {
   }
 
   useEffect(() => {
-    const scriptSrc = import.meta.env.VITE_GOVMAP_URL || 'https://govmap.gov.il/govmap/api/govmap.api.js'
-
     const initMap = () => {
       console.log('initMap')
       const govmap = window.govmap
@@ -780,17 +780,7 @@ const GovMapView = () => {
       })
     }
 
-    const existingScript = document.querySelector(`script[src="${scriptSrc}"]`)
-    if (existingScript) {
-      initMap()
-      return
-    }
-
-    const script = document.createElement('script')
-    script.src = scriptSrc
-    script.async = true
-    script.onload = initMap
-    document.body.appendChild(script)
+    void loadGovmapScript().then(initMap)
   }, [])
 
   useEffect(() => {

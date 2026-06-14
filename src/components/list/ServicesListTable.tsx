@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { ServiceListColumn, ServiceListItem } from '../../data/servicesListTypes'
 import { formatServiceCost, SERVICE_LIST_COLUMNS } from '../../data/servicesListTypes'
+import type { MapPointInfoField } from '../map/MapPointInfoCard'
 
 const TABLE_MIN_WIDTH = SERVICE_LIST_COLUMNS.reduce((sum, col) => sum + col.width, 0)
 
@@ -28,9 +29,11 @@ function TableHeaderCell({ column }: { column: ServiceListColumn }) {
 function TableBodyCell({
   row,
   column,
+  onServiceClick,
 }: {
   row: ServiceListItem
   column: ServiceListColumn
+  onServiceClick?: (row: ServiceListItem) => void
 }) {
   const baseClass =
     'h-8 border-b border-l border-[#dce3ec] bg-white px-1.5 text-right align-middle text-[11px] leading-[16px] text-[#34404f] last:border-l-0'
@@ -43,6 +46,7 @@ function TableBodyCell({
       >
         <button
           type="button"
+          onClick={() => onServiceClick?.(row)}
           className="block w-full truncate text-right font-medium text-[#1e6fb8] hover:underline"
           title={row.ServiceName}
         >
@@ -100,10 +104,42 @@ function TableBodyCell({
 type ServicesListTableProps = {
   rows: ServiceListItem[]
   searchQuery?: string
+  onServiceClick?: (fields: MapPointInfoField[]) => void
 }
 
-const ServicesListTable = ({ rows, searchQuery = '' }: ServicesListTableProps) => {
+const convertServiceToPointInfo = (service: ServiceListItem): MapPointInfoField[] => {
+  const fields: MapPointInfoField[] = []
+
+  const addField = (fieldName: string, fieldValue: unknown) => {
+    if (fieldValue != null && String(fieldValue).trim() !== '') {
+      fields.push({ fieldName, fieldValue })
+    }
+  }
+
+  addField('servicename', service.ServiceName)
+  addField('fulladdress', service.FullAddress)
+  addField('servicedescription', service.ServiceDescription)
+  addField('targetpopulations', service.TargetPopulations)
+  addField('requirespaymentamount', service.RequiresPaymentAmount)
+  addField('requirespayment', service.RequiresPayment)
+  addField('serviceproviderorganizationtype', service.ServiceProviderOrganizationType)
+  addField('language', service.Language)
+  addField('riskstatusdescription_agg', service.RiskStatusDescription_Agg)
+  addField('accessibility', service.Accessibility)
+  addField('providername', service.ProviderName)
+  addField('gisx', service.GisX)
+  addField('gisy', service.GisY)
+
+  return fields
+}
+
+const ServicesListTable = ({ rows, searchQuery = '', onServiceClick }: ServicesListTableProps) => {
   const [sortAsc, setSortAsc] = useState(true)
+
+  const handleServiceClick = (row: ServiceListItem) => {
+    const fields = convertServiceToPointInfo(row)
+    onServiceClick?.(fields)
+  }
 
   const filteredRows = useMemo(() => {
     const q = searchQuery.trim().toLowerCase()
@@ -159,7 +195,7 @@ const ServicesListTable = ({ rows, searchQuery = '' }: ServicesListTableProps) =
           {sortedRows.map((row) => (
             <tr key={row.objectId} className="group transition-colors hover:bg-[#f9fbfe]">
               {SERVICE_LIST_COLUMNS.map((column) => (
-                <TableBodyCell key={column.id} row={row} column={column} />
+                <TableBodyCell key={column.id} row={row} column={column} onServiceClick={handleServiceClick} />
               ))}
             </tr>
           ))}
