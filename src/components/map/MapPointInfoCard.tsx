@@ -77,6 +77,7 @@ const MapPointInfoCard = ({
     [],
   )
   const isMiniMapInitializedRef = useRef(false)
+  const lastServiceNameRef = useRef<string | null>(null)
   const [isMiniMapReady, setIsMiniMapReady] = useState(false)
 
   const fieldMap = new Map<string, string>()
@@ -111,6 +112,13 @@ const MapPointInfoCard = ({
   })()
   const mapCenter = serviceCenter ?? selectedAreaCenter ?? null
 
+  // Reset initialization flag when opening a different service
+  if (lastServiceNameRef.current !== title) {
+    isMiniMapInitializedRef.current = false
+    setIsMiniMapReady(false)
+    lastServiceNameRef.current = title
+  }
+
   useEffect(() => {
     if (!mapCenter) return
 
@@ -137,6 +145,17 @@ const MapPointInfoCard = ({
             })
           },
         })
+
+        // Fallback in case onLoad doesn't fire
+        setTimeout(() => {
+          setIsMiniMapReady(true)
+          window.govmap?.zoomToXY?.({
+            x: mapCenter.x,
+            y: mapCenter.y,
+            level: 10,
+            marker: true,
+          })
+        }, 1500)
         return
       }
 
