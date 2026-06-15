@@ -1,4 +1,4 @@
-/** שדות נדרשים לשכבת המענים — רק עמודות הטבלה */
+/** שדות נדרשים לשכבת המענים — עמודות טבלה + שדות לכרטיס מידע */
 export const SERVICE_TABLE_LAYER_FIELDS = [
   'ServiceName',
   'ServiceTypeDescription',
@@ -12,6 +12,10 @@ export const SERVICE_TABLE_LAYER_FIELDS = [
   'RequiresPayment',
   'ServiceProviderOrganizationType',
   'FullAddress',
+  'ServiceDescription',
+  'ProviderName',
+  'GisX',
+  'GisY',
 ] as const
 
 export type ServiceTableField = (typeof SERVICE_TABLE_LAYER_FIELDS)[number]
@@ -30,6 +34,10 @@ export type ServiceListItem = {
   RequiresPayment: string
   ServiceProviderOrganizationType: string
   FullAddress: string
+  ServiceDescription: string
+  ProviderName: string
+  GisX: string
+  GisY: string
 }
 
 export type ServiceListColumnId =
@@ -130,6 +138,10 @@ export function mapIntersectFeaturesToServicesList(
         RequiresPayment: String(row.RequiresPayment ?? ''),
         ServiceProviderOrganizationType: String(row.ServiceProviderOrganizationType ?? ''),
         FullAddress: String(row.FullAddress ?? ''),
+        ServiceDescription: String(row.ServiceDescription ?? ''),
+        ProviderName: String(row.ProviderName ?? ''),
+        GisX: String(row.GisX ?? ''),
+        GisY: String(row.GisY ?? ''),
       }
     })
     .filter((row): row is ServiceListItem => row != null)

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { loadGovmapScript } from '../../utils/loadGovmapScript'
 import type { MapPointInfoIconId } from './mapPointInfoData'
 import { IconClose, IconExpand, MapPointInfoIcon } from './MapPointInfoIcons'
 
@@ -11,7 +12,7 @@ type MapPointInfoCardProps = {
   data: MapPointInfoField[]
   onClose: () => void
   selectedAreaCenter?: { x: number; y: number } | null
-  onExpandMap?: (center: { x: number; y: number } | null) => void
+  onExpandMap?: ((center: { x: number; y: number } | null) => void) | null
 }
 
 type DetailRowData = {
@@ -76,6 +77,7 @@ const MapPointInfoCard = ({
     [],
   )
   const isMiniMapInitializedRef = useRef(false)
+  const lastServiceNameRef = useRef<string | null>(null)
   const [isMiniMapReady, setIsMiniMapReady] = useState(false)
 
   const fieldMap = new Map<string, string>()
@@ -110,21 +112,42 @@ const MapPointInfoCard = ({
   })()
   const mapCenter = serviceCenter ?? selectedAreaCenter ?? null
 
+  // Reset initialization flag when opening a different service
+  if (lastServiceNameRef.current !== title) {
+    isMiniMapInitializedRef.current = false
+    setIsMiniMapReady(false)
+    lastServiceNameRef.current = title
+  }
+
   useEffect(() => {
     if (!mapCenter) return
-    const govmap = window.govmap
-    const container = document.getElementById(miniMapContainerId)
-    if (!container || !govmap?.createMap) return
 
-    if (!isMiniMapInitializedRef.current) {
-      isMiniMapInitializedRef.current = true
-      govmap.createMap(miniMapContainerId, {
-        token: import.meta.env.VITE_GOVMAP_TOKEN,
-        center: mapCenter,
-        level: 10,
-        layersMode: 1,
-        identifyOnClick: false,
-        onLoad: () => {
+    void loadGovmapScript().then(() => {
+      const govmap = window.govmap
+      const container = document.getElementById(miniMapContainerId)
+      if (!container || !govmap?.createMap) return
+
+      if (!isMiniMapInitializedRef.current) {
+        isMiniMapInitializedRef.current = true
+        govmap.createMap(miniMapContainerId, {
+          token: import.meta.env.VITE_GOVMAP_TOKEN,
+          center: mapCenter,
+          level: 10,
+          layersMode: 1,
+          identifyOnClick: false,
+          onLoad: () => {
+            setIsMiniMapReady(true)
+            window.govmap?.zoomToXY?.({
+              x: mapCenter.x,
+              y: mapCenter.y,
+              level: 10,
+              marker: true,
+            })
+          },
+        })
+
+        // Fallback in case onLoad doesn't fire
+        setTimeout(() => {
           setIsMiniMapReady(true)
           window.govmap?.zoomToXY?.({
             x: mapCenter.x,
@@ -132,16 +155,16 @@ const MapPointInfoCard = ({
             level: 10,
             marker: true,
           })
-        },
-      })
-      return
-    }
+        }, 1500)
+        return
+      }
 
-    govmap.zoomToXY?.({
-      x: mapCenter.x,
-      y: mapCenter.y,
-      level: 10,
-      marker: true,
+      govmap.zoomToXY?.({
+        x: mapCenter.x,
+        y: mapCenter.y,
+        level: 10,
+        marker: true,
+      })
     })
   }, [miniMapContainerId, mapCenter])
 
@@ -178,16 +201,18 @@ const MapPointInfoCard = ({
             {!isMiniMapReady && (
               <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#dce8f4] via-[#e8eef4] to-[#f0f4f8] opacity-60" />
             )}
-            <button
-              type="button"
-              onClick={() => onExpandMap?.(mapCenter)}
-              className="absolute right-2 top-2 flex items-center justify-center rounded-[7px] bg-white p-0.5 shadow-sm transition-colors hover:bg-[#f5f8fc]"
-              aria-label="הרחבת מפה"
-            >
-              <span className="flex size-5 items-center justify-center">
-                <IconExpand />
-              </span>
-            </button>
+            {onExpandMap && (
+              <button
+                type="button"
+                onClick={() => onExpandMap(mapCenter)}
+                className="absolute right-2 top-2 flex items-center justify-center rounded-[7px] bg-white p-0.5 shadow-sm transition-colors hover:bg-[#f5f8fc]"
+                aria-label="הרחבת מפה"
+              >
+                <span className="flex size-5 items-center justify-center">
+                  <IconExpand />
+                </span>
+              </button>
+            )}
           </div>
 
           <div className="flex w-full flex-col items-end justify-center gap-3.5">

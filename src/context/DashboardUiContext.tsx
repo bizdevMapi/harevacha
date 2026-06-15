@@ -11,6 +11,7 @@ import {
 } from 'react'
 import type { ServiceListItem } from '../data/servicesListTypes'
 import { getCityCenterAreaSelectValue, TIRAT_CARMEL_CITY_AREA_OPTION } from '../constants'
+import type { MapPointInfoField } from '../components/map/MapPointInfoCard'
 
 export type DashboardViewMode = 'map' | 'list'
 
@@ -58,6 +59,8 @@ export type DashboardUiValue = {
   appliedServiceFilterSearchQuery: string
   selectedServiceFilterKeys: Set<string>
   setSelectedServiceFilterKeys: Dispatch<SetStateAction<Set<string>>>
+  selectedPointInfo: MapPointInfoField[] | null
+  setSelectedPointInfo: Dispatch<SetStateAction<MapPointInfoField[] | null>>
 }
 
 const DashboardUiContext = createContext<DashboardUiValue | null>(null)
@@ -86,6 +89,7 @@ export function DashboardUiProvider({ children }: { children: ReactNode }) {
   const [selectedServiceFilterKeys, setSelectedServiceFilterKeys] = useState<Set<string>>(
     () => new Set(),
   )
+  const [selectedPointInfo, setSelectedPointInfo] = useState<MapPointInfoField[] | null>(null)
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -94,6 +98,10 @@ export function DashboardUiProvider({ children }: { children: ReactNode }) {
 
     return () => window.clearTimeout(timer)
   }, [serviceFilterSearchQuery])
+
+  useEffect(() => {
+    setSelectedPointInfo(null)
+  }, [viewMode])
 
   const setPopulationSegment = useCallback((value: string) => {
     setPopulationSegmentState(value)
@@ -132,6 +140,8 @@ export function DashboardUiProvider({ children }: { children: ReactNode }) {
       appliedServiceFilterSearchQuery,
       selectedServiceFilterKeys,
       setSelectedServiceFilterKeys,
+      selectedPointInfo,
+      setSelectedPointInfo,
     }),
     [
       viewMode,
@@ -148,6 +158,7 @@ export function DashboardUiProvider({ children }: { children: ReactNode }) {
       serviceFilterSearchQuery,
       appliedServiceFilterSearchQuery,
       selectedServiceFilterKeys,
+      selectedPointInfo,
     ],
   )
 
