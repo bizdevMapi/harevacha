@@ -9,8 +9,9 @@ type MapPointTooltipData = {
   price?: string
   provider?: string
   languages?: string
-  risk?: string
-  accessibility?: string
+  airisktype?: string
+  accessibility?: string,
+
 }
 
 type MapPointTooltipProps = {
@@ -75,11 +76,12 @@ const MapPointTooltip = ({ data, position }: MapPointTooltipProps) => {
   const detailCells: TooltipDetailCell[] = [
     { row: 1, col: 1, icon: 'group', value: cleanValue(data.audiences) },
     { row: 1, col: 2, icon: 'price', value: cleanValue(data.price) },
-    { row: 2, col: 1, icon: 'building', value: cleanValue(data.provider) },
-    { row: 2, col: 2, icon: 'language', value: cleanValue(data.languages) },
-    { row: 3, col: 1, icon: 'target', value: cleanValue(data.risk) },
+    { row: 2, col: 2, icon: 'building', value: cleanValue(data.provider) },
+    { row: 2, col: 1, icon: 'language', value: cleanValue(data.languages) },
+    { row: 3, col: 1, icon: 'target', value: cleanValue(data.airisktype) },
     { row: 3, col: 2, icon: 'accessibility', value: cleanValue(data.accessibility) },
   ]
+  console.log('detailCells:', detailCells)
 
   useLayoutEffect(() => {
     const tooltipEl = tooltipRef.current
