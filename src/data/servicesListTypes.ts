@@ -14,6 +14,10 @@ export const SERVICE_TABLE_LAYER_FIELDS = [
   'FullAddress',
   'ServiceDescription',
   'ProviderName',
+  'LocationType',
+  'ParticipationEligibility',
+  'ActivityType',
+  'airisktype',
   'GisX',
   'GisY',
 ] as const
@@ -26,6 +30,7 @@ export type ServiceListItem = {
   ServiceTypeDescription: string
   RiskStatusDescription_Agg: string
   TargetPopulations: string
+  LocationType: string
   Language: string
   Phone: string
   OpenHours: string
@@ -36,6 +41,9 @@ export type ServiceListItem = {
   FullAddress: string
   ServiceDescription: string
   ProviderName: string
+  ParticipationEligibility: string
+  ActivityType: string
+  airisktype: string
   GisX: string
   GisY: string
 }
@@ -55,15 +63,17 @@ export type ServiceListColumn = {
 /** עמודות הטבלה — סדר RTL מימין לשמאל כמו בפיגמה */
 export const SERVICE_LIST_COLUMNS: ServiceListColumn[] = [
   { id: 'ServiceName', label: 'שם מענה', width: 168, sortable: true, cellType: 'link' },
-  { id: 'ServiceTypeDescription', label: 'סוג מענה', width: 168, cellType: 'text' },
-  { id: 'RiskStatusDescription_Agg', label: 'מותאם למצבי סיכון', width: 168, cellType: 'tags' },
+  { id: 'airisktype', label: 'התאמה למצבי סיכון', width: 168, cellType: 'tags' },
+  { id: 'ServiceDescription', label: 'סוג מענה', width: 168, cellType: 'text' },
   { id: 'TargetPopulations', label: 'אוכלוסיה ייעודית', width: 120, cellType: 'text' },
-  { id: 'Phone', label: 'פרטי קשר', width: 118, cellType: 'text' },
-  { id: 'OpenHours', label: 'שעות פעילות', width: 134, cellType: 'text' },
-  { id: 'Accessibility', label: 'הנגשה', width: 214, cellType: 'text' },
-  { id: 'cost', label: 'עלות', width: 80, cellType: 'cost' },
-  { id: 'ServiceProviderOrganizationType', label: 'סוג ארגון', width: 96, cellType: 'text' },
-  { id: 'FullAddress', label: 'מיקום', width: 214, cellType: 'text' },
+  { id: 'ProviderName', label: 'שם ארגון מספק השירות', width: 168, cellType: 'text' },
+  { id: 'ServiceProviderOrganizationType', label: 'סוג ארגון (נותן השירות)', width: 96, cellType: 'text' },
+  { id: 'RequiresPaymentAmount', label: 'עלות', width: 96, cellType: 'text' },
+  { id: 'LocationType', label: 'סוג מיקום ', width: 96, cellType: 'text' },
+  { id: 'Accessibility', label: 'נגישות', width: 214, cellType: 'text' },
+  { id: 'Language', label: 'שפות', width: 118, cellType: 'text' },
+  { id: 'ParticipationEligibility', label: 'קהל יעד', width: 118, cellType: 'text' },
+  { id: 'ActivityType', label: 'סוג פעילות', width: 118, cellType: 'text' },
 ]
 
 export type GovmapIntersectFeature = {
@@ -111,7 +121,6 @@ export function mapIntersectFeaturesToServicesList(
   fields: readonly string[] = SERVICE_TABLE_LAYER_FIELDS,
 ): ServiceListItem[] {
   if (!items?.length) return []
-
   return items
     .map((item) => {
       const objectId = item.ObjectId
@@ -123,13 +132,14 @@ export function mapIntersectFeaturesToServicesList(
       fields.forEach((fieldName, index) => {
         row[fieldName] = cellToString(values[index])
       })
-
+      
       return {
         objectId,
         ServiceName: String(row.ServiceName ?? ''),
         ServiceTypeDescription: String(row.ServiceTypeDescription ?? ''),
         RiskStatusDescription_Agg: String(row.RiskStatusDescription_Agg ?? ''),
         TargetPopulations: String(row.TargetPopulations ?? ''),
+        LocationType: String(row.LocationType ?? ''),
         Language: String(row.Language ?? ''),
         Phone: String(row.Phone ?? ''),
         OpenHours: String(row.OpenHours ?? ''),
@@ -140,6 +150,9 @@ export function mapIntersectFeaturesToServicesList(
         FullAddress: String(row.FullAddress ?? ''),
         ServiceDescription: String(row.ServiceDescription ?? ''),
         ProviderName: String(row.ProviderName ?? ''),
+        ParticipationEligibility: String(row.ParticipationEligibility ?? ''),
+        ActivityType: String(row.ActivityType ?? ''),
+        airisktype: String(row.airisktype ?? ''),
         GisX: String(row.GisX ?? ''),
         GisY: String(row.GisY ?? ''),
       }

@@ -57,7 +57,7 @@ function TableBodyCell({
   }
 
   if (column.cellType === 'tags') {
-    const value = String(row.RiskStatusDescription_Agg ?? '')
+    const value = String(row[column.id as keyof ServiceListItem] ?? '')
     return (
       <td
         style={{ width: column.width, minWidth: column.width, maxWidth: column.width }}
@@ -127,8 +127,8 @@ const convertServiceToPointInfo = (service: ServiceListItem): MapPointInfoField[
   addField('riskstatusdescription_agg', service.RiskStatusDescription_Agg)
   addField('accessibility', service.Accessibility)
   addField('providername', service.ProviderName)
-  addField('gisx', service.GisX)
-  addField('gisy', service.GisY)
+  addField('gisx', service.X)
+  addField('gisy', service.Y)
 
   return fields
 }
