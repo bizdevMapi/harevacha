@@ -68,36 +68,54 @@ function FilterSection({
   section,
   selectedKeys,
   onToggle,
+  isExpanded,
+  onToggleExpand,
 }: {
   section: FilterSectionData
   selectedKeys: Set<string>
   onToggle: (key: string, checked: boolean) => void
+  isExpanded: boolean
+  onToggleExpand: () => void
 }) {
   const sectionKey = (label: string) => `${section.title}::${label}`
 
   return (
     <section className="flex w-full flex-col items-end gap-3.5">
       <div className="flex w-full max-w-[312px] flex-col items-end gap-2.5">
-        <h3
-          className={`w-full text-right text-base font-bold leading-5 ${section.titleClassName ?? 'text-[#084878]'}`}
+        <button
+          type="button"
+          onClick={onToggleExpand}
+          className="flex w-full items-center justify-end gap-2 text-right transition-colors hover:opacity-80"
+          aria-expanded={isExpanded}
         >
-          {section.title}
-        </h3>
-        <DistributionBar items={section.items} />
+          <h3
+            className={`flex-1 text-right text-base font-bold leading-5 ${section.titleClassName ?? 'text-[#084878]'}`}
+          >
+            {section.title}
+          </h3>
+          <span
+            className={`inline-flex shrink-0 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+          >
+            <IconChevronDown className="size-4" />
+          </span>
+        </button>
+        {isExpanded && <DistributionBar items={section.items} />}
       </div>
-      <div className="w-full max-w-[312px]">
-        {section.items.map((item) => {
-          const key = sectionKey(item.label)
-          return (
-            <FilterListItem
-              key={key}
-              item={item}
-              checked={selectedKeys.has(key)}
-              onChange={(checked) => onToggle(key, checked)}
-            />
-          )
-        })}
-      </div>
+      {isExpanded && (
+        <div className="w-full max-w-[312px]">
+          {section.items.map((item) => {
+            const key = sectionKey(item.label)
+            return (
+              <FilterListItem
+                key={key}
+                item={item}
+                checked={selectedKeys.has(key)}
+                onChange={(checked) => onToggle(key, checked)}
+              />
+            )
+          })}
+        </div>
+      )}
     </section>
   )
 }
@@ -134,6 +152,7 @@ const MapFiltersPanel = ({
   const [internalSelectedKeys, setInternalSelectedKeys] = useState<Set<string>>(() => new Set())
   const selectedKeys = controlledSelectedKeys ?? internalSelectedKeys
   const setSelectedKeys = onFilterSelectionChange ?? setInternalSelectedKeys
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(() => new Set())
 
   const handleClear = () => {
     setSearchQuery('')
@@ -146,6 +165,13 @@ const MapFiltersPanel = ({
     if (checked) next.add(key)
     else next.delete(key)
     setSelectedKeys(next)
+  }
+
+  const handleToggleSection = (title: string) => {
+    const next = new Set(expandedSections)
+    if (next.has(title)) next.delete(title)
+    else next.add(title)
+    setExpandedSections(next)
   }
 
   const toggleButton = hideToggle ? null : (
@@ -227,6 +253,8 @@ const MapFiltersPanel = ({
                 section={section}
                 selectedKeys={selectedKeys}
                 onToggle={handleToggle}
+                isExpanded={expandedSections.has(section.title)}
+                onToggleExpand={() => handleToggleSection(section.title)}
               />
             ))}
           </div>
