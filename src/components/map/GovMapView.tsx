@@ -97,7 +97,7 @@ type HoverPointTooltipInfo = {
   price?: string
   provider?: string
   languages?: string
-  risk?: string
+  airisktype?: string
   accessibility?: string
 }
 
@@ -513,20 +513,17 @@ const GovMapView = () => {
         }
         const paymentAmount = cleanValue(getFieldValue('requirespaymentamount'))
         const requiresPayment = cleanValue(getFieldValue('requirespayment'))
-        const price =
-          paymentAmount && requiresPayment
-            ? `${paymentAmount}${requiresPayment === 'כן' ? '' : ` (${requiresPayment})`}`
-            : paymentAmount || requiresPayment
+       
 
         setHoverPointInfo({
           address: cleanValue(getFieldValue('fulladdress')),
           title: cleanValue(getFieldValue('servicename')),
           description: cleanValue(getFieldValue('servicedescription')),
           audiences: cleanValue(getFieldValue('targetpopulations')),
-          price,
+          price: getFieldValue('requirespayment'),
           provider: cleanValue(getFieldValue('serviceproviderorganizationtype')),
           languages: cleanValue(getFieldValue('language')),
-          risk: cleanValue(getFieldValue('riskstatusdescription_agg')),
+          airisktype: cleanValue(getFieldValue('airisktype')),
           accessibility: cleanValue(getFieldValue('accessibility')),
         })
       })

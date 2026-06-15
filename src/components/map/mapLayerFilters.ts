@@ -15,9 +15,16 @@ export type FilterSectionData = {
 }
 
 export const FILTER_SECTIONS_CONFIG = [
-  { fieldName: 'riskstatusdescription_agg', title: 'מצב סיכון' },
-  { fieldName: 'targetpopulations', title: 'סוג אוכלוסיה' },
-  { fieldName: 'language', title: 'שפה', titleClassName: 'text-[#06365a]' },
+  { fieldName: 'airisktype', title: 'מצב סיכון ייעודי' },
+  { fieldName: 'accessibility', title: 'הנגשה' },
+  { fieldName: 'locationtype', title: 'סוג מיקום' },
+  { fieldName: 'targetpopulations', title: 'התאמה לסוגי אוכלוסיות' },
+  { fieldName: 'language', title: 'שפות המענה' },
+  { fieldName: 'servicetypedescription', title: 'סוג המענה' },
+  { fieldName: 'serviceproviderorganizationtype', title: 'סוג ארגון נותן שירות' },
+  { fieldName: 'requirespaymentamount', title: 'עלות השירות' },
+  { fieldName: 'activitytype', title: 'סוג הפעילות' },
+  { fieldName: 'participationeligibility', title: 'קהל יעד' },
 ] as const
 
 const FILTER_FIELD_CONFIG = FILTER_SECTIONS_CONFIG
@@ -25,26 +32,53 @@ const FILTER_FIELD_CONFIG = FILTER_SECTIONS_CONFIG
 type AreaServiceFilterRow = {
   objectId: number
   riskStatus: string
+  serviceDescription: string
+  locationType: string
+  aiRiskType: string
+  accessibility: string
   targetPopulations: string
   language: string
+  serviceTypeDescription: string
+  serviceProviderOrganizationType: string
+  requiresPaymentAmount: string
+  activityType: string
+  participationEligibility: string
 }
 
 const FILTER_FIELD_TO_ROW_KEY: Record<
   (typeof FILTER_SECTIONS_CONFIG)[number]['fieldName'],
-  'riskStatus' | 'targetPopulations' | 'language'
+  keyof Omit<AreaServiceFilterRow, 'objectId'>
 > = {
   riskstatusdescription_agg: 'riskStatus',
+  servicedescription: 'serviceDescription',
+  locationtype: 'locationType',
+  airisktype: 'aiRiskType',
+  accessibility: 'accessibility',
   targetpopulations: 'targetPopulations',
   language: 'language',
+  servicetypedescription: 'serviceTypeDescription',
+  serviceproviderorganizationtype: 'serviceProviderOrganizationType',
+  requirespaymentamount: 'requiresPaymentAmount',
+  activitytype: 'activityType',
+  participationeligibility: 'participationEligibility',
 }
 
 const FILTER_FIELD_TO_SERVICE_KEY: Record<
   (typeof FILTER_SECTIONS_CONFIG)[number]['fieldName'],
-  'RiskStatusDescription_Agg' | 'TargetPopulations' | 'Language'
+  keyof ServiceListItem
 > = {
   riskstatusdescription_agg: 'RiskStatusDescription_Agg',
+  servicedescription: 'ServiceDescription',
+  locationtype: 'LocationType',
+  airisktype: 'airisktype',
+  accessibility: 'Accessibility',
   targetpopulations: 'TargetPopulations',
   language: 'Language',
+  servicetypedescription: 'ServiceTypeDescription',
+  serviceproviderorganizationtype: 'ServiceProviderOrganizationType',
+  requirespaymentamount: 'RequiresPaymentAmount',
+  activitytype: 'ActivityType',
+  participationeligibility: 'ParticipationEligibility',
 }
 
 export const SECTION_TITLE_TO_FIELD_NAME: Record<string, string> = Object.fromEntries(
@@ -157,8 +191,17 @@ function serviceListToAreaRows(services: ServiceListItem[]): AreaServiceFilterRo
   return services.map((service) => ({
     objectId: service.objectId,
     riskStatus: service.RiskStatusDescription_Agg,
+    serviceDescription: service.ServiceDescription,
+    locationType: service.LocationType,
+    aiRiskType: service.airisktype,
+    accessibility: service.Accessibility,
     targetPopulations: service.TargetPopulations,
     language: service.Language,
+    serviceTypeDescription: service.ServiceTypeDescription,
+    serviceProviderOrganizationType: service.ServiceProviderOrganizationType,
+    requiresPaymentAmount: service.RequiresPaymentAmount,
+    activityType: service.ActivityType,
+    participationEligibility: service.ParticipationEligibility,
   }))
 }
 
