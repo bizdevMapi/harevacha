@@ -230,8 +230,8 @@ const normalizeServiceFieldsForCard = (
     'riskstatusdescription_agg',
     'accessibility',
     'providername',
-    'x',
-    'y',
+    'gisx',
+    'gisy',
   ] as const
 
   const normalized: IdentifyField[] = []
@@ -643,6 +643,28 @@ const GovMapView = () => {
           const { response, useNeighborhoodClick } = result
           let serviceFields: IdentifyField[] | null = null
 
+          // First, check if there's a service at this location
+          for (const layerResult of response?.data ?? []) {
+            const layer = layerResult as IdentifyLayerResult
+            const entity = layer.entities?.[0]
+            if (!entity) continue
+
+            if (isServicesIdentifyLayer(layer, SITE.layers.servicesLayer)) {
+              const serviceName = getEntityFieldByKey(entity, layer.fieldsMapping, 'servicename')
+              if (serviceName) {
+                serviceFields = normalizeServiceFieldsForCard(entity, layer.fieldsMapping)
+                break // Found service, stop looking
+              }
+            }
+          }
+
+          // If we found a service, show its card and don't select area
+          if (serviceFields) {
+            setSelectedPointInfo(serviceFields)
+            return
+          }
+
+          // No service found, proceed with area selection
           for (const layerResult of response?.data ?? []) {
             const layer = layerResult as IdentifyLayerResult
             const entity = layer.entities?.[0]
@@ -687,7 +709,7 @@ const GovMapView = () => {
                 )
                 applyAreaSelection(optionToApply)
               }
-              continue
+              return
             }
 
             if (useNeighborhoodClick && isNeighborhoodIdentifyLayer(layer)) {
@@ -699,18 +721,9 @@ const GovMapView = () => {
               if (selectedOption) {
                 applyAreaSelection(selectedOption)
               }
-              continue
-            }
-
-            if (isServicesIdentifyLayer(layer, SITE.layers.servicesLayer)) {
-              const serviceName = getEntityFieldByKey(entity, layer.fieldsMapping, 'servicename')
-              if (serviceName) {
-                serviceFields = normalizeServiceFieldsForCard(entity, layer.fieldsMapping)
-              }
+              return
             }
           }
-
-          setSelectedPointInfo(serviceFields)
         })
         ?.catch((error: unknown) => {
           console.error('failed identifying map click', error)

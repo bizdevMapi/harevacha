@@ -37,7 +37,7 @@ export const JERUSALEM_CITY_CENTER_AREA_OPTION = {
 /** מרכז טירת כרמל — אחרי שכונות ירושלים ולפני שכונות טירת כרמל מהשכבה */
 export const TIRAT_CARMEL_CITY_AREA_OPTION = {
   label: 'טירת כרמל - מרכז העיר',
-  value: { x: 199580, y: 743467 },
+  value: { x: 198811.34, y: 741553.42 },
   geometry: 'POLYGON ((196500 739500, 199500 739500, 199500 744000, 196500 744000, 196500 739500))'
 } as const
 
