@@ -310,11 +310,6 @@ const GovMapView = () => {
   const selectedAreaOption = neighborhoodsList.find((n) => n.optionValue === selectedArea)
   const applyAreaSelection = (option: NeighborhoodMapOption) => {
     if (option.optionValue === selectedAreaRef.current) {
-      void applySelectedArea(option, {
-        setServicesQueryGeometry,
-        setServicesListLoading,
-        setServicesList,
-      })
       return
     }
     setSelectedArea(option.optionValue)
@@ -753,7 +748,7 @@ const GovMapView = () => {
     window.govmap?.filterLayers?.({
       layerName: SITE.layers.servicesLayer,
       whereClause,
-      zoomToExtent: true,
+      zoomToExtent: false,
     })
   }
 
