@@ -45,7 +45,7 @@ export const TIRAT_CARMEL_CITY_AREA_OPTION = {
 export const GOVMAP_DEFAULT_VIEW_LEVEL = 7 as const
 
 /** מרמת זום זו ומעלה — קליק בוחר שכונה; מתחת — קליק בוחר יישוב */
-export const GOVMAP_NEIGHBORHOOD_CLICK_MIN_LEVEL = 9 as const
+export const GOVMAP_NEIGHBORHOOD_CLICK_MIN_LEVEL = 8 as const
 
 /** מזהי שכבות ל-identify (ללא קידומת layer_) */
 export const GOVMAP_NEIGHBORHOODS_LAYER_ID = '22' as const
