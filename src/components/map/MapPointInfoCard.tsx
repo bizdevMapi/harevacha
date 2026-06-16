@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { loadGovmapScript } from '../../utils/loadGovmapScript'
+import { useEffect, useRef, useState } from 'react'
 import type { MapPointInfoIconId } from './mapPointInfoData'
 import { IconClose, IconExpand, MapPointInfoIcon } from './MapPointInfoIcons'
 
@@ -72,11 +71,6 @@ const MapPointInfoCard = ({
   selectedAreaCenter,
   onExpandMap,
 }: MapPointInfoCardProps) => {
-  const miniMapContainerId = useMemo(
-    () => `point-info-map-${Math.random().toString(36).slice(2, 10)}`,
-    [],
-  )
-  const isMiniMapInitializedRef = useRef(false)
   const lastServiceNameRef = useRef<string | null>(null)
   const [isMiniMapReady, setIsMiniMapReady] = useState(false)
 
@@ -112,61 +106,26 @@ const MapPointInfoCard = ({
   })()
   const mapCenter = serviceCenter ?? selectedAreaCenter ?? null
 
-  // Reset initialization flag when opening a different service
+  // Reset mini map when switching services
   if (lastServiceNameRef.current !== title) {
-    isMiniMapInitializedRef.current = false
-    setIsMiniMapReady(false)
     lastServiceNameRef.current = title
+    setIsMiniMapReady(false)
   }
 
   useEffect(() => {
     if (!mapCenter) return
 
-    void loadGovmapScript().then(() => {
-      const govmap = window.govmap
-      const container = document.getElementById(miniMapContainerId)
-      if (!container || !govmap?.createMap) return
+    const timer = setTimeout(() => {
+      setIsMiniMapReady(true)
+    }, 500)
 
-      if (!isMiniMapInitializedRef.current) {
-        isMiniMapInitializedRef.current = true
-        govmap.createMap(miniMapContainerId, {
-          token: import.meta.env.VITE_GOVMAP_TOKEN,
-          center: mapCenter,
-          level: 10,
-          layersMode: 1,
-          identifyOnClick: false,
-          onLoad: () => {
-            setIsMiniMapReady(true)
-            window.govmap?.zoomToXY?.({
-              x: mapCenter.x,
-              y: mapCenter.y,
-              level: 10,
-              marker: true,
-            })
-          },
-        })
+    return () => clearTimeout(timer)
+  }, [mapCenter, title])
 
-        // Fallback in case onLoad doesn't fire
-        setTimeout(() => {
-          setIsMiniMapReady(true)
-          window.govmap?.zoomToXY?.({
-            x: mapCenter.x,
-            y: mapCenter.y,
-            level: 10,
-            marker: true,
-          })
-        }, 1500)
-        return
-      }
-
-      govmap.zoomToXY?.({
-        x: mapCenter.x,
-        y: mapCenter.y,
-        level: 10,
-        marker: true,
-      })
-    })
-  }, [miniMapContainerId, mapCenter])
+  // Create iframe-based mini map URL
+  const miniMapSrc = mapCenter
+    ? `https://govmap.gov.il/?c=${mapCenter.x},${mapCenter.y}&z=10&mk=1`
+    : null
 
   return (
     <aside
@@ -196,24 +155,31 @@ const MapPointInfoCard = ({
         </div>
 
         <div className="flex min-h-0 w-full max-w-[340px] flex-1 flex-col items-end gap-6 overflow-y-auto overflow-x-clip pb-6">
-          <div className="relative h-[196px] w-full shrink-0 overflow-hidden rounded-2xl bg-[#f0f4f8]">
-            <div id={miniMapContainerId} className="h-full w-full" aria-label="מפת האזור הנבחר" />
-            {!isMiniMapReady && (
-              <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#dce8f4] via-[#e8eef4] to-[#f0f4f8] opacity-60" />
-            )}
-            {onExpandMap && (
-              <button
-                type="button"
-                onClick={() => onExpandMap(mapCenter)}
-                className="absolute right-2 top-2 flex items-center justify-center rounded-[7px] bg-white p-0.5 shadow-sm transition-colors hover:bg-[#f5f8fc]"
-                aria-label="הרחבת מפה"
-              >
-                <span className="flex size-5 items-center justify-center">
-                  <IconExpand />
-                </span>
-              </button>
-            )}
-          </div>
+          {miniMapSrc && (
+            <div className="relative h-[196px] w-full shrink-0 overflow-hidden rounded-2xl bg-[#f0f4f8]">
+              <iframe
+                src={miniMapSrc}
+                className="h-full w-full border-0"
+                title="מפת המענה"
+                loading="lazy"
+              />
+              {!isMiniMapReady && (
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#dce8f4] via-[#e8eef4] to-[#f0f4f8] opacity-60" />
+              )}
+              {onExpandMap && (
+                <button
+                  type="button"
+                  onClick={() => onExpandMap(mapCenter)}
+                  className="absolute right-2 top-2 flex items-center justify-center rounded-[7px] bg-white p-0.5 shadow-sm transition-colors hover:bg-[#f5f8fc]"
+                  aria-label="הרחבת מפה"
+                >
+                  <span className="flex size-5 items-center justify-center">
+                    <IconExpand />
+                  </span>
+                </button>
+              )}
+            </div>
+          )}
 
           <div className="flex w-full flex-col items-end justify-center gap-3.5">
             {details.map((detail) => (
