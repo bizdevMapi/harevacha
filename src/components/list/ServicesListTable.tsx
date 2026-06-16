@@ -124,11 +124,11 @@ const convertServiceToPointInfo = (service: ServiceListItem): MapPointInfoField[
   addField('requirespayment', service.RequiresPayment)
   addField('serviceproviderorganizationtype', service.ServiceProviderOrganizationType)
   addField('language', service.Language)
-  addField('riskstatusdescription_agg', service.RiskStatusDescription_Agg)
+  addField('airisktype', service.airisktype)
   addField('accessibility', service.Accessibility)
   addField('providername', service.ProviderName)
-  addField('gisx', service.X)
-  addField('gisy', service.Y)
+  addField('gisx', service.GisX)
+  addField('gisy', service.GisY)
 
   return fields
 }

@@ -55,7 +55,7 @@ const DETAIL_SPECS: Array<{ id: string; icon: MapPointInfoIconId; field: string;
   { id: 'address', icon: 'location', field: 'fulladdress' },
   { id: 'audience', icon: 'group', field: 'targetpopulations' },
   { id: 'language', icon: 'language', field: 'language' },
-  { id: 'risk', icon: 'target', field: 'riskstatusdescription_agg' },
+  { id: 'risk', icon: 'target', field: 'airisktype' },
   { id: 'price', icon: 'price', field: 'requirespaymentamount' },
   {
     id: 'provider',
