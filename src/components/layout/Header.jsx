@@ -8,11 +8,11 @@ const Header = () => {
           <img
             src={Logo}
             alt="משרד הרווחה והביטחון החברתי"
-            className="h-10 w-auto max-w-[192px] object-contain md:h-12 md:max-w-[220px]"
+            className="h-8 w-auto max-w-[192px] object-contain md:h-10 md:max-w-[220px]"
           />
         </div>
 
-        <p className="max-w-[min(100%,52rem)] px-[max(3rem,8vw)] text-center text-base font-bold leading-snug tracking-tight text-[#161a20] md:text-lg md:leading-tight lg:text-xl">
+        <p className="px-[max(3rem,8vw)] text-center text-base font-bold leading-snug tracking-tight text-[#161a20] md:text-lg md:leading-tight lg:text-xl">
           פוטנציאל למצבי סיכון בקרב אוכלוסיית הגיל השלישי ומענים מותאמים
         </p>
       </div>
