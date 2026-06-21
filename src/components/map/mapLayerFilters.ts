@@ -103,6 +103,10 @@ function escapeSqlLiteral(value: string): string {
   return value.replace(/'/g, "''")
 }
 
+function fieldContainsClause(fieldName: string, value: string): string {
+  return `${fieldName} LIKE '%${escapeSqlLiteral(value)}%'`
+}
+
 /** OR within the same field; AND across different fields. */
 export function buildServicesLayerWhereClause(selectedKeys: Iterable<string>): string | null {
   const valuesByField = new Map<string, string[]>()
@@ -118,11 +122,11 @@ export function buildServicesLayerWhereClause(selectedKeys: Iterable<string>): s
   if (valuesByField.size === 0) return null
 
   const fieldClauses = Array.from(valuesByField.entries()).map(([fieldName, values]) => {
-    const escapedValues = values.map((value) => `'${escapeSqlLiteral(value)}'`).join(',')
-    return `${fieldName} IN (${escapedValues})`
+    const valueClauses = values.map((value) => fieldContainsClause(fieldName, value))
+    return valueClauses.length === 1 ? valueClauses[0] : `(${valueClauses.join(' OR ')})`
   })
 
-  return fieldClauses.join(' AND ')
+  return fieldClauses.length === 1 ? fieldClauses[0] : `(${fieldClauses.join(' AND ')})`
 }
 
 export function buildServicesSearchWhereClause(searchQuery: string): string | null {
@@ -134,14 +138,14 @@ export function buildServicesSearchWhereClause(searchQuery: string): string | nu
 
 export function buildAreaObjectIdsClause(objectIds: number[]): string {
   if (objectIds.length === 0) return `objectid IN (999999999)`
-  return `(objectid IN (${objectIds.join(',')}))`
+  return `objectid IN (${objectIds.join(',')})`
 }
 
 export function combineWhereClauses(...clauses: Array<string | null | undefined>): string {
   const parts = clauses.filter((clause): clause is string => Boolean(clause))
   if (parts.length === 0) return '1=1'
   if (parts.length === 1) return parts[0]
-  return parts.join(' AND ')
+  return `(${parts.join(' AND ')})`
 }
 
 /** Area (object IDs from geometry) + optional attribute filters from the side panel. */
