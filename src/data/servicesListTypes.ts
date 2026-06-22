@@ -1,7 +1,7 @@
 /** שדות נדרשים לשכבת המענים — עמודות טבלה + שדות לכרטיס מידע */
 export const SERVICE_TABLE_LAYER_FIELDS = [
   'ServiceName',
-  'ServiceTypeDescription',
+  'servicetypename',
   'RiskStatusDescription_Agg',
   'TargetPopulations',
   'Language',
@@ -27,7 +27,7 @@ export type ServiceTableField = (typeof SERVICE_TABLE_LAYER_FIELDS)[number]
 export type ServiceListItem = {
   objectId: number
   ServiceName: string
-  ServiceTypeDescription: string
+  servicetypename: string
   RiskStatusDescription_Agg: string
   TargetPopulations: string
   LocationType: string
@@ -64,14 +64,14 @@ export type ServiceListColumn = {
 export const SERVICE_LIST_COLUMNS: ServiceListColumn[] = [
   { id: 'ServiceName', label: 'שם מענה', width: 168, sortable: true, cellType: 'link' },
   { id: 'airisktype', label: 'התאמה למצבי סיכון', width: 168, cellType: 'tags' },
-  { id: 'ServiceDescription', label: 'סוג מענה', width: 168, cellType: 'text' },
-  { id: 'TargetPopulations', label: 'אוכלוסיה ייעודית', width: 120, cellType: 'text' },
+  { id: 'servicetypename', label: 'סוג מענה', width: 168, cellType: 'text' },
   { id: 'ProviderName', label: 'שם ארגון מספק השירות', width: 168, cellType: 'text' },
   { id: 'ServiceProviderOrganizationType', label: 'סוג ארגון (נותן השירות)', width: 96, cellType: 'text' },
   { id: 'RequiresPaymentAmount', label: 'עלות', width: 96, cellType: 'text' },
   { id: 'LocationType', label: 'סוג מיקום ', width: 96, cellType: 'text' },
   { id: 'Accessibility', label: 'נגישות', width: 214, cellType: 'text' },
   { id: 'Language', label: 'שפות', width: 118, cellType: 'text' },
+  { id: 'TargetPopulations', label: 'אוכלוסיה ייעודית', width: 120, cellType: 'text' },
   { id: 'ParticipationEligibility', label: 'קהל יעד', width: 118, cellType: 'text' },
   { id: 'ActivityType', label: 'סוג פעילות', width: 118, cellType: 'text' },
 ]
@@ -136,7 +136,7 @@ export function mapIntersectFeaturesToServicesList(
       return {
         objectId,
         ServiceName: String(row.ServiceName ?? ''),
-        ServiceTypeDescription: String(row.ServiceTypeDescription ?? ''),
+        servicetypename: String(row.servicetypename ?? ''),
         RiskStatusDescription_Agg: String(row.RiskStatusDescription_Agg ?? ''),
         TargetPopulations: String(row.TargetPopulations ?? ''),
         LocationType: String(row.LocationType ?? ''),
