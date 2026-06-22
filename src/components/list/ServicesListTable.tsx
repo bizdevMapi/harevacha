@@ -169,7 +169,7 @@ const ServicesListTable = ({ rows, searchQuery = '', onServiceClick }: ServicesL
         <thead className="sticky top-0 z-10">
           <tr>
             {SERVICE_LIST_COLUMNS.map((column) =>
-              column.id === 'ServiceName' ? (
+              column.sortable === true ? (
                 <th
                   key={column.id}
                   scope="col"

@@ -92,6 +92,7 @@ const MapPointInfoCard = ({
 
   const details: DetailRowData[] = DETAIL_SPECS.map((spec) => {
     let value = spec.field === 'requirespaymentamount' ? getPaymentValue() : getFieldValue(spec.field)
+    if(spec.field === 'fulladdress' && !value) value = 'לא נמצאה כתובת/מקוון'
     if (!value && spec.fallbackField) value = getFieldValue(spec.fallbackField)
     return { id: spec.id, icon: spec.icon, value }
   }).filter((item) => item.value)

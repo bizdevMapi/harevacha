@@ -65,7 +65,7 @@ export const SERVICE_LIST_COLUMNS: ServiceListColumn[] = [
   { id: 'ServiceName', label: 'שם מענה', width: 168, sortable: true, cellType: 'link' },
   { id: 'airisktype', label: 'התאמה למצבי סיכון', width: 168, cellType: 'tags' },
   { id: 'servicetypename', label: 'סוג מענה', width: 168, cellType: 'text' },
-  { id: 'ProviderName', label: 'שם ארגון מספק השירות', width: 168, cellType: 'text' },
+  { id: 'ProviderName', label: 'שם ארגון מספק השירות', width: 168, cellType: 'text', sortable: true },
   { id: 'ServiceProviderOrganizationType', label: 'סוג ארגון (נותן השירות)', width: 96, cellType: 'text' },
   { id: 'RequiresPaymentAmount', label: 'עלות', width: 96, cellType: 'text' },
   { id: 'LocationType', label: 'סוג מיקום ', width: 96, cellType: 'text' },

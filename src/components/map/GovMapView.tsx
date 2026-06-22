@@ -770,11 +770,21 @@ const GovMapView = () => {
           SITE.layers.municipalitiesLayer,
           SITE.layers.neighborhoodsLayer,
           SITE.layers.servicesLayer,
+          SITE.layers.sportsLayer,
+          SITE.layers.seniorHousingLayer,
+          SITE.layers.institutionsLayer,
+          SITE.layers.postLayer,
+          SITE.layers.populationCensusLayer,
         ],
         visibleLayers: [
           SITE.layers.municipalitiesLayer,
           SITE.layers.neighborhoodsLayer,
-          SITE.layers.servicesLayer
+          SITE.layers.servicesLayer,
+           SITE.layers.sportsLayer,
+          SITE.layers.seniorHousingLayer,
+          SITE.layers.institutionsLayer,
+          SITE.layers.postLayer,
+          SITE.layers.populationCensusLayer,
         ],
         onLoad: () => {
           registerMapInteractionEvents()
