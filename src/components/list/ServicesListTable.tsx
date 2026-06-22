@@ -118,7 +118,7 @@ const convertServiceToPointInfo = (service: ServiceListItem): MapPointInfoField[
 
   addField('servicename', service.ServiceName)
   addField('fulladdress', service.FullAddress)
-  addField('servicedescription', service.ServiceDescription)
+  addField('servicetypename', service.servicetypename)
   addField('targetpopulations', service.TargetPopulations)
   addField('requirespaymentamount', service.RequiresPaymentAmount)
   addField('requirespayment', service.RequiresPayment)
@@ -146,7 +146,7 @@ const ServicesListTable = ({ rows, searchQuery = '', onServiceClick }: ServicesL
     if (!q) return rows
 
     return rows.filter((row) => {
-      const haystack = [row.ServiceName, row.FullAddress, row.ServiceTypeDescription]
+      const haystack = [row.ServiceName, row.FullAddress, row.servicetypename]
         .join(' ')
         .toLowerCase()
       return haystack.includes(q)
