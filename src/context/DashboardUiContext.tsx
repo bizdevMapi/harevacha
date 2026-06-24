@@ -13,6 +13,11 @@ import type { ServiceListItem } from '../data/servicesListTypes'
 import { getCityCenterAreaSelectValue, TIRAT_CARMEL_CITY_AREA_OPTION } from '../constants'
 import type { MapPointInfoField } from '../components/map/MapPointInfoCard'
 
+export type SelectedPointInfo = {
+  fields: MapPointInfoField[]
+  isOtherLayer: boolean
+}
+
 export type DashboardViewMode = 'map' | 'list'
 
 export type NeighborhoodMapOption = {
@@ -59,8 +64,8 @@ export type DashboardUiValue = {
   appliedServiceFilterSearchQuery: string
   selectedServiceFilterKeys: Set<string>
   setSelectedServiceFilterKeys: Dispatch<SetStateAction<Set<string>>>
-  selectedPointInfo: MapPointInfoField[] | null
-  setSelectedPointInfo: Dispatch<SetStateAction<MapPointInfoField[] | null>>
+  selectedPointInfo: SelectedPointInfo | null
+  setSelectedPointInfo: Dispatch<SetStateAction<SelectedPointInfo | null>>
 }
 
 const DashboardUiContext = createContext<DashboardUiValue | null>(null)
@@ -89,7 +94,7 @@ export function DashboardUiProvider({ children }: { children: ReactNode }) {
   const [selectedServiceFilterKeys, setSelectedServiceFilterKeys] = useState<Set<string>>(
     () => new Set(),
   )
-  const [selectedPointInfo, setSelectedPointInfo] = useState<MapPointInfoField[] | null>(null)
+  const [selectedPointInfo, setSelectedPointInfo] = useState<SelectedPointInfo | null>(null)
 
   useEffect(() => {
     const timer = window.setTimeout(() => {

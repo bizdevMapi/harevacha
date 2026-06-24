@@ -95,6 +95,11 @@ export const SITE = Object.freeze({
     municipalitiesLayer: 'layer_125',
     neighborhoodsLayer: 'layer_22',
     servicesLayer: import.meta.env.VITE_SERVICES_LAYER || 'layer_233404',
+    sportsLayer: 'layer_400',
+    seniorHousingLayer: 'layer_337',
+    institutionsLayer: 'layer_96',
+    postLayer: 'layer_200710',
+    populationCensusLayer: 'layer_313',
   }),
 
   

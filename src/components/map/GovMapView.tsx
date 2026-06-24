@@ -630,46 +630,72 @@ const GovMapView = () => {
         .identifyByXYAndLayer?.(mapPoint.x, mapPoint.y, [
           areaLayerId,
           SITE.layers.servicesLayer,
+          "400","337","96","200710","313"
         ])
         ?.then((response: any) => ({ response, useNeighborhoodClick }))
         ?.then((result) => {
           if (!result) return
 
           const { response, useNeighborhoodClick } = result
-          let serviceFields: IdentifyField[] | null = null
 
-          // First, check if there's a service at this location
+          // Categorize all layers
+          let serviceLayer: IdentifyLayerResult | null = null
+          let areaLayer: IdentifyLayerResult | null = null
+          let otherLayer: IdentifyLayerResult | null = null
+
           for (const layerResult of response?.data ?? []) {
             const layer = layerResult as IdentifyLayerResult
             const entity = layer.entities?.[0]
             if (!entity) continue
 
+            // Check what type of layer this is
             if (isServicesIdentifyLayer(layer, SITE.layers.servicesLayer)) {
               const serviceName = getEntityFieldByKey(entity, layer.fieldsMapping, 'servicename')
-              if (serviceName) {
-                serviceFields = normalizeServiceFieldsForCard(entity, layer.fieldsMapping)
-                break // Found service, stop looking
+              if (serviceName && !serviceLayer) {
+                serviceLayer = layer
+              }
+            } else if (isNeighborhoodIdentifyLayer(layer) || isMunicipalityIdentifyLayer(layer)) {
+              if (!areaLayer) {
+                areaLayer = layer
+              }
+            } else {
+              // This is another layer (not service, not area)
+              if (!otherLayer) {
+                otherLayer = layer
               }
             }
           }
 
-          // If we found a service, show its card and don't select area
-          if (serviceFields) {
-            setSelectedPointInfo(serviceFields)
-            return
+          // Priority 1: Show service info if found
+          if (serviceLayer) {
+            const entity = serviceLayer.entities?.[0]
+            if (entity) {
+              const serviceFields = normalizeServiceFieldsForCard(entity, serviceLayer.fieldsMapping)
+              setSelectedPointInfo({ fields: serviceFields, isOtherLayer: false })
+              return
+            }
           }
 
-          // No service found, proceed with area selection
-          for (const layerResult of response?.data ?? []) {
-            const layer = layerResult as IdentifyLayerResult
-            const entity = layer.entities?.[0]
-            if (!entity) continue
+          // Priority 2: Show other layer info if found
+          if (otherLayer) {
+            const entity = otherLayer.entities?.[0]
+            if (entity) {
+              const otherFields = normalizeServiceFieldsForCard(entity, otherLayer.fieldsMapping)
+              setSelectedPointInfo({ fields: otherFields, isOtherLayer: true })
+              return
+            }
+          }
 
-            if (!useNeighborhoodClick && isMunicipalityIdentifyLayer(layer)) {
+          // Priority 3: Handle area selection
+          if (areaLayer) {
+            const entity = areaLayer.entities?.[0]
+            if (!entity) return
+
+            if (!useNeighborhoodClick && isMunicipalityIdentifyLayer(areaLayer)) {
               const settlementName =
-                getEntityFieldByKey(entity, layer.fieldsMapping, 'muni_heb') ||
-                getEntityFieldByKey(entity, layer.fieldsMapping, 'setl_name') ||
-                getEntityFieldByKey(entity, layer.fieldsMapping, 'name')
+                getEntityFieldByKey(entity, areaLayer.fieldsMapping, 'muni_heb') ||
+                getEntityFieldByKey(entity, areaLayer.fieldsMapping, 'setl_name') ||
+                getEntityFieldByKey(entity, areaLayer.fieldsMapping, 'name')
               const selectedOption = findCityCenterOptionBySettlementName(
                 neighborhoodsListRef.current,
                 settlementName,
@@ -686,8 +712,6 @@ const GovMapView = () => {
 
                 const optionToApply: NeighborhoodMapOption = {
                   ...selectedOption,
-                  // Keep the predefined city geometry for service queries.
-                  // Municipality identify geometry can be too broad/incompatible for intersectFeatures.
                   value: center,
                   municipalityObjectId: entity.objectId,
                 }
@@ -707,11 +731,11 @@ const GovMapView = () => {
               return
             }
 
-            if (useNeighborhoodClick && isNeighborhoodIdentifyLayer(layer)) {
+            if (useNeighborhoodClick && isNeighborhoodIdentifyLayer(areaLayer)) {
               const selectedOption = findNeighborhoodOptionFromIdentify(
                 neighborhoodsListRef.current,
                 entity,
-                layer.fieldsMapping,
+                areaLayer.fieldsMapping,
               )
               if (selectedOption) {
                 applyAreaSelection(selectedOption)
@@ -770,11 +794,21 @@ const GovMapView = () => {
           SITE.layers.municipalitiesLayer,
           SITE.layers.neighborhoodsLayer,
           SITE.layers.servicesLayer,
+          SITE.layers.sportsLayer,
+          SITE.layers.seniorHousingLayer,
+          SITE.layers.institutionsLayer,
+          SITE.layers.postLayer,
+          SITE.layers.populationCensusLayer,
         ],
         visibleLayers: [
           SITE.layers.municipalitiesLayer,
           SITE.layers.neighborhoodsLayer,
-          SITE.layers.servicesLayer
+          SITE.layers.servicesLayer,
+           SITE.layers.sportsLayer,
+          SITE.layers.seniorHousingLayer,
+          SITE.layers.institutionsLayer,
+          SITE.layers.postLayer,
+          SITE.layers.populationCensusLayer,
         ],
         onLoad: () => {
           registerMapInteractionEvents()
@@ -872,7 +906,8 @@ const GovMapView = () => {
         </div>
         {selectedPointInfo && (
           <MapPointInfoCard
-            data={selectedPointInfo}
+            data={selectedPointInfo.fields}
+            isOtherLayer={selectedPointInfo.isOtherLayer}
             onClose={() => setSelectedPointInfo(null)}
             selectedAreaCenter={selectedAreaOption?.value ?? null}
             onExpandMap={handleExpandPointMap}
