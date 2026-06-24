@@ -630,7 +630,7 @@ const GovMapView = () => {
         .identifyByXYAndLayer?.(mapPoint.x, mapPoint.y, [
           areaLayerId,
           SITE.layers.servicesLayer,
-          "400","337","96","200710","313"
+          "400","337","96","200710"
         ])
         ?.then((response: any) => ({ response, useNeighborhoodClick }))
         ?.then((result) => {
