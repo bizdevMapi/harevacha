@@ -9,6 +9,7 @@ export type MapPointInfoField = {
 
 type MapPointInfoCardProps = {
   data: MapPointInfoField[]
+  isOtherLayer?: boolean
   onClose: () => void
   selectedAreaCenter?: { x: number; y: number } | null
   onExpandMap?: ((center: { x: number; y: number } | null) => void) | null
@@ -39,7 +40,19 @@ function parseCoordinate(value: unknown): number | null {
   return Number.isFinite(parsed) ? parsed : null
 }
 
-function DetailRow({ detail }: { detail: DetailRowData }) {
+function DetailRow({ detail, showLabel }: { detail: DetailRowData; showLabel?: boolean }) {
+  if (showLabel) {
+    return (
+      <div className="flex w-full shrink-0 items-start justify-between gap-3">
+        <span className="text-right text-[14px] font-semibold leading-[22.871px] text-[#084878]">
+          {detail.id}
+        </span>
+                <p className="min-w-0 flex-1 text-left text-[14px] leading-[22.871px] text-[#5f708a]">{detail.value}</p>
+
+      </div>
+    )
+  }
+
   return (
     <div className="flex w-full shrink-0 items-center justify-start gap-3">
       <span className="flex size-5 shrink-0 items-center justify-center">
@@ -67,6 +80,7 @@ const DETAIL_SPECS: Array<{ id: string; icon: MapPointInfoIconId; field: string;
 
 const MapPointInfoCard = ({
   data,
+  isOtherLayer = false,
   onClose,
   selectedAreaCenter,
   onExpandMap,
@@ -90,22 +104,43 @@ const MapPointInfoCard = ({
     return amount || requiresPayment
   }
 
-  const details: DetailRowData[] = DETAIL_SPECS.map((spec) => {
-    let value = spec.field === 'requirespaymentamount' ? getPaymentValue() : getFieldValue(spec.field)
-    if(spec.field === 'fulladdress' && !value) value = 'לא נמצאה כתובת/מקוון'
-    if (!value && spec.fallbackField) value = getFieldValue(spec.fallbackField)
-    return { id: spec.id, icon: spec.icon, value }
-  }).filter((item) => item.value)
+  // For other layers, show all fields with values (with field names as labels)
+  const details: DetailRowData[] = isOtherLayer
+    ? (() => {
+        const allFields: DetailRowData[] = []
+        for (const row of data ?? []) {
+          if (!row?.fieldName) continue
+          const value = cleanFieldValue(row.fieldValue)
+          if (value) {
+            allFields.push({
+              id: row.fieldName, // field name will be shown as label
+              icon: 'location', // default icon for other layers
+              value: value,
+            })
+          }
+        }
+        return allFields // all fields
+      })()
+    : DETAIL_SPECS.map((spec) => {
+        let value = spec.field === 'requirespaymentamount' ? getPaymentValue() : getFieldValue(spec.field)
+        if (spec.field === 'fulladdress' && !value) value = 'לא נמצאה כתובת/מקוון'
+        if (!value && spec.fallbackField) value = getFieldValue(spec.fallbackField)
+        return { id: spec.id, icon: spec.icon, value }
+      }).filter((item) => item.value)
 
-  const title = getFieldValue('servicename')
-  const description = getFieldValue('servicedescription')
+  const title = isOtherLayer
+    ? 'מידע נוסף'
+    : getFieldValue('servicename')
+  const description = isOtherLayer
+    ? ''
+    : getFieldValue('servicedescription')
   const serviceCenter: MapCenterPoint | null = (() => {
     const x = parseCoordinate(getFieldValue('gisx'))
     const y = parseCoordinate(getFieldValue('gisy'))
     if (x == null || y == null) return null
     return { x, y }
   })()
-  const mapCenter = serviceCenter ?? selectedAreaCenter ?? null
+  const mapCenter = isOtherLayer ? null : (serviceCenter ?? selectedAreaCenter ?? null)
 
   // Reset mini map when switching services
   if (lastServiceNameRef.current !== title) {
@@ -184,7 +219,7 @@ const MapPointInfoCard = ({
 
           <div className="flex w-full flex-col items-end justify-center gap-3.5">
             {details.map((detail) => (
-              <DetailRow key={detail.id} detail={detail} />
+              <DetailRow key={detail.id} detail={detail} showLabel={isOtherLayer} />
             ))}
           </div>
         </div>
