@@ -1,5 +1,6 @@
 import {
   IconBackCircle,
+  IconHelp,
   IconList,
   IconMap,
   IconPerson,
@@ -10,7 +11,7 @@ import {
   PROFILE_FILTER_OPTIONS,
 } from '../../constants'
 import { useDashboardUi } from '../../context/DashboardUiContext'
-import { ToolbarSelect } from '../ui'
+import { ToolbarSelect, Tooltip } from '../ui'
 
 const toolbarSelectWidthClass =
   'w-full max-w-[200px] sm:w-[200px] sm:max-w-[200px] xl:w-[240px] xl:max-w-[240px] 2xl:w-[312px] 2xl:max-w-[312px]'
@@ -80,6 +81,10 @@ const FilterToolbar = ({ onBack = () => { } }) => {
               options={[...POPULATION_SEGMENT_OPTIONS]}
               rightIcon={<IconPerson />}
               className={toolbarSelectWidthClass}
+              tooltip={`
+               <p>בחרו מצב סיכון או משתנה דמוגרפי להצגה על גבי המפה</p>
+              `}
+              tooltipPosition="left"
             />
             {populationSegment !== 'none' && (
               <>
@@ -102,7 +107,8 @@ const FilterToolbar = ({ onBack = () => { } }) => {
               className="min-w-0 flex-1 text-center text-[15px] tracking-tight text-white drop-shadow-sm sm:text-right"
               style={{ textShadow: '0 1px 1px rgba(0,0,0,0.15)' }}
             >
-              מענים מותאמים:{' '}
+              מענים מותאמים{' '}
+              :{' '}
               <span className="tabular-nums font-bold">{matchCount}</span>
             </p>
           <div className="flex shrink-0 flex-wrap items-center gap-3 sm:gap-4">
