@@ -11,6 +11,7 @@ export type MapPointInfoIconId =
   | 'price'
   | 'building'
   | 'accessibility'
+  | 'link'
 
 export type MapPointInfoDetail = {
   id: string
