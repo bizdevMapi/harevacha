@@ -1,6 +1,7 @@
 import { useId, useState } from 'react'
-import { IconChevronDown, IconSearch } from '../../assets/icons'
+import { IconChevronDown, IconSearch, IconHelp } from '../../assets/icons'
 import type { FilterItem, FilterSectionData } from './mapLayerFilters'
+import { Tooltip } from '../ui'
 
 function DistributionBar({ items }: { items: FilterItem[] }) {
   const total = items.reduce((sum, item) => sum + item.count, 0)
@@ -178,9 +179,8 @@ const MapFiltersPanel = ({
     <button
       type="button"
       onClick={onToggle}
-      className={`absolute top-0 z-30 flex size-6 items-center justify-center rounded-bl-[4px] rounded-br-[11px] border border-b border-l border-[#cbd5e3] bg-[#fafbfd] py-0.5 text-brand-darkBlue shadow-[-2px_1px_1.5px_rgba(121,136,157,0.2)] transition-colors hover:bg-white ${
-        isOpen ? 'left-0' : 'right-0'
-      }`}
+      className={`absolute top-0 z-30 flex size-6 items-center justify-center rounded-bl-[4px] rounded-br-[11px] border border-b border-l border-[#cbd5e3] bg-[#fafbfd] py-0.5 text-brand-darkBlue shadow-[-2px_1px_1.5px_rgba(121,136,157,0.2)] transition-colors hover:bg-white ${isOpen ? 'left-0' : 'right-0'
+        }`}
       aria-label={isOpen ? 'סגירת פנל סינון' : 'פתיחת פנל סינון'}
       title={isOpen ? 'סגירת פנל סינון' : 'פתיחת פנל סינון'}
     >
@@ -209,7 +209,17 @@ const MapFiltersPanel = ({
           {/* כותרת + חיפוש */}
           <div className="flex w-full flex-col gap-4">
             <div className="flex w-full items-center justify-between">
-              <h2 className="text-lg font-bold leading-5 text-[#161a20]">סינון מענים</h2>
+              <div className="flex items-center gap-1">
+                <h2 className="text-lg font-bold leading-5 text-[#161a20]"    >סינון מענים</h2>
+                <Tooltip
+                  content={`<p>המענים המוצגים בממשק זה אותרו ממקורות מידע פתוחים ברשת.</p>
+                 <p> ייתכנו מענים נוספים שאינם כלולים ברשימה זו.</p>
+                 <p>המענים מוצגים לצורכי מידע בלבד, והצגתם במערכת אינה מהווה המלצה.</p>
+                 <p>בחירת מענה למקרה פרטני נתונה לשיקול דעת מקצועי של עו"ס.</p>`}
+                  position="left"
+                />
+                
+              </div>
               <button
                 type="button"
                 onClick={handleClear}

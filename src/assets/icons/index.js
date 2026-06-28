@@ -1,6 +1,7 @@
 export { default as IconBackCircle } from './IconBackCircle.jsx'
 export { default as IconChevronDown } from './IconChevronDown.jsx'
 export { default as IconChevronsUpDown } from './IconChevronsUpDown.jsx'
+export { default as IconHelp } from './IconHelp.jsx'
 export { default as IconList } from './IconList.jsx'
 export { default as IconMap } from './IconMap.jsx'
 export { default as IconPerson } from './IconPerson.jsx'
