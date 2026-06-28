@@ -135,10 +135,20 @@ const convertServiceToPointInfo = (service: ServiceListItem): MapPointInfoField[
 
 const ServicesListTable = ({ rows, searchQuery = '', onServiceClick }: ServicesListTableProps) => {
   const [sortAsc, setSortAsc] = useState(true)
+  const [sortColumn, setSortColumn] = useState<string>('ServiceName')
 
   const handleServiceClick = (row: ServiceListItem) => {
     const fields = convertServiceToPointInfo(row)
     onServiceClick?.(fields)
+  }
+
+  const handleSortClick = (columnId: string) => {
+    if (sortColumn === columnId) {
+      setSortAsc((prev) => !prev)
+    } else {
+      setSortColumn(columnId)
+      setSortAsc(true)
+    }
   }
 
   const filteredRows = useMemo(() => {
@@ -155,10 +165,12 @@ const ServicesListTable = ({ rows, searchQuery = '', onServiceClick }: ServicesL
 
   const sortedRows = useMemo(() => {
     return [...filteredRows].sort((a, b) => {
-      const cmp = a.ServiceName.localeCompare(b.ServiceName, 'he')
+      const aValue = String(a[sortColumn as keyof ServiceListItem] ?? '')
+      const bValue = String(b[sortColumn as keyof ServiceListItem] ?? '')
+      const cmp = aValue.localeCompare(bValue, 'he')
       return sortAsc ? cmp : -cmp
     })
-  }, [filteredRows, sortAsc])
+  }, [filteredRows, sortAsc, sortColumn])
 
   return (
     <div className="flex min-h-0 flex-1 items-start justify-start overflow-auto border-t border-[#dce3ec] bg-white" dir="rtl">
@@ -178,7 +190,7 @@ const ServicesListTable = ({ rows, searchQuery = '', onServiceClick }: ServicesL
                 >
                   <button
                     type="button"
-                    onClick={() => setSortAsc((prev) => !prev)}
+                    onClick={() => handleSortClick(column.id)}
                     className="flex h-full w-full items-center justify-start gap-1.5 overflow-hidden text-right"
                   >
                     <span className="truncate">{column.label}</span>

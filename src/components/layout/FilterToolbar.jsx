@@ -129,15 +129,15 @@ const FilterToolbar = ({ onBack = () => { } }) => {
                 )
               })}
             </div>
-{divider}
-            <button
+{/* {divider} */}
+            {/* <button
               type="button"
               onClick={onBack}
               className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-white/35 bg-brand-toolbarBlueDeep text-white shadow-md transition-all hover:border-white/55 hover:bg-brand-toolbarToggleOn hover:shadow-lg active:scale-[0.98]"
               aria-label="חזרה"
             >
               <IconBackCircle />
-            </button>
+            </button> */}
           </div>
         </div>
       </div>
