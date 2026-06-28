@@ -64,18 +64,55 @@ function DetailRow({ detail, showLabel }: { detail: DetailRowData; showLabel?: b
 }
 
 const DETAIL_SPECS: Array<{ id: string; icon: MapPointInfoIconId; field: string; fallbackField?: string }> = [
+  // 1-2: ServiceName and ServiceDescription are displayed separately as title and description
+  // 3: התאמה למצבי סיכון
+  { id: 'risk', icon: 'target', field: 'riskstatusdescription_agg' },
+  // 4: לאילו מצבי סיכון מענה זה מתאים?
+  { id: 'airisktype', icon: 'target', field: 'airisktype' },
+  // 5: מדוע מענה זה מוצג כ/ן?
+  { id: 'aiscore', icon: 'target', field: 'aiscoreexplanation' },
+  // 6: כתובת
   { id: 'address', icon: 'location', field: 'fulladdress' },
+  // 7: סוג מיקום
+  { id: 'location', icon: 'location', field: 'locationtype' },
+  // 8: אוכלוסיה ייעודית
   { id: 'audience', icon: 'group', field: 'targetpopulations' },
-  { id: 'language', icon: 'language', field: 'language' },
-  { id: 'risk', icon: 'target', field: 'airisktype' },
-  { id: 'price', icon: 'price', field: 'requirespaymentamount' },
-  {
-    id: 'provider',
-    icon: 'building',
-    field: 'serviceproviderorganizationtype',
-    fallbackField: 'providername',
-  },
+  // 9: שם ארגון מספק השירות
+  { id: 'provider', icon: 'building', field: 'providername' },
+  // 10: מייל
+  { id: 'mail', icon: 'phone', field: 'mail' },
+  // 11: טלפון
+  { id: 'phone', icon: 'phone', field: 'phone' },
+  // 12: פרטי קשר
+  { id: 'contact', icon: 'phone', field: 'contactdetails' },
+  // 13: סוג מענה
+  { id: 'servicetype', icon: 'building', field: 'servicetypedescription' },
+  // 14: סוג פעילות
+  { id: 'activitytype', icon: 'building', field: 'activitytype' },
+  // 15: נגישות
   { id: 'accessibility', icon: 'accessibility', field: 'accessibility' },
+  // 16: פירוט על נגישות
+  { id: 'accessibilitytext', icon: 'accessibility', field: 'accessibilitytext' },
+  // 17: קהל יעד
+  { id: 'eligibility', icon: 'group', field: 'participationeligibility' },
+  // 18: שפות
+  { id: 'language', icon: 'language', field: 'language' },
+  // 19: סוג ארגון (נותן השירות)
+  { id: 'providertype', icon: 'building', field: 'serviceproviderorganizationtype' },
+  // 20: שעות פעילות
+  { id: 'hours', icon: 'clock', field: 'openhours' },
+  // 21: תדירות
+  { id: 'frequency', icon: 'clock', field: 'frequency' },
+  // 22: דרוש תשלום
+  { id: 'payment', icon: 'price', field: 'requirespayment' },
+  // 23: עלות
+  { id: 'price', icon: 'price', field: 'requirespaymentamount' },
+  // 24: אתר מקור
+  { id: 'link', icon: 'link', field: 'servicelink' },
+  // 25: תאריך שליפת המידע מהרשת
+  { id: 'insertdate', icon: 'clock', field: 'insertdate' },
+  // 26: תאריך
+  { id: 'servicedate', icon: 'clock', field: 'servicedate' },
 ]
 
 const MapPointInfoCard = ({

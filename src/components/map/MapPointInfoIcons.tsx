@@ -117,6 +117,15 @@ function IconAccessibility() {
   )
 }
 
+function IconLink() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M6.66667 8.66732C6.95467 9.04965 7.31867 9.36465 7.73467 9.59065C8.15067 9.81665 8.608 9.94865 9.078 9.97865C9.548 10.0087 10.0193 9.93598 10.46 9.76465C10.9007 9.59332 11.3013 9.32732 11.6333 8.98532L13.3 7.31865C13.8728 6.72192 14.1901 5.92421 14.1813 5.09688C14.1725 4.26955 13.8383 3.47841 13.253 2.89312C12.6677 2.30783 11.8765 1.97363 11.0492 1.96481C10.2219 1.956 9.42418 2.27327 8.82733 2.84599L7.75067 3.91732" stroke="#A4B1C0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M9.33333 7.33268C9.04533 6.95035 8.68133 6.63535 8.26533 6.40935C7.84933 6.18335 7.392 6.05135 6.922 6.02135C6.452 5.99135 5.98067 6.06402 5.54 6.23535C5.09933 6.40668 4.69867 6.67268 4.36667 7.01468L2.7 8.68135C2.12728 9.27808 1.80995 10.0758 1.81877 10.9031C1.82758 11.7304 2.16178 12.5216 2.74707 13.1069C3.33236 13.6922 4.1235 14.0264 4.95083 14.0352C5.77816 14.044 6.57587 13.7267 7.17267 13.154L8.24333 12.0827" stroke="#A4B1C0" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  )
+}
+
 function IconMapPinLarge() {
   return (
     <svg className="size-9 text-brand-darkBlue" viewBox="0 0 36 36" fill="none" aria-hidden>
@@ -170,6 +179,8 @@ export function MapPointInfoIcon({ icon }: { icon: MapPointInfoIconId }) {
       return <IconBuilding />
     case 'accessibility':
       return <IconAccessibility />
+    case 'link':
+      return <IconLink />
     default:
       return <IconLocation />
   }
