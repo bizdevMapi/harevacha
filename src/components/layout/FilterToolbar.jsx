@@ -67,8 +67,8 @@ const FilterToolbar = ({ onBack = () => { } }) => {
   )
 
   return (
-    <div className="px-4 pb-5 pt-0 sm:px-6 sm:pb-6">
-      <div className="flex flex-wrap items-end gap-x-4 gap-y-3 rounded-[10px] border border-white/18 bg-brand-darkBlue px-4 py-4 shadow-toolbarBar sm:flex-nowrap sm:items-center sm:gap-x-5 sm:px-5 sm:py-4">
+    <div className="px-2 pb-3 pt-0">
+      <div className="flex flex-wrap items-end gap-x-4 gap-y-3 rounded-[10px] border border-white/18 bg-brand-darkBlue px-2 py-2 shadow-toolbarBar sm:flex-nowrap sm:items-center sm:gap-x-5">
         {areaSelect}
         {divider}
 

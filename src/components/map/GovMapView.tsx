@@ -769,11 +769,11 @@ const GovMapView = () => {
       selectedKeys,
       searchQuery,
     )
-    // window.govmap?.filterLayers?.({
-    //   layerName: SITE.layers.servicesLayer,
-    //   whereClause,
-    //   zoomToExtent: false,
-    // })
+    window.govmap?.filterLayers?.({
+      layerName: SITE.layers.servicesLayer,
+      whereClause,
+      zoomToExtent: false,
+    })
   }
 
   useEffect(() => {

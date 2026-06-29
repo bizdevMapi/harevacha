@@ -22,7 +22,7 @@ export const FILTER_SECTIONS_CONFIG = [
   { fieldName: 'language', title: 'שפות המענה' },
   { fieldName: 'servicetypedescription', title: 'סוג המענה' },
   { fieldName: 'serviceproviderorganizationtype', title: 'סוג ארגון נותן שירות' },
-  { fieldName: 'requirespaymentamount', title: 'עלות השירות' },
+  { fieldName: 'requirespayment', title: 'עלות השירות' },
   { fieldName: 'activitytype', title: 'סוג הפעילות' },
   { fieldName: 'participationeligibility', title: 'קהל יעד' },
 ] as const
@@ -40,7 +40,7 @@ type AreaServiceFilterRow = {
   language: string
   serviceTypeDescription: string
   serviceProviderOrganizationType: string
-  requiresPaymentAmount: string
+  requiresPayment: string
   activityType: string
   participationEligibility: string
 }
@@ -58,7 +58,7 @@ const FILTER_FIELD_TO_ROW_KEY: Record<
   language: 'language',
   servicetypedescription: 'serviceTypeDescription',
   serviceproviderorganizationtype: 'serviceProviderOrganizationType',
-  requirespaymentamount: 'requiresPaymentAmount',
+  requirespayment: 'requiresPayment',
   activitytype: 'activityType',
   participationeligibility: 'participationEligibility',
 }
@@ -76,7 +76,7 @@ const FILTER_FIELD_TO_SERVICE_KEY: Record<
   language: 'Language',
   servicetypedescription: 'ServiceTypeDescription',
   serviceproviderorganizationtype: 'ServiceProviderOrganizationType',
-  requirespaymentamount: 'RequiresPaymentAmount',
+  requirespayment: 'RequiresPayment',
   activitytype: 'ActivityType',
   participationeligibility: 'ParticipationEligibility',
 }
@@ -199,7 +199,7 @@ function serviceListToAreaRows(services: ServiceListItem[]): AreaServiceFilterRo
     language: service.Language,
     serviceTypeDescription: service.ServiceTypeDescription,
     serviceProviderOrganizationType: service.ServiceProviderOrganizationType,
-    requiresPaymentAmount: service.RequiresPaymentAmount,
+    requiresPayment: service.RequiresPayment,
     activityType: service.ActivityType,
     participationEligibility: service.ParticipationEligibility,
   }))

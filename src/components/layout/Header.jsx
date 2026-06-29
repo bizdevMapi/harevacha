@@ -3,12 +3,12 @@ import Logo from '../../assets/images/logo.png'
 const Header = () => {
   return (
     <header className="bg-white">
-      <div className="relative mx-auto flex min-h-[4.25rem] items-center justify-center px-4 py-4 md:px-8">
+      <div className="relative mx-auto flex items-center justify-center px-4 py-4 md:px-8">
         <div className="absolute start-4 top-1/2 -translate-y-1/2 md:start-8">
           <img
             src={Logo}
             alt="משרד הרווחה והביטחון החברתי"
-            className="h-8 w-auto max-w-[192px] object-contain md:h-10 md:max-w-[220px]"
+            className="h-8 w-auto max-w-[192px] object-contain md:max-w-[220px]"
           />
         </div>
 
