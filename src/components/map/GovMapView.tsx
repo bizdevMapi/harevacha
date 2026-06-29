@@ -19,6 +19,7 @@ import {
   buildFullServicesLayerWhereClause,
   filterServicesBySearchQuery,
   filterServicesBySelectedKeys,
+  updateFilterSectionsCounts,
   type FilterSectionData,
 } from './mapLayerFilters'
 import MapPointInfoCard from './MapPointInfoCard'
@@ -858,8 +859,17 @@ const GovMapView = () => {
     if (viewMode !== 'map') return
     if (servicesListLoading) return
     areaServiceObjectIdsRef.current = servicesList.map((service) => service.objectId)
-    const relevantServices = filterServicesBySearchQuery(servicesList, appliedServiceFilterSearchQuery)
-    setFilterSections(buildFilterSectionsFromServiceList(relevantServices))
+    const searchFiltered = filterServicesBySearchQuery(servicesList, appliedServiceFilterSearchQuery)
+    const baseSections = buildFilterSectionsFromServiceList(searchFiltered)
+
+    if (selectedServiceFilterKeys.size === 0) {
+      setFilterSections(baseSections)
+    } else {
+      const fullyFiltered = filterServicesBySelectedKeys(searchFiltered, selectedServiceFilterKeys)
+      const updatedSections = updateFilterSectionsCounts(baseSections, fullyFiltered)
+      setFilterSections(updatedSections)
+    }
+
     applyServicesLayerFilter(selectedServiceFilterKeys, appliedServiceFilterSearchQuery)
   }, [
     viewMode,

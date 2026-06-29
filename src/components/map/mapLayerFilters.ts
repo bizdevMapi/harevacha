@@ -49,8 +49,6 @@ const FILTER_FIELD_TO_ROW_KEY: Record<
   (typeof FILTER_SECTIONS_CONFIG)[number]['fieldName'],
   keyof Omit<AreaServiceFilterRow, 'objectId'>
 > = {
-  riskstatusdescription_agg: 'riskStatus',
-  servicedescription: 'serviceDescription',
   locationtype: 'locationType',
   airisktype: 'aiRiskType',
   accessibility: 'accessibility',
@@ -67,8 +65,6 @@ const FILTER_FIELD_TO_SERVICE_KEY: Record<
   (typeof FILTER_SECTIONS_CONFIG)[number]['fieldName'],
   keyof ServiceListItem
 > = {
-  riskstatusdescription_agg: 'RiskStatusDescription_Agg',
-  servicedescription: 'ServiceDescription',
   locationtype: 'LocationType',
   airisktype: 'airisktype',
   accessibility: 'Accessibility',
@@ -209,6 +205,40 @@ export function buildFilterSectionsFromServiceList(
   services: ServiceListItem[],
 ): FilterSectionData[] {
   return buildFilterSectionsForArea(serviceListToAreaRows(services))
+}
+
+export function updateFilterSectionsCounts(
+  sections: FilterSectionData[],
+  filteredServices: ServiceListItem[],
+): FilterSectionData[] {
+  const filteredRows = serviceListToAreaRows(filteredServices)
+
+  return sections.map((section) => {
+    const config = FILTER_FIELD_CONFIG.find((c) => c.title === section.title)
+    if (!config) return section
+
+    const rowKey = FILTER_FIELD_TO_ROW_KEY[config.fieldName]
+    const rawValues: string[] = filteredRows.map((row) => row[rowKey])
+    const filteredCounts = new Map<string, number>()
+
+    for (const value of rawValues) {
+      if (!value) continue
+      const parts = splitFilterValue(value)
+      for (const part of parts) {
+        filteredCounts.set(part, (filteredCounts.get(part) ?? 0) + 1)
+      }
+    }
+
+    const updatedItems = section.items.map((item) => ({
+      ...item,
+      count: filteredCounts.get(item.label) ?? 0,
+    }))
+
+    return {
+      ...section,
+      items: updatedItems,
+    }
+  })
 }
 
 function fieldValueMatchesSelection(fieldValue: string, selectedValues: string[]): boolean {
