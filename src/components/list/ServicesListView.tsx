@@ -74,13 +74,14 @@ const ServicesListView = () => {
             </p>
           </div>
         ) : (
-          <ServicesListTable rows={filteredRows} onServiceClick={setSelectedPointInfo} />
+          <ServicesListTable rows={filteredRows} onServiceClick={(fields) => setSelectedPointInfo({ fields, isOtherLayer: false })} />
         )}
       </div>
 
       {selectedPointInfo && (
         <MapPointInfoCard
-          data={selectedPointInfo}
+          data={selectedPointInfo.fields}
+          isOtherLayer={selectedPointInfo.isOtherLayer}
           onClose={() => setSelectedPointInfo(null)}
           selectedAreaCenter={selectedAreaOption?.value ?? null}
           onExpandMap={(center) => {

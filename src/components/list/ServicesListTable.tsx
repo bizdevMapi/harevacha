@@ -116,19 +116,35 @@ const convertServiceToPointInfo = (service: ServiceListItem): MapPointInfoField[
     }
   }
 
+  // Add all fields in the same order as the map layer identify
   addField('servicename', service.ServiceName)
   addField('fulladdress', service.FullAddress)
-  addField('servicetypename', service.servicetypename)
+  addField('servicedescription', service.ServiceDescription)
   addField('targetpopulations', service.TargetPopulations)
   addField('requirespaymentamount', service.RequiresPaymentAmount)
   addField('requirespayment', service.RequiresPayment)
   addField('serviceproviderorganizationtype', service.ServiceProviderOrganizationType)
   addField('language', service.Language)
-  addField('airisktype', service.airisktype)
+  addField('riskstatusdescription_agg', service.RiskStatusDescription_Agg)
   addField('accessibility', service.Accessibility)
   addField('providername', service.ProviderName)
   addField('gisx', service.GisX)
   addField('gisy', service.GisY)
+  addField('servicetypename', service.servicetypename)
+  addField('locationtype', service.LocationType)
+  addField('participationeligibility', service.ParticipationEligibility)
+  addField('activitytype', service.ActivityType)
+  addField('airisktype', service.airisktype)
+  addField('phone', service.Phone)
+  addField('openhours', service.OpenHours)
+  addField('mail', service.Mail)
+  addField('contactdetails', service.ContactDetails)
+  addField('frequency', service.Frequency)
+  addField('servicelink', service.ServiceLink)
+  addField('insertdate', service.InsertDate)
+  addField('servicedate', service.ServiceDate)
+  addField('aiscoreexplanation', service.AIScoreExplanation)
+  addField('accessibilitytext', service.AccessibilityText)
 
   return fields
 }
