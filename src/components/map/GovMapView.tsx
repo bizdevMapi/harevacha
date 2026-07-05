@@ -852,10 +852,6 @@ const GovMapView = () => {
     setServicesListLoading,
   ])
 
-  useEffect(() => {
-    setSelectedServiceFilterKeys((prev) => (prev.size === 0 ? prev : new Set()))
-    setServiceFilterSearchQuery((prev) => (prev === '' ? prev : ''))
-  }, [servicesQueryGeometry])
 
   useEffect(() => {
     if (viewMode !== 'map') return
