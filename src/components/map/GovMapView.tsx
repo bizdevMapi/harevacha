@@ -290,6 +290,8 @@ const GovMapView = () => {
     setSelectedServiceFilterKeys,
     selectedPointInfo,
     setSelectedPointInfo,
+    expandedFilterSections,
+    setExpandedFilterSections,
   } = useDashboardUi()
   const mapRef = useRef<HTMLDivElement | null>(null)
   const isHoverIdentifyInFlightRef = useRef(false)
@@ -902,6 +904,8 @@ const GovMapView = () => {
           filtersLoading={servicesListLoading}
           selectedKeys={selectedServiceFilterKeys}
           onFilterSelectionChange={setSelectedServiceFilterKeys}
+          expandedSections={expandedFilterSections}
+          onExpandedSectionsChange={setExpandedFilterSections}
         />
 
         <div className="relative min-w-0 flex-1">

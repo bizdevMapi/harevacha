@@ -24,6 +24,8 @@ const ServicesListView = () => {
     setSelectedPointInfo,
     selectedArea,
     neighborhoodsList,
+    expandedFilterSections,
+    setExpandedFilterSections,
   } = useDashboardUi()
 
   const filterSections = useMemo(
@@ -63,6 +65,8 @@ const ServicesListView = () => {
         filtersLoading={servicesListLoading}
         selectedKeys={selectedServiceFilterKeys}
         onFilterSelectionChange={setSelectedServiceFilterKeys}
+        expandedSections={expandedFilterSections}
+        onExpandedSectionsChange={setExpandedFilterSections}
       />
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">

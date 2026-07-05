@@ -132,6 +132,8 @@ type MapFiltersPanelProps = {
   filtersLoading?: boolean
   onFilterSelectionChange?: (selectedKeys: Set<string>) => void
   selectedKeys?: Set<string>
+  expandedSections?: Set<string>
+  onExpandedSectionsChange?: (sections: Set<string>) => void
 }
 
 const MapFiltersPanel = ({
@@ -145,6 +147,8 @@ const MapFiltersPanel = ({
   filtersLoading = false,
   onFilterSelectionChange,
   selectedKeys: controlledSelectedKeys,
+  expandedSections: controlledExpandedSections,
+  onExpandedSectionsChange,
 }: MapFiltersPanelProps) => {
   const searchId = useId()
   const [internalSearchQuery, setInternalSearchQuery] = useState('')
@@ -153,7 +157,9 @@ const MapFiltersPanel = ({
   const [internalSelectedKeys, setInternalSelectedKeys] = useState<Set<string>>(() => new Set())
   const selectedKeys = controlledSelectedKeys ?? internalSelectedKeys
   const setSelectedKeys = onFilterSelectionChange ?? setInternalSelectedKeys
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(() => new Set())
+  const [internalExpandedSections, setInternalExpandedSections] = useState<Set<string>>(() => new Set())
+  const expandedSections = controlledExpandedSections ?? internalExpandedSections
+  const setExpandedSections = onExpandedSectionsChange ?? setInternalExpandedSections
 
   const handleClear = () => {
     setSearchQuery('')
