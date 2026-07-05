@@ -12,7 +12,7 @@ type MapPointInfoCardProps = {
   isOtherLayer?: boolean
   onClose: () => void
   selectedAreaCenter?: { x: number; y: number } | null
-  onExpandMap?: ((center: { x: number; y: number } | null) => void) | null
+  onExpandMap: (center: { x: number; y: number } | null) => void
 }
 
 type DetailRowData = {
@@ -86,7 +86,7 @@ const DETAIL_SPECS: Array<{ id: string; icon: MapPointInfoIconId; field: string;
   // 12: פרטי קשר
   { id: 'contact', icon: 'phone', field: 'contactdetails' },
   // 13: סוג מענה
-  { id: 'servicetype', icon: 'building', field: 'servicetypedescription' },
+  { id: 'servicetype', icon: 'building', field: 'servicetypename' },
   // 14: סוג פעילות
   { id: 'activitytype', icon: 'building', field: 'activitytype' },
   // 15: נגישות
@@ -239,18 +239,16 @@ const MapPointInfoCard = ({
               {!isMiniMapReady && (
                 <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#dce8f4] via-[#e8eef4] to-[#f0f4f8] opacity-60" />
               )}
-              {onExpandMap && (
-                <button
-                  type="button"
-                  onClick={() => onExpandMap(mapCenter)}
-                  className="absolute right-2 top-2 flex items-center justify-center rounded-[7px] bg-white p-0.5 shadow-sm transition-colors hover:bg-[#f5f8fc]"
-                  aria-label="הרחבת מפה"
-                >
-                  <span className="flex size-5 items-center justify-center">
-                    <IconExpand />
-                  </span>
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => onExpandMap(mapCenter)}
+                className="absolute right-2 top-2 flex items-center justify-center rounded-[7px] bg-white p-0.5 shadow-sm transition-colors hover:bg-[#f5f8fc]"
+                aria-label="הרחבת מפה"
+              >
+                <span className="flex size-5 items-center justify-center">
+                  <IconExpand />
+                </span>
+              </button>
             </div>
           )}
 

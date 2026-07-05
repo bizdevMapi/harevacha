@@ -83,7 +83,17 @@ const ServicesListView = () => {
           data={selectedPointInfo}
           onClose={() => setSelectedPointInfo(null)}
           selectedAreaCenter={selectedAreaOption?.value ?? null}
-          onExpandMap={null}
+          onExpandMap={(center) => {
+            const target = center ?? selectedAreaOption?.value ?? null
+            if (!target) return
+            window.govmap?.zoomToXY?.({
+              x: target.x,
+              y: target.y,
+              level: 12,
+              marker: true,
+            })
+            setSelectedPointInfo(null)
+          }}
         />
       )}
     </div>
