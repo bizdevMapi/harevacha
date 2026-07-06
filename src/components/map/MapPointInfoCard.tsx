@@ -160,7 +160,17 @@ const MapPointInfoCard = ({
       })()
     : DETAIL_SPECS.map((spec) => {
         let value = spec.field === 'requirespaymentamount' ? getPaymentValue() : getFieldValue(spec.field)
-        if (spec.field === 'fulladdress' && !value) value = 'לא נמצאה כתובת/מקוון'
+
+        // Special handling for fulladdress field based on LocationType
+        if (spec.field === 'fulladdress' && !value) {
+          const locationType = getFieldValue('locationtype')
+          // If LocationType is physical (פיזי), show "לא נמצאה כתובת"
+          // Otherwise, skip the address field entirely (value stays empty)
+          if (locationType && locationType.toLowerCase().includes('פיזי')) {
+            value = 'לא נמצאה כתובת'
+          }
+        }
+
         if (!value && spec.fallbackField) value = getFieldValue(spec.fallbackField)
         return { id: spec.id, icon: spec.icon, value }
       }).filter((item) => item.value)
