@@ -66,6 +66,8 @@ export type DashboardUiValue = {
   setSelectedServiceFilterKeys: Dispatch<SetStateAction<Set<string>>>
   selectedPointInfo: SelectedPointInfo | null
   setSelectedPointInfo: Dispatch<SetStateAction<SelectedPointInfo | null>>
+  expandedFilterSections: Set<string>
+  setExpandedFilterSections: Dispatch<SetStateAction<Set<string>>>
 }
 
 const DashboardUiContext = createContext<DashboardUiValue | null>(null)
@@ -95,6 +97,9 @@ export function DashboardUiProvider({ children }: { children: ReactNode }) {
     () => new Set(),
   )
   const [selectedPointInfo, setSelectedPointInfo] = useState<SelectedPointInfo | null>(null)
+  const [expandedFilterSections, setExpandedFilterSections] = useState<Set<string>>(
+    () => new Set(),
+  )
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -147,6 +152,8 @@ export function DashboardUiProvider({ children }: { children: ReactNode }) {
       setSelectedServiceFilterKeys,
       selectedPointInfo,
       setSelectedPointInfo,
+      expandedFilterSections,
+      setExpandedFilterSections,
     }),
     [
       viewMode,
@@ -164,6 +171,7 @@ export function DashboardUiProvider({ children }: { children: ReactNode }) {
       appliedServiceFilterSearchQuery,
       selectedServiceFilterKeys,
       selectedPointInfo,
+      expandedFilterSections,
     ],
   )
 

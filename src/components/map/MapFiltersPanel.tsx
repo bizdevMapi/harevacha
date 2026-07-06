@@ -69,16 +69,32 @@ function FilterSection({
   section,
   selectedKeys,
   onToggle,
+  onToggleMultiple,
   isExpanded,
   onToggleExpand,
 }: {
   section: FilterSectionData
   selectedKeys: Set<string>
   onToggle: (key: string, checked: boolean) => void
+  onToggleMultiple: (keys: string[], checked: boolean) => void
   isExpanded: boolean
   onToggleExpand: () => void
 }) {
   const sectionKey = (label: string) => `${section.title}::${label}`
+
+  const allSectionKeys = section.items.map((item) => sectionKey(item.label))
+  const allSelected = allSectionKeys.every((key) => selectedKeys.has(key))
+  const someSelected = allSectionKeys.some((key) => selectedKeys.has(key))
+
+  const handleSelectAll = () => {
+    if (allSelected) {
+      // Unselect all
+      onToggleMultiple(allSectionKeys, false)
+    } else {
+      // Select all
+      onToggleMultiple(allSectionKeys, true)
+    }
+  }
 
   return (
     <section className="flex w-full flex-col items-end gap-3.5">
@@ -104,6 +120,22 @@ function FilterSection({
       </div>
       {isExpanded && (
         <div className="w-full max-w-[312px]">
+          <label
+            className="flex cursor-pointer items-center justify-between border-b border-[#e0e5eb] bg-[#f0f4f8] p-2"
+          >
+            <span className="text-sm font-semibold leading-[18px] text-[#34404f]">בחר הכל</span>
+            <input
+              type="checkbox"
+              checked={allSelected}
+              ref={(input) => {
+                if (input) {
+                  input.indeterminate = someSelected && !allSelected
+                }
+              }}
+              onChange={handleSelectAll}
+              className="size-5 shrink-0 cursor-pointer rounded border border-[#e0e5eb] bg-white accent-brand-darkBlue"
+            />
+          </label>
           {section.items.map((item) => {
             const key = sectionKey(item.label)
             return (
@@ -132,6 +164,8 @@ type MapFiltersPanelProps = {
   filtersLoading?: boolean
   onFilterSelectionChange?: (selectedKeys: Set<string>) => void
   selectedKeys?: Set<string>
+  expandedSections?: Set<string>
+  onExpandedSectionsChange?: (sections: Set<string>) => void
 }
 
 const MapFiltersPanel = ({
@@ -145,6 +179,8 @@ const MapFiltersPanel = ({
   filtersLoading = false,
   onFilterSelectionChange,
   selectedKeys: controlledSelectedKeys,
+  expandedSections: controlledExpandedSections,
+  onExpandedSectionsChange,
 }: MapFiltersPanelProps) => {
   const searchId = useId()
   const [internalSearchQuery, setInternalSearchQuery] = useState('')
@@ -153,7 +189,9 @@ const MapFiltersPanel = ({
   const [internalSelectedKeys, setInternalSelectedKeys] = useState<Set<string>>(() => new Set())
   const selectedKeys = controlledSelectedKeys ?? internalSelectedKeys
   const setSelectedKeys = onFilterSelectionChange ?? setInternalSelectedKeys
-  const [expandedSections, setExpandedSections] = useState<Set<string>>(() => new Set())
+  const [internalExpandedSections, setInternalExpandedSections] = useState<Set<string>>(() => new Set())
+  const expandedSections = controlledExpandedSections ?? internalExpandedSections
+  const setExpandedSections = onExpandedSectionsChange ?? setInternalExpandedSections
 
   const handleClear = () => {
     setSearchQuery('')
@@ -165,6 +203,16 @@ const MapFiltersPanel = ({
     const next = new Set(selectedKeys)
     if (checked) next.add(key)
     else next.delete(key)
+    setSelectedKeys(next)
+  }
+
+  const handleToggleMultiple = (keys: string[], checked: boolean) => {
+    const next = new Set(selectedKeys)
+    if (checked) {
+      keys.forEach((key) => next.add(key))
+    } else {
+      keys.forEach((key) => next.delete(key))
+    }
     setSelectedKeys(next)
   }
 
@@ -263,6 +311,7 @@ const MapFiltersPanel = ({
                 section={section}
                 selectedKeys={selectedKeys}
                 onToggle={handleToggle}
+                onToggleMultiple={handleToggleMultiple}
                 isExpanded={expandedSections.has(section.title)}
                 onToggleExpand={() => handleToggleSection(section.title)}
               />

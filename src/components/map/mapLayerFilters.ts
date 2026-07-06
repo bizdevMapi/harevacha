@@ -20,7 +20,7 @@ export const FILTER_SECTIONS_CONFIG = [
   { fieldName: 'locationtype', title: 'סוג מיקום' },
   { fieldName: 'targetpopulations', title: 'התאמה לסוגי אוכלוסיות' },
   { fieldName: 'language', title: 'שפות המענה' },
-  { fieldName: 'servicetypedescription', title: 'סוג המענה' },
+  { fieldName: 'servicetypename', title: 'סוג המענה' },
   { fieldName: 'serviceproviderorganizationtype', title: 'סוג ארגון נותן שירות' },
   { fieldName: 'requirespayment', title: 'עלות השירות' },
   { fieldName: 'activitytype', title: 'סוג הפעילות' },
@@ -38,7 +38,7 @@ type AreaServiceFilterRow = {
   accessibility: string
   targetPopulations: string
   language: string
-  serviceTypeDescription: string
+  servicetypename: string
   serviceProviderOrganizationType: string
   requiresPayment: string
   activityType: string
@@ -54,7 +54,7 @@ const FILTER_FIELD_TO_ROW_KEY: Record<
   accessibility: 'accessibility',
   targetpopulations: 'targetPopulations',
   language: 'language',
-  servicetypedescription: 'serviceTypeDescription',
+  servicetypename   : 'servicetypename',
   serviceproviderorganizationtype: 'serviceProviderOrganizationType',
   requirespayment: 'requiresPayment',
   activitytype: 'activityType',
@@ -70,7 +70,7 @@ const FILTER_FIELD_TO_SERVICE_KEY: Record<
   accessibility: 'Accessibility',
   targetpopulations: 'TargetPopulations',
   language: 'Language',
-  servicetypedescription: 'ServiceTypeDescription',
+  servicetypename: 'servicetypename',
   serviceproviderorganizationtype: 'ServiceProviderOrganizationType',
   requirespayment: 'RequiresPayment',
   activitytype: 'ActivityType',
@@ -193,7 +193,7 @@ function serviceListToAreaRows(services: ServiceListItem[]): AreaServiceFilterRo
     accessibility: service.Accessibility,
     targetPopulations: service.TargetPopulations,
     language: service.Language,
-    serviceTypeDescription: service.ServiceTypeDescription,
+    servicetypename: service.servicetypename,
     serviceProviderOrganizationType: service.ServiceProviderOrganizationType,
     requiresPayment: service.RequiresPayment,
     activityType: service.ActivityType,

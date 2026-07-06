@@ -20,6 +20,14 @@ export const SERVICE_TABLE_LAYER_FIELDS = [
   'airisktype',
   'GisX',
   'GisY',
+  'Mail',
+  'ContactDetails',
+  'Frequency',
+  'ServiceLink',
+  'InsertDate',
+  'ServiceDate',
+  'AIScoreExplanation',
+  'AccessibilityText',
 ] as const
 
 export type ServiceTableField = (typeof SERVICE_TABLE_LAYER_FIELDS)[number]
@@ -46,6 +54,14 @@ export type ServiceListItem = {
   airisktype: string
   GisX: string
   GisY: string
+  Mail: string
+  ContactDetails: string
+  Frequency: string
+  ServiceLink: string
+  InsertDate: string
+  ServiceDate: string
+  AIScoreExplanation: string
+  AccessibilityText: string
 }
 
 export type ServiceListColumnId =
@@ -155,6 +171,14 @@ export function mapIntersectFeaturesToServicesList(
         airisktype: String(row.airisktype ?? ''),
         GisX: String(row.GisX ?? ''),
         GisY: String(row.GisY ?? ''),
+        Mail: String(row.Mail ?? ''),
+        ContactDetails: String(row.ContactDetails ?? ''),
+        Frequency: String(row.Frequency ?? ''),
+        ServiceLink: String(row.ServiceLink ?? ''),
+        InsertDate: String(row.InsertDate ?? ''),
+        ServiceDate: String(row.ServiceDate ?? ''),
+        AIScoreExplanation: String(row.AIScoreExplanation ?? ''),
+        AccessibilityText: String(row.AccessibilityText ?? ''),
       }
     })
     .filter((row): row is ServiceListItem => row != null)

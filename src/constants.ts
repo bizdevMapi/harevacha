@@ -29,7 +29,7 @@ export const DASHBOARD_ALL_CITY_AREA_VALUE = 'jerusalem-all'
 
 /** אזור קבוע ראשון בסלקט «אזור» — מרכז ירושלים (קואורדינטות GovMap / רשת ישראל החדשה) */
 export const JERUSALEM_CITY_CENTER_AREA_OPTION = {
-  label: 'ירושלים - מרכז העיר',
+  label: 'ירושלים',
   value: { x: 220000, y: 630000 },
   geometry: 'POLYGON ((211000 621000, 227000 621000, 227000 643000, 211000 643000, 211000 621000))'
 } as const
@@ -94,6 +94,7 @@ export const SITE = Object.freeze({
   layers: Object.freeze({
     municipalitiesLayer: 'layer_125',
     neighborhoodsLayer: 'layer_22',
+    statisticsLayer: 'layer_23',
     servicesLayer: import.meta.env.VITE_SERVICES_LAYER || 'layer_233404',
     sportsLayer: 'layer_400',
     seniorHousingLayer: 'layer_337',

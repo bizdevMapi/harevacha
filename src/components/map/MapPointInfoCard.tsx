@@ -12,7 +12,7 @@ type MapPointInfoCardProps = {
   isOtherLayer?: boolean
   onClose: () => void
   selectedAreaCenter?: { x: number; y: number } | null
-  onExpandMap?: ((center: { x: number; y: number } | null) => void) | null
+  onExpandMap: (center: { x: number; y: number } | null) => void
 }
 
 type DetailRowData = {
@@ -86,7 +86,7 @@ const DETAIL_SPECS: Array<{ id: string; icon: MapPointInfoIconId; field: string;
   // 12: פרטי קשר
   { id: 'contact', icon: 'phone', field: 'contactdetails' },
   // 13: סוג מענה
-  { id: 'servicetype', icon: 'building', field: 'servicetypedescription' },
+  { id: 'servicetype', icon: 'building', field: 'servicetypename' },
   // 14: סוג פעילות
   { id: 'activitytype', icon: 'building', field: 'activitytype' },
   // 15: נגישות
@@ -160,7 +160,17 @@ const MapPointInfoCard = ({
       })()
     : DETAIL_SPECS.map((spec) => {
         let value = spec.field === 'requirespaymentamount' ? getPaymentValue() : getFieldValue(spec.field)
-        if (spec.field === 'fulladdress' && !value) value = 'לא נמצאה כתובת/מקוון'
+
+        // Special handling for fulladdress field based on LocationType
+        if (spec.field === 'fulladdress' && !value) {
+          const locationType = getFieldValue('locationtype')
+          // If LocationType is physical (פיזי), show "לא נמצאה כתובת"
+          // Otherwise, skip the address field entirely (value stays empty)
+          if (locationType && locationType.toLowerCase().includes('פיזי')) {
+            value = 'לא נמצאה כתובת'
+          }
+        }
+
         if (!value && spec.fallbackField) value = getFieldValue(spec.fallbackField)
         return { id: spec.id, icon: spec.icon, value }
       }).filter((item) => item.value)
@@ -228,6 +238,12 @@ const MapPointInfoCard = ({
         </div>
 
         <div className="flex min-h-0 w-full max-w-[340px] flex-1 flex-col items-end gap-6 overflow-y-auto overflow-x-clip pb-6">
+          <div className="flex w-full flex-col items-end justify-center gap-3.5">
+            {details.map((detail) => (
+              <DetailRow key={detail.id} detail={detail} showLabel={isOtherLayer} />
+            ))}
+          </div>
+
           {miniMapSrc && (
             <div className="relative h-[196px] w-full shrink-0 overflow-hidden rounded-2xl bg-[#f0f4f8]">
               <iframe
@@ -239,26 +255,18 @@ const MapPointInfoCard = ({
               {!isMiniMapReady && (
                 <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-[#dce8f4] via-[#e8eef4] to-[#f0f4f8] opacity-60" />
               )}
-              {onExpandMap && (
-                <button
-                  type="button"
-                  onClick={() => onExpandMap(mapCenter)}
-                  className="absolute right-2 top-2 flex items-center justify-center rounded-[7px] bg-white p-0.5 shadow-sm transition-colors hover:bg-[#f5f8fc]"
-                  aria-label="הרחבת מפה"
-                >
-                  <span className="flex size-5 items-center justify-center">
-                    <IconExpand />
-                  </span>
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => onExpandMap(mapCenter)}
+                className="absolute right-2 top-2 flex items-center justify-center rounded-[7px] bg-white p-0.5 shadow-sm transition-colors hover:bg-[#f5f8fc]"
+                aria-label="הרחבת מפה"
+              >
+                <span className="flex size-5 items-center justify-center">
+                  <IconExpand />
+                </span>
+              </button>
             </div>
           )}
-
-          <div className="flex w-full flex-col items-end justify-center gap-3.5">
-            {details.map((detail) => (
-              <DetailRow key={detail.id} detail={detail} showLabel={isOtherLayer} />
-            ))}
-          </div>
         </div>
       </div>
     </aside>

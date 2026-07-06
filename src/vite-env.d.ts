@@ -83,6 +83,7 @@ interface GovMapApi {
     highlight?: boolean
   }) => void
   identifyByXYAndLayer?: (x: number, y: number, layers: string[]) => Promise<unknown>
+  identifyByXY?: (x: number, y: number) => Promise<unknown>
   getZoomLevel?: () => Promise<number | { level?: number; z?: number }>
   filterLayers?: (params: {
     layerName: string

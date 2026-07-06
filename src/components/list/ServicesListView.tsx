@@ -24,6 +24,8 @@ const ServicesListView = () => {
     setSelectedPointInfo,
     selectedArea,
     neighborhoodsList,
+    expandedFilterSections,
+    setExpandedFilterSections,
   } = useDashboardUi()
 
   const filterSections = useMemo(
@@ -63,6 +65,8 @@ const ServicesListView = () => {
         filtersLoading={servicesListLoading}
         selectedKeys={selectedServiceFilterKeys}
         onFilterSelectionChange={setSelectedServiceFilterKeys}
+        expandedSections={expandedFilterSections}
+        onExpandedSectionsChange={setExpandedFilterSections}
       />
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
@@ -74,16 +78,27 @@ const ServicesListView = () => {
             </p>
           </div>
         ) : (
-          <ServicesListTable rows={filteredRows} onServiceClick={setSelectedPointInfo} />
+          <ServicesListTable rows={filteredRows} onServiceClick={(fields) => setSelectedPointInfo({ fields, isOtherLayer: false })} />
         )}
       </div>
 
       {selectedPointInfo && (
         <MapPointInfoCard
-          data={selectedPointInfo}
+          data={selectedPointInfo.fields}
+          isOtherLayer={selectedPointInfo.isOtherLayer}
           onClose={() => setSelectedPointInfo(null)}
           selectedAreaCenter={selectedAreaOption?.value ?? null}
-          onExpandMap={null}
+          onExpandMap={(center) => {
+            const target = center ?? selectedAreaOption?.value ?? null
+            if (!target) return
+            window.govmap?.zoomToXY?.({
+              x: target.x,
+              y: target.y,
+              level: 12,
+              marker: true,
+            })
+            setSelectedPointInfo(null)
+          }}
         />
       )}
     </div>
