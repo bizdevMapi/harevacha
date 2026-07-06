@@ -446,7 +446,7 @@ const GovMapView = () => {
       const tiratNeighborhoods = tiratRows.map(toOption)
 
       setNeighborhoodsList([
-        
+
         {
           label: TIRAT_CARMEL_CITY_AREA_OPTION.label,
           value: { ...TIRAT_CARMEL_CITY_AREA_OPTION.value },
@@ -511,7 +511,7 @@ const GovMapView = () => {
         }
         const paymentAmount = cleanValue(getFieldValue('requirespaymentamount'))
         const requiresPayment = cleanValue(getFieldValue('requirespayment'))
-       
+
 
         setHoverPointInfo({
           address: cleanValue(getFieldValue('fulladdress')),
@@ -630,11 +630,7 @@ const GovMapView = () => {
       const useNeighborhoodClick = shouldUseNeighborhoodClick(zoomLevel)
 
       void govmap
-        .identifyByXYAndLayer?.(mapPoint.x, mapPoint.y, [
-          areaLayerId,
-          SITE.layers.servicesLayer,
-          "400","337","96","200710"
-        ])
+        .identifyByXY?.(mapPoint.x, mapPoint.y)
         ?.then((response: any) => ({ response, useNeighborhoodClick }))
         ?.then((result) => {
           if (!result) return
@@ -707,9 +703,9 @@ const GovMapView = () => {
                 const centroid = entity.centroid
                 const center =
                   Array.isArray(centroid) &&
-                  centroid.length >= 2 &&
-                  Number.isFinite(centroid[0]) &&
-                  Number.isFinite(centroid[1])
+                    centroid.length >= 2 &&
+                    Number.isFinite(centroid[0]) &&
+                    Number.isFinite(centroid[1])
                     ? { x: centroid[0], y: centroid[1] }
                     : selectedOption.value
 
@@ -722,10 +718,10 @@ const GovMapView = () => {
                   prev.map((opt) =>
                     opt.optionValue === selectedOption.optionValue
                       ? {
-                          ...opt,
-                          value: center,
-                          municipalityObjectId: entity.objectId,
-                        }
+                        ...opt,
+                        value: center,
+                        municipalityObjectId: entity.objectId,
+                      }
                       : opt,
                   ),
                 )
@@ -797,6 +793,7 @@ const GovMapView = () => {
           SITE.layers.municipalitiesLayer,
           SITE.layers.neighborhoodsLayer,
           SITE.layers.servicesLayer,
+          SITE.layers.statisticsLayer,
           SITE.layers.sportsLayer,
           SITE.layers.seniorHousingLayer,
           SITE.layers.institutionsLayer,
@@ -804,14 +801,8 @@ const GovMapView = () => {
           SITE.layers.populationCensusLayer,
         ],
         visibleLayers: [
-          SITE.layers.municipalitiesLayer,
           SITE.layers.neighborhoodsLayer,
           SITE.layers.servicesLayer,
-           SITE.layers.sportsLayer,
-          SITE.layers.seniorHousingLayer,
-          SITE.layers.institutionsLayer,
-          SITE.layers.postLayer,
-          SITE.layers.populationCensusLayer,
         ],
         onLoad: () => {
           registerMapInteractionEvents()

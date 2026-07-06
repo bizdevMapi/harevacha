@@ -94,6 +94,7 @@ export const SITE = Object.freeze({
   layers: Object.freeze({
     municipalitiesLayer: 'layer_125',
     neighborhoodsLayer: 'layer_22',
+    statisticsLayer: 'layer_23',
     servicesLayer: import.meta.env.VITE_SERVICES_LAYER || 'layer_233404',
     sportsLayer: 'layer_400',
     seniorHousingLayer: 'layer_337',

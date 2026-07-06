@@ -228,6 +228,12 @@ const MapPointInfoCard = ({
         </div>
 
         <div className="flex min-h-0 w-full max-w-[340px] flex-1 flex-col items-end gap-6 overflow-y-auto overflow-x-clip pb-6">
+          <div className="flex w-full flex-col items-end justify-center gap-3.5">
+            {details.map((detail) => (
+              <DetailRow key={detail.id} detail={detail} showLabel={isOtherLayer} />
+            ))}
+          </div>
+
           {miniMapSrc && (
             <div className="relative h-[196px] w-full shrink-0 overflow-hidden rounded-2xl bg-[#f0f4f8]">
               <iframe
@@ -251,12 +257,6 @@ const MapPointInfoCard = ({
               </button>
             </div>
           )}
-
-          <div className="flex w-full flex-col items-end justify-center gap-3.5">
-            {details.map((detail) => (
-              <DetailRow key={detail.id} detail={detail} showLabel={isOtherLayer} />
-            ))}
-          </div>
         </div>
       </div>
     </aside>
