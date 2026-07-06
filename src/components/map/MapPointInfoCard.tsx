@@ -18,7 +18,8 @@ type MapPointInfoCardProps = {
 type DetailRowData = {
   id: string
   icon: MapPointInfoIconId
-  value: string
+  value: string,
+  hebel?: string
 }
 
 type MapCenterPoint = {
@@ -55,64 +56,67 @@ function DetailRow({ detail, showLabel }: { detail: DetailRowData; showLabel?: b
 
   return (
     <div className="flex w-full shrink-0 items-center justify-start gap-3">
-      <span className="flex size-5 shrink-0 items-center justify-center">
+      {/* <span className="flex size-5 shrink-0 items-center justify-center">
         <MapPointInfoIcon icon={detail.icon} />
+      </span> */}
+      <span className="text-right text-[14px] font-semibold leading-[22.871px] text-[#084878]">
+        {detail.hebel || detail.id}
       </span>
-      <p className="min-w-0 flex-1 text-right text-[14px] leading-[22.871px] text-[#5f708a]">{detail.value}</p>
+      <p className="min-w-0 flex-1 text-left text-[14px] leading-[22.871px] text-[#5f708a]">{detail.value}</p>
     </div>
   )
 }
 
-const DETAIL_SPECS: Array<{ id: string; icon: MapPointInfoIconId; field: string; fallbackField?: string }> = [
+const DETAIL_SPECS: Array<{ id: string; icon: MapPointInfoIconId; field: string; hebel: string; fallbackField?: string }> = [
   // 1-2: ServiceName and ServiceDescription are displayed separately as title and description
   // 3: התאמה למצבי סיכון
-  { id: 'risk', icon: 'target', field: 'riskstatusdescription_agg' },
+  { id: 'risk', icon: 'target', field: 'riskstatusdescription_agg', hebel: 'מצבי סיכון' },
   // 4: לאילו מצבי סיכון מענה זה מתאים?
-  { id: 'airisktype', icon: 'target', field: 'airisktype' },
+  { id: 'airisktype', icon: 'target', field: 'airisktype', hebel: 'מצבי סיכון' },
   // 5: מדוע מענה זה מוצג כ/ן?
-  { id: 'aiscore', icon: 'target', field: 'aiscoreexplanation' },
+  { id: 'aiscore', icon: 'target', field: 'aiscoreexplanation', hebel: 'מדוע מענה זה מוצג ?' },
   // 6: כתובת
-  { id: 'address', icon: 'location', field: 'fulladdress' },
+  { id: 'address', icon: 'location', field: 'fulladdress', hebel: 'כתובת' },
   // 7: סוג מיקום
-  { id: 'location', icon: 'location', field: 'locationtype' },
+  { id: 'location', icon: 'location', field: 'locationtype', hebel: 'סוג מיקום' },
   // 8: אוכלוסיה ייעודית
-  { id: 'audience', icon: 'group', field: 'targetpopulations' },
+  { id: 'audience', icon: 'group', field: 'targetpopulations', hebel: 'אוכלוסיה ייעודית' },
   // 9: שם ארגון מספק השירות
-  { id: 'provider', icon: 'building', field: 'providername' },
+  { id: 'provider', icon: 'building', field: 'providername', hebel: 'שם ארגון מספק השירות' },
   // 10: מייל
-  { id: 'mail', icon: 'phone', field: 'mail' },
+  { id: 'mail', icon: 'phone', field: 'mail', hebel: 'מייל' },
   // 11: טלפון
-  { id: 'phone', icon: 'phone', field: 'phone' },
+  { id: 'phone', icon: 'phone', field: 'phone', hebel: 'טלפון' },
   // 12: פרטי קשר
-  { id: 'contact', icon: 'phone', field: 'contactdetails' },
+  { id: 'contact', icon: 'phone', field: 'contactdetails', hebel: 'פרטי קשר' },
   // 13: סוג מענה
-  { id: 'servicetype', icon: 'building', field: 'servicetypename' },
+  { id: 'servicetype', icon: 'building', field: 'servicetypename', hebel: 'סוג מענה' },
   // 14: סוג פעילות
-  { id: 'activitytype', icon: 'building', field: 'activitytype' },
+  { id: 'activitytype', icon: 'building', field: 'activitytype', hebel: 'סוג פעילות' },
   // 15: נגישות
-  { id: 'accessibility', icon: 'accessibility', field: 'accessibility' },
+  { id: 'accessibility', icon: 'accessibility', field: 'accessibility', hebel: 'נגישות' },
   // 16: פירוט על נגישות
-  { id: 'accessibilitytext', icon: 'accessibility', field: 'accessibilitytext' },
+  { id: 'accessibilitytext', icon: 'accessibility', field: 'accessibilitytext', hebel: 'פירוט על נגישות' },
   // 17: קהל יעד
-  { id: 'eligibility', icon: 'group', field: 'participationeligibility' },
+  { id: 'eligibility', icon: 'group', field: 'participationeligibility', hebel: 'קהל יעד' },
   // 18: שפות
-  { id: 'language', icon: 'language', field: 'language' },
+  { id: 'language', icon: 'language', field: 'language', hebel: 'שפות'   },
   // 19: סוג ארגון (נותן השירות)
-  { id: 'providertype', icon: 'building', field: 'serviceproviderorganizationtype' },
+  { id: 'providertype', icon: 'building', field: 'serviceproviderorganizationtype', hebel: 'סוג ארגון (נותן השירות)' },
   // 20: שעות פעילות
-  { id: 'hours', icon: 'clock', field: 'openhours' },
+  { id: 'hours', icon: 'clock', field: 'openhours', hebel: 'שעות פעילות' },
   // 21: תדירות
-  { id: 'frequency', icon: 'clock', field: 'frequency' },
+  { id: 'frequency', icon: 'clock', field: 'frequency', hebel: 'תדירות' },
   // 22: דרוש תשלום
-  { id: 'payment', icon: 'price', field: 'requirespayment' },
+  { id: 'payment', icon: 'price', field: 'requirespayment', hebel: 'דרושים תשלום' },
   // 23: עלות
-  { id: 'price', icon: 'price', field: 'requirespaymentamount' },
+  { id: 'price', icon: 'price', field: 'requirespaymentamount', hebel: 'עלות' },
   // 24: אתר מקור
-  { id: 'link', icon: 'link', field: 'servicelink' },
+  { id: 'link', icon: 'link', field: 'servicelink', hebel: 'אתר מקור' },
   // 25: תאריך שליפת המידע מהרשת
-  { id: 'insertdate', icon: 'clock', field: 'insertdate' },
+  { id: 'insertdate', icon: 'clock', field: 'insertdate', hebel: 'תאריך שליפת המידע מהרשת' },
   // 26: תאריך
-  { id: 'servicedate', icon: 'clock', field: 'servicedate' },
+  { id: 'servicedate', icon: 'clock', field: 'servicedate', hebel: 'תאריך' },
 ]
 
 const MapPointInfoCard = ({
@@ -172,7 +176,7 @@ const MapPointInfoCard = ({
         }
 
         if (!value && spec.fallbackField) value = getFieldValue(spec.fallbackField)
-        return { id: spec.id, icon: spec.icon, value }
+        return { id: spec.id, icon: spec.icon, value, hebel: spec.hebel }
       }).filter((item) => item.value)
 
   const title = isOtherLayer
