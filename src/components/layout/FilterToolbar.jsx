@@ -77,7 +77,7 @@ const FilterToolbar = ({ onBack = () => { } }) => {
             <ToolbarSelect
               label="נתוני אוכלוסייה"
               value={populationSegment}
-              onChange={(e) => setPopulationSegment(e.target.value)}
+              // onChange={(e) => setPopulationSegment(e.target.value)}
               options={[...POPULATION_SEGMENT_OPTIONS]}
               rightIcon={<IconPerson />}
               className={toolbarSelectWidthClass}
