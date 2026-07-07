@@ -55,14 +55,14 @@ function DetailRow({ detail, showLabel }: { detail: DetailRowData; showLabel?: b
   }
 
   return (
-    <div className="flex w-full shrink-0 items-center justify-start gap-3">
+    <div className="w-full">
       {/* <span className="flex size-5 shrink-0 items-center justify-center">
         <MapPointInfoIcon icon={detail.icon} />
       </span> */}
-      <span className="text-right text-[14px] font-semibold leading-[22.871px] text-[#084878]">
+      <span className="w-full text-right text-[14px] font-semibold leading-[22.871px] text-[#084878]">
         {detail.hebel || detail.id}
       </span>
-      <p className="min-w-0 flex-1 text-left text-[14px] leading-[22.871px] text-[#5f708a]">{detail.value}</p>
+      <p className="w-full flex-1 text-right text-[14px] leading-[22.871px] text-[#5f708a]">{detail.value}</p>
     </div>
   )
 }
