@@ -480,13 +480,23 @@ const GovMapView = () => {
     lastHoverIdentifyScreenRef.current = screenPoint
     lastHoverIdentifyMapRef.current = mapPoint
 
-    govmap
-      .identifyByXYAndLayer?.(mapPoint.x, mapPoint.y, [SITE.layers.servicesLayer])
+    const fieldNames = ['servicename', 'fulladdress', 'servicedescription', 'targetpopulations', 'requirespaymentamount', 'requirespayment', 'serviceproviderorganizationtype', 'language', 'airisktype', 'accessibility', 'providername', 'gisx', 'gisy']
+
+    const params = {
+      geometry: `POINT (${mapPoint.x} ${mapPoint.y})`,
+      layerName: SITE.layers.servicesLayer,
+      fields: fieldNames,
+      radius: 100
+    }
+
+    govmap.intersectFeatures(params)
       ?.then((response: any) => {
         if (hoverSession !== hoverSessionRef.current) return
 
-        const rawEntity = response?.data?.[0]?.entities?.[0] ?? response?.data?.[0]?.fields ?? null
-        if (!rawEntity || typeof rawEntity !== 'object') {
+        const firstItem = response?.data?.[0]
+        const rawValues = firstItem?.Values
+
+        if (!Array.isArray(rawValues) || rawValues.length === 0) {
           lastHoverIdentifyScreenRef.current = null
           lastHoverIdentifyMapRef.current = null
           setHoverPointInfo(null)
@@ -498,21 +508,22 @@ const GovMapView = () => {
           setHoverTooltipPosition({ left: screenPoint.x, top: screenPoint.y })
         }
 
-        const fields = Array.isArray(rawEntity.fields) ? rawEntity.fields : []
-        const getFieldValue = (fieldName: string) =>
-          String(
-            fields.find((f: { fieldName?: string; fieldValue?: string }) => f?.fieldName === fieldName)
-              ?.fieldValue ?? '',
-          )
+        // Map array values to field names based on index
+        const getFieldValue = (fieldName: string): string => {
+          const index = fieldNames.indexOf(fieldName)
+          if (index === -1) return ''
+          const value = rawValues[index]
+          return String(value ?? '')
+        }
+
         const cleanValue = (value: string) => {
           const normalized = value.trim()
           if (!normalized || normalized.toLowerCase() === 'null') return ''
           return normalized
         }
+
         const paymentAmount = cleanValue(getFieldValue('requirespaymentamount'))
         const requiresPayment = cleanValue(getFieldValue('requirespayment'))
-
-
         setHoverPointInfo({
           address: cleanValue(getFieldValue('fulladdress')),
           title: cleanValue(getFieldValue('servicename')),
