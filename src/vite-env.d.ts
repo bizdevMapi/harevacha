@@ -90,6 +90,37 @@ interface GovMapApi {
     whereClause: string
     zoomToExtent?: boolean
   }) => void
+  aggregate?: (params: {
+    apiKey: string
+    source: { layer: string; srid?: string }
+    operation: {
+      type: string
+      fields: string[]
+    }
+    output?: { limit?: number; page_token?: string; offset?: number }
+    geometry?: string
+    whereClause?: string
+    filter?: {
+      view_mode?: string
+      bbox?: number[]
+    }
+  }) => Promise<{
+    data?: any[]
+    paging?: {
+      next_page_token?: string
+      has_more?: boolean
+    }
+    metadata?: {
+      layer?: string
+      total_records_found?: number
+      offset_start?: number
+      offset_end?: number
+    }
+  }>
+  aggSrid?: {
+    Itm?: string
+    Wgs84?: string
+  }
 }
 
 interface Window {

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import type { ServiceListColumn, ServiceListItem } from '../../data/servicesListTypes'
-import { formatServiceCost, SERVICE_LIST_COLUMNS } from '../../data/servicesListTypes'
+import { SERVICE_LIST_COLUMNS } from '../../data/servicesListTypes'
 import type { MapPointInfoField } from '../map/MapPointInfoCard'
 
 const TABLE_MIN_WIDTH = SERVICE_LIST_COLUMNS.reduce((sum, col) => sum + col.width, 0)
@@ -48,9 +48,9 @@ function TableBodyCell({
           type="button"
           onClick={() => onServiceClick?.(row)}
           className="block w-full truncate text-right font-medium text-[#1e6fb8] hover:underline"
-          title={row.ServiceName}
+          title={row.servicename}
         >
-          {row.ServiceName || '—'}
+          {row.servicename || '—'}
         </button>
       </td>
     )
@@ -71,7 +71,7 @@ function TableBodyCell({
   }
 
   if (column.cellType === 'cost') {
-    const cost = formatServiceCost(row.RequiresPayment, row.RequiresPaymentAmount)
+    const cost = row.requirespaymentamount || '—'
     return (
       <td
         style={{ width: column.width, minWidth: column.width, maxWidth: column.width }}
@@ -116,42 +116,30 @@ const convertServiceToPointInfo = (service: ServiceListItem): MapPointInfoField[
     }
   }
 
-  // Add all fields in the same order as the map layer identify
-  addField('servicename', service.ServiceName)
-  addField('fulladdress', service.FullAddress)
-  addField('servicedescription', service.ServiceDescription)
-  addField('targetpopulations', service.TargetPopulations)
-  addField('requirespaymentamount', service.RequiresPaymentAmount)
-  addField('requirespayment', service.RequiresPayment)
-  addField('serviceproviderorganizationtype', service.ServiceProviderOrganizationType)
-  addField('language', service.Language)
-  addField('riskstatusdescription_agg', service.RiskStatusDescription_Agg)
-  addField('accessibility', service.Accessibility)
-  addField('providername', service.ProviderName)
-  addField('gisx', service.GisX)
-  addField('gisy', service.GisY)
+  // Add all fields
+  addField('servicename', service.servicename)
   addField('servicetypename', service.servicetypename)
-  addField('locationtype', service.LocationType)
-  addField('participationeligibility', service.ParticipationEligibility)
-  addField('activitytype', service.ActivityType)
-  addField('airisktype', service.airisktype)
-  addField('phone', service.Phone)
-  addField('openhours', service.OpenHours)
-  addField('mail', service.Mail)
-  addField('contactdetails', service.ContactDetails)
-  addField('frequency', service.Frequency)
-  addField('servicelink', service.ServiceLink)
-  addField('insertdate', service.InsertDate)
-  addField('servicedate', service.ServiceDate)
-  addField('aiscoreexplanation', service.AIScoreExplanation)
-  addField('accessibilitytext', service.AccessibilityText)
+  addField('servicedescription', service.servicedescription)
+  addField('providername', service.providername)
+  addField('fulladdress', service.fulladdress)
+  addField('participationeligibility', service.participationeligibility)
+  addField('serviceproviderorganizationtype', service.serviceproviderorganizationtype)
+  addField('locationtype', service.locationtype)
+  addField('openhours', service.openhours)
+  addField('frequency', service.frequency)
+  addField('requirespaymentamount', service.requirespaymentamount)
+  addField('language', service.language)
 
   return fields
 }
 
-const ServicesListTable = ({ rows, searchQuery = '', onServiceClick }: ServicesListTableProps) => {
+const ServicesListTable = ({
+  rows,
+  searchQuery = '',
+  onServiceClick
+}: ServicesListTableProps) => {
   const [sortAsc, setSortAsc] = useState(true)
-  const [sortColumn, setSortColumn] = useState<string>('ServiceName')
+  const [sortColumn, setSortColumn] = useState<string>('servicename')
 
   const handleServiceClick = (row: ServiceListItem) => {
     const fields = convertServiceToPointInfo(row)
@@ -172,7 +160,7 @@ const ServicesListTable = ({ rows, searchQuery = '', onServiceClick }: ServicesL
     if (!q) return rows
 
     return rows.filter((row) => {
-      const haystack = [row.ServiceName, row.FullAddress, row.servicetypename]
+      const haystack = [row.servicename, row.fulladdress, row.servicetypename]
         .join(' ')
         .toLowerCase()
       return haystack.includes(q)
@@ -221,7 +209,10 @@ const ServicesListTable = ({ rows, searchQuery = '', onServiceClick }: ServicesL
         </thead>
         <tbody>
           {sortedRows.map((row) => (
-            <tr key={row.objectId} className="group transition-colors hover:bg-[#f9fbfe]">
+            <tr
+              key={row.objectId}
+              className="group transition-colors hover:bg-[#f9fbfe]"
+            >
               {SERVICE_LIST_COLUMNS.map((column) => (
                 <TableBodyCell key={column.id} row={row} column={column} onServiceClick={handleServiceClick} />
               ))}
