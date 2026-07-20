@@ -441,7 +441,6 @@ const GovMapView = () => {
       const tiratRows = groupByNbrCode(raw.filter((r) => r.setlName === 'טירת כרמל')).sort(
         byFname,
       )
-
       const jerusalemNeighborhoods = jerusalemRows.map(toOption)
       const tiratNeighborhoods = tiratRows.map(toOption)
 
@@ -481,12 +480,11 @@ const GovMapView = () => {
     lastHoverIdentifyMapRef.current = mapPoint
 
     const fieldNames = ['servicename', 'fulladdress', 'servicedescription', 'targetpopulations', 'requirespaymentamount', 'requirespayment', 'serviceproviderorganizationtype', 'language', 'airisktype', 'accessibility', 'providername', 'gisx', 'gisy']
-
     const params = {
       geometry: `POINT (${mapPoint.x} ${mapPoint.y})`,
       layerName: SITE.layers.servicesLayer,
       fields: fieldNames,
-      radius: 100
+      radius: mapZoomLevelRef.current <= GOVMAP_DEFAULT_VIEW_LEVEL ? 50 : 30
     }
 
     govmap.intersectFeatures(params)
@@ -773,7 +771,6 @@ const GovMapView = () => {
     const filteredByKeys = filterServicesBySelectedKeys(servicesList, selectedKeys)
     const filtered = filterServicesBySearchQuery(filteredByKeys, searchQuery)
     setMatchedServicesCount(filtered.length)
-
     const whereClause = buildFullServicesLayerWhereClause(
       areaServiceObjectIdsRef.current,
       selectedKeys,
@@ -858,7 +855,7 @@ const GovMapView = () => {
   useEffect(() => {
     if (viewMode !== 'map') return
     if (servicesListLoading) return
-    areaServiceObjectIdsRef.current = servicesList.map((service) => service.objectId)
+    areaServiceObjectIdsRef.current = servicesList.map((service) => service.serviceid)
     const searchFiltered = filterServicesBySearchQuery(servicesList, appliedServiceFilterSearchQuery)
     const baseSections = buildFilterSectionsFromServiceList(searchFiltered)
 
@@ -887,7 +884,6 @@ const GovMapView = () => {
 
     return () => window.clearTimeout(resizeTimer)
   }, [isFiltersOpen])
-
 
   return (
     <section className="h-full w-full overflow-hidden rounded-md border border-brand-lightBlue bg-brand-bgLight">

@@ -1,67 +1,46 @@
-/** שדות נדרשים לשכבת המענים — עמודות טבלה + שדות לכרטיס מידע */
 export const SERVICE_TABLE_LAYER_FIELDS = [
-  'ServiceName',
+  'serviceid',
+  'servicename',
   'servicetypename',
-  'RiskStatusDescription_Agg',
-  'TargetPopulations',
-  'Language',
-  'Phone',
-  'OpenHours',
-  'Accessibility',
-  'RequiresPaymentAmount',
-  'RequiresPayment',
-  'ServiceProviderOrganizationType',
-  'FullAddress',
-  'ServiceDescription',
-  'ProviderName',
-  'LocationType',
-  'ParticipationEligibility',
-  'ActivityType',
+   'targetpopulations',
+  'language',
+  'openhours',
+  'accessibility',
+  'requirespaymentamount',
+  'requirespayment',
+  'serviceproviderorganizationtype',
+  'fulladdress',
+  'servicedescription',
+  'providername',
+  'locationtype',
+  'participationeligibility',
+  'activitytype',
   'airisktype',
-  'GisX',
-  'GisY',
-  'Mail',
-  'ContactDetails',
-  'Frequency',
-  'ServiceLink',
-  'InsertDate',
-  'ServiceDate',
-  'AIScoreExplanation',
-  'AccessibilityText',
+  'frequency',
 ] as const
 
 export type ServiceTableField = (typeof SERVICE_TABLE_LAYER_FIELDS)[number]
 
 export type ServiceListItem = {
   objectId: number
-  ServiceName: string
+  servicename: string
   servicetypename: string
-  RiskStatusDescription_Agg: string
-  TargetPopulations: string
-  LocationType: string
-  Language: string
-  Phone: string
-  OpenHours: string
-  Accessibility: string
-  RequiresPaymentAmount: string
-  RequiresPayment: string
-  ServiceProviderOrganizationType: string
-  FullAddress: string
-  ServiceDescription: string
-  ProviderName: string
-  ParticipationEligibility: string
-  ActivityType: string
+  targetpopulations: string
+  locationtype: string
+  language: string
+  openhours: string
+  accessibility: string
+  requirespaymentamount: string
+  requirespayment: string
+  serviceproviderorganizationtype: string
+  fulladdress: string
+  servicedescription: string
+  providername: string
+  participationeligibility: string
+  activitytype: string
   airisktype: string
-  GisX: string
-  GisY: string
-  Mail: string
-  ContactDetails: string
-  Frequency: string
-  ServiceLink: string
-  InsertDate: string
-  ServiceDate: string
-  AIScoreExplanation: string
-  AccessibilityText: string
+  frequency: string
+  servicedate: string
 }
 
 export type ServiceListColumnId =
@@ -78,18 +57,18 @@ export type ServiceListColumn = {
 
 /** עמודות הטבלה — סדר RTL מימין לשמאל כמו בפיגמה */
 export const SERVICE_LIST_COLUMNS: ServiceListColumn[] = [
-  { id: 'ServiceName', label: 'שם מענה', width: 168, sortable: true, cellType: 'link' },
+  { id: 'servicename', label: 'שם מענה', width: 168, sortable: true, cellType: 'link' },
   { id: 'airisktype', label: 'התאמה למצבי סיכון', width: 168, cellType: 'tags' },
   { id: 'servicetypename', label: 'סוג מענה', width: 168, cellType: 'text' },
-  { id: 'ProviderName', label: 'שם ארגון מספק השירות', width: 168, cellType: 'text', sortable: true },
-  { id: 'ServiceProviderOrganizationType', label: 'סוג ארגון (נותן השירות)', width: 96, cellType: 'text' },
-  { id: 'RequiresPaymentAmount', label: 'עלות', width: 96, cellType: 'text' },
-  { id: 'LocationType', label: 'סוג מיקום ', width: 96, cellType: 'text' },
-  { id: 'Accessibility', label: 'נגישות', width: 214, cellType: 'text' },
-  { id: 'Language', label: 'שפות', width: 118, cellType: 'text' },
-  { id: 'TargetPopulations', label: 'אוכלוסיה ייעודית', width: 120, cellType: 'text' },
-  { id: 'ParticipationEligibility', label: 'קהל יעד', width: 118, cellType: 'text' },
-  { id: 'ActivityType', label: 'סוג פעילות', width: 118, cellType: 'text' },
+  { id: 'providername', label: 'שם ארגון מספק השירות', width: 168, cellType: 'text', sortable: true },
+  { id: 'serviceproviderorganizationtype', label: 'סוג ארגון (נותן השירות)', width: 96, cellType: 'text' },
+  { id: 'requirespaymentamount', label: 'עלות', width: 96, cellType: 'text' },
+  { id: 'locationtype', label: 'סוג מיקום ', width: 96, cellType: 'text' },
+  { id: 'accessibility', label: 'נגישות', width: 214, cellType: 'text' },
+  { id: 'language', label: 'שפות', width: 118, cellType: 'text' },
+  { id: 'targetpopulations', label: 'אוכלוסיה ייעודית', width: 120, cellType: 'text' },
+  { id: 'participationeligibility', label: 'קהל יעד', width: 118, cellType: 'text' },
+  { id: 'activitytype', label: 'סוג פעילות', width: 118, cellType: 'text' },
 ]
 
 export type GovmapIntersectFeature = {
@@ -133,53 +112,46 @@ export function formatServiceCost(requiresPayment: string, amount: string): stri
 }
 
 export function mapIntersectFeaturesToServicesList(
-  items: GovmapIntersectFeature[] | undefined,
+  items: any,
   fields: readonly string[] = SERVICE_TABLE_LAYER_FIELDS,
 ): ServiceListItem[] {
+  console.log('mapIntersectFeaturesToServicesList', items, fields)
   if (!items?.length) return []
   return items
-    .map((item) => {
-      const objectId = item.ObjectId
-      if (objectId == null) return null
+    .map((item:any) => {
+      const objectId = item.serviceid
+      if (objectId == null) return null  
 
-      const values = item.Values ?? []
-      const row: Record<string, string | number> = { objectId }
-
-      fields.forEach((fieldName, index) => {
-        row[fieldName] = cellToString(values[index])
-      })
       
       return {
-        objectId,
-        ServiceName: String(row.ServiceName ?? ''),
-        servicetypename: String(row.servicetypename ?? ''),
-        RiskStatusDescription_Agg: String(row.RiskStatusDescription_Agg ?? ''),
-        TargetPopulations: String(row.TargetPopulations ?? ''),
-        LocationType: String(row.LocationType ?? ''),
-        Language: String(row.Language ?? ''),
-        Phone: String(row.Phone ?? ''),
-        OpenHours: String(row.OpenHours ?? ''),
-        Accessibility: String(row.Accessibility ?? ''),
-        RequiresPaymentAmount: String(row.RequiresPaymentAmount ?? ''),
-        RequiresPayment: String(row.RequiresPayment ?? ''),
-        ServiceProviderOrganizationType: String(row.ServiceProviderOrganizationType ?? ''),
-        FullAddress: String(row.FullAddress ?? ''),
-        ServiceDescription: String(row.ServiceDescription ?? ''),
-        ProviderName: String(row.ProviderName ?? ''),
-        ParticipationEligibility: String(row.ParticipationEligibility ?? ''),
-        ActivityType: String(row.ActivityType ?? ''),
-        airisktype: String(row.airisktype ?? ''),
-        GisX: String(row.GisX ?? ''),
-        GisY: String(row.GisY ?? ''),
-        Mail: String(row.Mail ?? ''),
-        ContactDetails: String(row.ContactDetails ?? ''),
-        Frequency: String(row.Frequency ?? ''),
-        ServiceLink: String(row.ServiceLink ?? ''),
-        InsertDate: String(row.InsertDate ?? ''),
-        ServiceDate: String(row.ServiceDate ?? ''),
-        AIScoreExplanation: String(row.AIScoreExplanation ?? ''),
-        AccessibilityText: String(row.AccessibilityText ?? ''),
+        ObjectId:item.serviceid,
+        serviceid: item.serviceid,
+        servicename: String(item.servicename ?? ''),
+        servicetypename: String(item.servicetypename ?? ''),
+        RiskStatusDescription_Agg: String(item.RiskStatusDescription_Agg ?? ''),
+        targetpopulations: String(item.targetpopulations ?? ''),
+        locationtype: String(item.locationtype ?? ''),
+        language: String(item.language ?? ''),
+        Phone: String(item.Phone ?? ''),
+        OpenHours: String(item.OpenHours ?? ''),
+        accessibility: String(item.accessibility ?? ''),
+        requirespaymentamount: String(item.requirespaymentamount ?? ''),
+        requirespayment: String(item.requirespayment ?? ''),
+        serviceproviderorganizationtype: String(item.serviceproviderorganizationtype ?? ''),
+        FullAddress: String(item.FullAddress ?? ''),
+        ServiceDescription: String(item.ServiceDescription ?? ''),
+        providername: String(item.providername ?? ''),
+        participationeligibility: String(item.participationeligibility ?? ''),
+        activitytype: String(item.activitytype ?? ''),
+        airisktype: String(item.airisktype ?? ''),
+        ContactDetails: String(item.ContactDetails ?? ''),
+        Frequency: String(item.Frequency ?? ''),
+        ServiceLink: String(item.ServiceLink ?? ''),
+        InsertDate: String(item.InsertDate ?? ''),
+        ServiceDate: String(item.ServiceDate ?? ''),
+        AIScoreExplanation: String(item.AIScoreExplanation ?? ''),
+        AccessibilityText: String(item.AccessibilityText ?? ''),
       }
     })
-    .filter((row): row is ServiceListItem => row != null)
+    .filter((item:AnimationPlaybackEvent): item is ServiceListItem => item != null)
 }

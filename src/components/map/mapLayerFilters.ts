@@ -33,7 +33,7 @@ type AreaServiceFilterRow = {
   objectId: number
   riskStatus: string
   serviceDescription: string
-  locationType: string
+  locationtype: string
   aiRiskType: string
   accessibility: string
   targetPopulations: string
@@ -49,12 +49,12 @@ const FILTER_FIELD_TO_ROW_KEY: Record<
   (typeof FILTER_SECTIONS_CONFIG)[number]['fieldName'],
   keyof Omit<AreaServiceFilterRow, 'objectId'>
 > = {
-  locationtype: 'locationType',
+  locationtype: 'locationtype',
   airisktype: 'aiRiskType',
   accessibility: 'accessibility',
   targetpopulations: 'targetPopulations',
   language: 'language',
-  servicetypename   : 'servicetypename',
+  servicetypename: 'servicetypename',
   serviceproviderorganizationtype: 'serviceProviderOrganizationType',
   requirespayment: 'requiresPayment',
   activitytype: 'activityType',
@@ -65,16 +65,16 @@ const FILTER_FIELD_TO_SERVICE_KEY: Record<
   (typeof FILTER_SECTIONS_CONFIG)[number]['fieldName'],
   keyof ServiceListItem
 > = {
-  locationtype: 'LocationType',
+  locationtype: 'locationtype',
   airisktype: 'airisktype',
-  accessibility: 'Accessibility',
-  targetpopulations: 'TargetPopulations',
-  language: 'Language',
+  accessibility: 'accessibility',
+  targetpopulations: 'targetpopulations',
+  language: 'language',
   servicetypename: 'servicetypename',
-  serviceproviderorganizationtype: 'ServiceProviderOrganizationType',
-  requirespayment: 'RequiresPayment',
-  activitytype: 'ActivityType',
-  participationeligibility: 'ParticipationEligibility',
+  serviceproviderorganizationtype: 'serviceproviderorganizationtype',
+  requirespayment: 'requirespayment',
+  activitytype: 'activitytype',
+  participationeligibility: 'participationeligibility',
 }
 
 export const SECTION_TITLE_TO_FIELD_NAME: Record<string, string> = Object.fromEntries(
@@ -132,9 +132,11 @@ export function buildServicesSearchWhereClause(searchQuery: string): string | nu
   return `(servicename LIKE '%${escaped}%' OR fulladdress LIKE '%${escaped}%')`
 }
 
-export function buildAreaObjectIdsClause(objectIds: number[]): string {
+export function buildAreaObjectIdsClause(objectIds: any[]): string {
+  console.log('5555555', objectIds)
   if (objectIds.length === 0) return `objectid IN (999999999)`
-  return `objectid IN (${objectIds.join(',')})`
+  console.log('Building area object IDs clause for', objectIds.length, 'IDs')
+  return `serviceid IN (${objectIds.join(',')})`
 }
 
 export function combineWhereClauses(...clauses: Array<string | null | undefined>): string {
@@ -146,7 +148,7 @@ export function combineWhereClauses(...clauses: Array<string | null | undefined>
 
 /** Area (object IDs from geometry) + optional attribute filters from the side panel. */
 export function buildFullServicesLayerWhereClause(
-  areaObjectIds: number[],
+  areaObjectIds: any[],
   selectedKeys: Iterable<string>,
   searchQuery = '',
 ): string {
@@ -186,18 +188,17 @@ function aggregateAreaFieldValues(rawValues: string[]): FilterItem[] {
 function serviceListToAreaRows(services: ServiceListItem[]): AreaServiceFilterRow[] {
   return services.map((service) => ({
     objectId: service.objectId,
-    riskStatus: service.RiskStatusDescription_Agg,
-    serviceDescription: service.ServiceDescription,
-    locationType: service.LocationType,
+    serviceDescription: service.servicedescription,
+    locationtype: service.locationtype,
     aiRiskType: service.airisktype,
-    accessibility: service.Accessibility,
-    targetPopulations: service.TargetPopulations,
-    language: service.Language,
+    accessibility: service.accessibility,
+    targetPopulations: service.targetpopulations,
+    language: service.language,
     servicetypename: service.servicetypename,
-    serviceProviderOrganizationType: service.ServiceProviderOrganizationType,
-    requiresPayment: service.RequiresPayment,
-    activityType: service.ActivityType,
-    participationEligibility: service.ParticipationEligibility,
+    serviceProviderOrganizationType: service.serviceproviderorganizationtype,
+    requiresPayment: service.requirespayment,
+    activityType: service.activitytype,
+    participationEligibility: service.participationeligibility,
   }))
 }
 
@@ -282,7 +283,7 @@ export function filterServicesBySearchQuery(
   if (!q) return services
 
   return services.filter((service) => {
-    const haystack = [service.ServiceName, service.FullAddress].join(' ').toLowerCase()
+    const haystack = [service.servicename, service.fulladdress].join(' ').toLowerCase()
     return haystack.includes(q)
   })
 }
