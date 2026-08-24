@@ -870,7 +870,7 @@ const GovMapView = () => {
     if (!isMapReady || !selectedArea) return
 
     const option = neighborhoodsList.find((n) => n.optionValue === selectedArea)
-    // if (!option?.geometry) return
+    if (!option) return
 
     let active = true
     void applySelectedArea(option, {

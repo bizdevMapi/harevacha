@@ -99,7 +99,7 @@ export async function applySelectedArea(
   pageToken?: string,
 ): Promise<void> {
   const govmap = window.govmap
-  const geometry = option.geometry
+  const geometry = option?.geometry
   if (!govmap) return
 
   callbacks.setServicesQueryGeometry(geometry)
