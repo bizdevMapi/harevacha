@@ -103,6 +103,7 @@ interface GovMapApi {
     filter?: {
       view_mode?: string
       bbox?: number[]
+      filter?: string
     }
   }) => Promise<{
     data?: any[]

@@ -133,7 +133,6 @@ export function buildServicesSearchWhereClause(searchQuery: string): string | nu
 }
 
 export function buildAreaObjectIdsClause(objectIds: any[]): string {
-  console.log('5555555', objectIds)
   if (objectIds.length === 0) return `objectid IN (999999999)`
   console.log('Building area object IDs clause for', objectIds.length, 'IDs')
   return `serviceid IN (${objectIds.join(',')})`

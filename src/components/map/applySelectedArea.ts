@@ -28,33 +28,35 @@ export function parseBboxFromGeometry(geometry: string): [number, number, number
   try {
     // Try parsing as WKT format first (e.g., "POLYGON ((x1 y1, x2 y2, ...))" or "MULTIPOLYGON (((x1 y1, x2 y2, ...)))")
     if (geometry.startsWith('POLYGON') || geometry.startsWith('MULTIPOLYGON')) {
-      // For MULTIPOLYGON, extract all coordinate pairs from all polygons
-      // For POLYGON, extract coordinate pairs from the single polygon
-      const coordsRegex = /\(\(([^)]+)\)\)/g
-      let minX = Infinity
-      let minY = Infinity
-      let maxX = -Infinity
-      let maxY = -Infinity
-      let foundCoords = false
+      // Match coordinates inside the innermost parentheses
+      // For POLYGON: ((coords)) -> extract coords
+      // For MULTIPOLYGON: (((coords))) -> extract coords from first polygon
+      const coordsMatch = geometry.match(/\(\(\(([^)]+)\)\)\)|\(\(([^)]+)\)\)/)
+      if (!coordsMatch) return null
 
-      let match
-      while ((match = coordsRegex.exec(geometry)) !== null) {
-        const coordPairs = match[1].split(',').map(pair => {
-          const parts = pair.trim().split(/\s+/).map(Number)
-          return { x: parts[0], y: parts[1] }
-        })
+      // Get the matched group (group 1 for MULTIPOLYGON, group 2 for POLYGON)
+      const coordsString = coordsMatch[1] || coordsMatch[2]
+      if (!coordsString) return null
 
-        for (const point of coordPairs) {
-          if (isNaN(point.x) || isNaN(point.y)) continue
-          foundCoords = true
-          if (point.x < minX) minX = point.x
-          if (point.y < minY) minY = point.y
-          if (point.x > maxX) maxX = point.x
-          if (point.y > maxY) maxY = point.y
-        }
+      const coordPairs = coordsString.split(',').map(pair => {
+        const [x, y] = pair.trim().split(/\s+/).map(Number)
+        return { x, y }
+      })
+
+      if (coordPairs.length === 0) return null
+
+      // Calculate bbox from all coordinates
+      let minX = coordPairs[0].x
+      let minY = coordPairs[0].y
+      let maxX = coordPairs[0].x
+      let maxY = coordPairs[0].y
+
+      for (const point of coordPairs) {
+        if (point.x < minX) minX = point.x
+        if (point.y < minY) minY = point.y
+        if (point.x > maxX) maxX = point.x
+        if (point.y > maxY) maxY = point.y
       }
-
-      if (!foundCoords) return null
 
       return [minX, minY, maxX, maxY]
     }
@@ -98,10 +100,9 @@ export async function applySelectedArea(
 ): Promise<void> {
   const govmap = window.govmap
   const geometry = option.geometry
-  if (!govmap || !geometry) return
+  if (!govmap) return
 
   callbacks.setServicesQueryGeometry(geometry)
-
     if (option.layerObjectId != null) {
       govmap.searchInLayer?.({
         layerName: NEIGHBORHOODS_LAYER_NAME,
@@ -124,10 +125,11 @@ export async function applySelectedArea(
         marker: false,
       })
     }
+  
 
 
   const bbox = parseBboxFromGeometry(geometry)
-  if (!bbox) {
+  if (!bbox &&geometry ) {
     console.error('Failed to parse bbox from geometry')
     callbacks.setServicesList([])
     callbacks.setServicesListLoading(false)
@@ -142,7 +144,7 @@ export async function applySelectedArea(
 
   try {
     do {
-      const response = await govmap.aggregate?.({
+      const params = {
         apiKey: GOVMAP_TOKEN,
         source: {
           layer: SITE.layers.servicesLayer,
@@ -156,11 +158,14 @@ export async function applySelectedArea(
           limit: PAGE_SIZE,
           page_token: currentPageToken,
         },
-        filter: {
-          view_mode: "extent",
-          bbox: bbox
-        }
-      })
+        filter: {} as any
+      }
+      if(option.filter) params.filter.filter = option.filter
+      else {
+        params.filter.view_mode = "extent"
+        params.filter.bbox = bbox
+      }
+      const response = await govmap.aggregate?.(params)
 
       console.log('aggregate response:', response)
 
