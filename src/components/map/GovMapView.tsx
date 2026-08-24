@@ -25,6 +25,7 @@ import {
 import MapPointInfoCard from './MapPointInfoCard'
 import MapPointTooltip from './MapPointTooltip'
 import MapProfileInsightsCard from './profile-insights/MapProfileInsightsCard'
+import MapQuickFilters from './MapQuickFilters'
 
 const GOVMAP_TOKEN = import.meta.env.VITE_GOVMAP_TOKEN
 /** המתנה אחרי תזוזת עכבר לפני קריאת identify */
@@ -272,6 +273,7 @@ const getClickMapPoint = (payload: MapPointerPayload) => {
 const GovMapView = () => {
   const {
     viewMode,
+    setViewMode,
     selectedArea,
     setSelectedArea,
     servicesQueryGeometry,
@@ -329,6 +331,38 @@ const GovMapView = () => {
     setSelectedPointInfo(null)
   }
 
+  const handlePhysicalLocationFilter = () => {
+    console.log('Physical location filter applied', selectedServiceFilterKeys)
+    const newKeys = new Set(selectedServiceFilterKeys)
+    newKeys.add('סוג מיקום::מקוון')
+    newKeys.add('סוג מיקום::טלפוני')
+    newKeys.add('סוג מיקום::עד הבית')
+    setSelectedServiceFilterKeys(newKeys)
+    setViewMode('list')
+  }
+
+  const handleMissingAddressFilter = () => {
+    const newKeys = new Set(selectedServiceFilterKeys)
+    newKeys.add('סוג מיקום::לא נמצא מידע')
+    newKeys.delete('סוג מיקום::פיזי')
+    setSelectedServiceFilterKeys(newKeys)
+    setViewMode('list')
+  }
+
+  const physicalLocationCount = servicesList.filter(
+    (service) => service.locationtype?.toLowerCase().includes('מקוון') ||
+      service.locationtype?.toLowerCase().includes('טלפוני') ||
+      service.locationtype?.toLowerCase().includes('עד הבית')
+  ).length
+
+  const missingAddressCount = servicesList.filter(
+    (service) => {
+      const hasPhysical = service.locationtype?.toLowerCase().includes('לא נמצא מידע') ||
+        service.locationtype?.toLowerCase().includes('פיזי')
+      return hasPhysical
+    }
+  ).length
+
   useEffect(() => {
     hoverPointInfoRef.current = hoverPointInfo
   }, [hoverPointInfo])
@@ -382,6 +416,7 @@ const GovMapView = () => {
         x: number
         y: number
         geometry?: string
+    
       }
       const normalizeNbrCode = (value: unknown): string => {
         const text = String(value ?? '').trim()
@@ -452,6 +487,13 @@ const GovMapView = () => {
           cityObjectId: '2',
           optionValue: getCityCenterAreaSelectValue(TIRAT_CARMEL_CITY_AREA_OPTION.value),
           geometry: TIRAT_CARMEL_CITY_AREA_OPTION.geometry,
+          filter: "(cityid=2100)"
+        },
+        {
+          label: 'מענים נוספים בסביבה',
+          optionValue: 'מענים נוספים בסביבה',
+          value: { ...TIRAT_CARMEL_CITY_AREA_OPTION.value },
+          filter: "(providercitycode in (4000, 5000, 6900,683))",
         },
         ...tiratNeighborhoods,
         {
@@ -828,7 +870,7 @@ const GovMapView = () => {
     if (!isMapReady || !selectedArea) return
 
     const option = neighborhoodsList.find((n) => n.optionValue === selectedArea)
-    if (!option?.geometry) return
+    if (!option) return
 
     let active = true
     void applySelectedArea(option, {
@@ -910,6 +952,12 @@ const GovMapView = () => {
               position={hoverTooltipPosition}
             />
           )}
+          {/* <MapQuickFilters
+            localCount={physicalLocationCount}
+            missingDataCount={missingAddressCount}
+            onLocalClick={handlePhysicalLocationFilter}
+            onMissingDataClick={handleMissingAddressFilter}
+          /> */}
           <MapProfileInsightsCard />
         </div>
         {selectedPointInfo && (

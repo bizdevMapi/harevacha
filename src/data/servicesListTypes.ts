@@ -10,12 +10,13 @@ export const SERVICE_TABLE_LAYER_FIELDS = [
   'requirespayment',
   'serviceproviderorganizationtype',
   'fulladdress',
-  'servicedescription',
   'providername',
   'locationtype',
   'participationeligibility',
   'activitytype',
   'airisktype',
+  'cityid',
+  'providercitycode',
   'frequency',
 ] as const
 
@@ -34,13 +35,14 @@ export type ServiceListItem = {
   requirespayment: string
   serviceproviderorganizationtype: string
   fulladdress: string
-  servicedescription: string
   providername: string
   participationeligibility: string
   activitytype: string
   airisktype: string
-  frequency: string
+  // frequency: string
   servicedate: string
+  cityid: string
+  providercitycode: string
 }
 
 export type ServiceListColumnId =

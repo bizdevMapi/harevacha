@@ -108,11 +108,11 @@ const DETAIL_SPECS: Array<{ id: string; icon: MapPointInfoIconId; field: string;
   // 21: תדירות
   { id: 'frequency', icon: 'clock', field: 'frequency', hebel: 'תדירות' },
   // 22: דרוש תשלום
-  { id: 'payment', icon: 'price', field: 'requirespayment', hebel: 'דרושים תשלום' },
+  { id: 'payment', icon: 'price', field: 'requirespayment', hebel: 'דרוש תשלום' },
   // 23: עלות
   { id: 'price', icon: 'price', field: 'requirespaymentamount', hebel: 'עלות' },
   // 24: אתר מקור
-  { id: 'link', icon: 'link', field: 'servicelink', hebel: 'אתר מקור' },
+  { id: 'link', icon: 'link', field: 'SourceLink', hebel: 'אתר מקור' },
   // 25: תאריך שליפת המידע מהרשת
   { id: 'insertdate', icon: 'clock', field: 'insertdate', hebel: 'תאריך שליפת המידע מהרשת' },
   // 26: תאריך
