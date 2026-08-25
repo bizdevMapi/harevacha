@@ -110,7 +110,7 @@ const ReportErrorModal = ({ serviceName, onClose, onSubmit }: ReportErrorModalPr
         </div>
 
         <form className="mt-6 flex w-full flex-col gap-5" onSubmit={handleSubmit}>
-          <input type="hidden" name="access_key" value="a2f5e0f3-7d89-40dd-8bca-430b05902628" />
+          <input type="hidden" name="access_key" value={import.meta.env.VITE_WEB3FORMS_KEY || ''} />
           <input type="hidden" name="to_email" value="rivkah@mapi.gov.il" />
           <input type="hidden" name="service_name" value={serviceName || 'N/A'} />
 
