@@ -1,6 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import type { MapPointInfoIconId } from './mapPointInfoData'
-import { IconClose, IconExpand, MapPointInfoIcon } from './MapPointInfoIcons'
+import {
+  IconClose,
+  IconExpand,
+  IconInfo,
+  IconReport,
+  IconSparkle,
+  MapPointInfoIcon,
+} from './MapPointInfoIcons'
+import ReportErrorModal from './ReportErrorModal'
 
 export type MapPointInfoField = {
   fieldName?: string
@@ -128,6 +136,7 @@ const MapPointInfoCard = ({
 }: MapPointInfoCardProps) => {
   const lastServiceNameRef = useRef<string | null>(null)
   const [isMiniMapReady, setIsMiniMapReady] = useState(false)
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false)
 
   const fieldMap = new Map<string, string>()
   for (const row of data ?? []) {
@@ -273,6 +282,29 @@ const MapPointInfoCard = ({
           )}
         </div>
       </div>
+
+      {!isOtherLayer && (
+        <div className="flex w-full shrink-0 items-center justify-between gap-2 border-t border-[#eef2f6] px-8 py-4">
+          <span className="inline-flex items-center gap-1.5 text-[13px] text-[#a4b1c0]">
+            <IconSparkle />
+            התוכן הוזן באמצעות AI
+            <IconInfo />
+          </span>
+
+          <button
+            type="button"
+            onClick={() => setIsReportModalOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-[#e3ecf7] px-3 py-2 text-[13px] font-semibold text-[#084878] transition-colors hover:bg-[#d4e3f0] cursor-pointer"
+          >
+            <IconReport />
+            דווח על טעות
+          </button>
+        </div>
+      )}
+
+      {isReportModalOpen && (
+        <ReportErrorModal serviceName={title} onClose={() => setIsReportModalOpen(false)} />
+      )}
     </aside>
   )
 }
