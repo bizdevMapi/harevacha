@@ -1,4 +1,5 @@
 import { formatServiceCost } from '../../data/servicesListTypes'
+import { getOrganizationIcon } from '../../constants/organizationTypeIcons'
 
 /** סוג אייקון לשורת פרטים — להרחבה כשמחברים ל-API */
 export type MapPointInfoIconId =
@@ -10,6 +11,9 @@ export type MapPointInfoIconId =
   | 'target'
   | 'price'
   | 'building'
+  | 'building-gov'
+  | 'building-private'
+  | 'building-nonprofit'
   | 'accessibility'
   | 'link'
 
@@ -79,3 +83,12 @@ const POINT_INFO_DETAIL_SPECS: Array<{ field: string; icon: MapPointInfoIconId }
   { field: 'ServiceProviderOrganizationType', icon: 'building' },
   { field: 'Accessibility', icon: 'accessibility' },
 ]
+
+export function getDetailIconForField(fieldName: string, fieldValue?: string): MapPointInfoIconId {
+  if (fieldName === 'ServiceProviderOrganizationType' && fieldValue) {
+    return getOrganizationIcon(fieldValue)
+  }
+
+  const spec = POINT_INFO_DETAIL_SPECS.find((s) => s.field === fieldName)
+  return spec?.icon ?? 'building'
+}

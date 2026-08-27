@@ -101,6 +101,7 @@ type HoverPointTooltipInfo = {
   languages?: string
   airisktype?: string
   accessibility?: string
+  isMultipleServices?: boolean
 }
 
 type IdentifyField = { fieldName?: string; fieldValue?: string | null }
@@ -549,10 +550,10 @@ const GovMapView = () => {
         }
 
         // Map array values to field names based on index
-        const getFieldValue = (fieldName: string): string => {
+        const getFieldValue = (fieldName: string, item: any[]): string => {
           const index = fieldNames.indexOf(fieldName)
           if (index === -1) return ''
-          const value = rawValues[index]
+          const value = item[index]
           return String(value ?? '')
         }
 
@@ -562,19 +563,43 @@ const GovMapView = () => {
           return normalized
         }
 
-        const paymentAmount = cleanValue(getFieldValue('requirespaymentamount'))
-        const requiresPayment = cleanValue(getFieldValue('requirespayment'))
-        setHoverPointInfo({
-          address: cleanValue(getFieldValue('fulladdress')),
-          title: cleanValue(getFieldValue('servicename')),
-          description: cleanValue(getFieldValue('servicedescription')),
-          audiences: cleanValue(getFieldValue('targetpopulations')),
-          price: getFieldValue('requirespayment'),
-          provider: cleanValue(getFieldValue('serviceproviderorganizationtype')),
-          languages: cleanValue(getFieldValue('language')),
-          airisktype: cleanValue(getFieldValue('airisktype')),
-          accessibility: cleanValue(getFieldValue('accessibility')),
-        })
+        // If only one service, show tooltip as before
+        if (response.data.length === 1) {
+          const paymentAmount = cleanValue(getFieldValue('requirespaymentamount', rawValues))
+          const requiresPayment = cleanValue(getFieldValue('requirespayment', rawValues))
+          setHoverPointInfo({
+            address: cleanValue(getFieldValue('fulladdress', rawValues)),
+            title: cleanValue(getFieldValue('servicename', rawValues)),
+            description: cleanValue(getFieldValue('servicedescription', rawValues)),
+            audiences: cleanValue(getFieldValue('targetpopulations', rawValues)),
+            price: getFieldValue('requirespayment', rawValues),
+            provider: cleanValue(getFieldValue('serviceproviderorganizationtype', rawValues)),
+            languages: cleanValue(getFieldValue('language', rawValues)),
+            airisktype: cleanValue(getFieldValue('airisktype', rawValues)),
+            accessibility: cleanValue(getFieldValue('accessibility', rawValues)),
+            isMultipleServices: false,
+          })
+        } else {
+          // If multiple services, show address and organization type icons
+          const firstItem = response.data[0]
+          const address = cleanValue(getFieldValue('fulladdress', firstItem.Values))
+          const orgTypes = response.data
+            .map((item: any) => cleanValue(getFieldValue('serviceproviderorganizationtype', item.Values)))
+            .filter((type: string) => type)
+
+          setHoverPointInfo({
+            address: address,
+            title: `${response.data.length} סוגי מענים`,
+            description: orgTypes.join(', '),
+            audiences: '',
+            price: '',
+            provider: '',
+            languages: '',
+            airisktype: '',
+            accessibility: '',
+            isMultipleServices: true,
+          })
+        }
       })
       ?.catch((error: unknown) => {
         console.error('failed identifying map point on hover', error)
