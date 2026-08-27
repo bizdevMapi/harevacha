@@ -24,6 +24,8 @@ const ReportErrorModal = ({ serviceName, onClose, onSubmit }: ReportErrorModalPr
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
 
+  console.log(import.meta.env.VITE_WEB3FORMS_KEY, import.meta.env.VITE_WEB3FORMS_TO_EMAIL, import.meta.env.VITE_SERVICES_LAYER)
+
   // סגירה בלחיצה על Escape
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
