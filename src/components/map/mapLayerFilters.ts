@@ -2,10 +2,19 @@ import type { ServiceListItem } from '../../data/servicesListTypes'
 
 export const FILTER_DATA_COLORS = ['#042640', '#115b91', '#115b91', '#2a8ad4', '#80b3e6', '#cce1f5'] as const
 
+export const ORGANIZATION_TYPE_COLORS: Record<string, { bg: string; text: string }> = {
+  'ממשלתי': { bg: '#0090DD', text: '#ffffff' },
+  'פרטי': { bg: '#C44DEF', text: '#ffffff' },
+  'עמותה': { bg: '#E47D23', text: '#ffffff' },
+}
+
+const DEFAULT_ORG_COLOR = { bg: '#2a8ad4', text: '#ffffff' }
+
 export type FilterItem = {
   label: string
   count: number
   color: string
+  textColor?: string
 }
 
 export type FilterSectionData = {
@@ -164,7 +173,7 @@ function splitFilterValue(value: string): string[] {
     .filter((part) => part.length > 0 && part !== 'NULL')
 }
 
-function aggregateAreaFieldValues(rawValues: string[]): FilterItem[] {
+function aggregateAreaFieldValues(rawValues: string[], fieldName?: string): FilterItem[] {
   const counts = new Map<string, number>()
 
   for (const value of rawValues) {
@@ -177,11 +186,25 @@ function aggregateAreaFieldValues(rawValues: string[]): FilterItem[] {
 
   return Array.from(counts.entries())
     .sort((a, b) => b[1] - a[1])
-    .map(([label, count], index) => ({
-      label,
-      count,
-      color: FILTER_DATA_COLORS[index % FILTER_DATA_COLORS.length],
-    }))
+    .map(([label, count], index) => {
+      const isOrgType = fieldName === 'serviceproviderorganizationtype'
+
+      if (isOrgType) {
+        const orgColor = ORGANIZATION_TYPE_COLORS[label as keyof typeof ORGANIZATION_TYPE_COLORS] ?? DEFAULT_ORG_COLOR
+        return {
+          label,
+          count,
+          color: orgColor.bg,
+          textColor: orgColor.text,
+        }
+      }
+
+      return {
+        label,
+        count,
+        color: FILTER_DATA_COLORS[index % FILTER_DATA_COLORS.length],
+      }
+    })
 }
 
 function serviceListToAreaRows(services: ServiceListItem[]): AreaServiceFilterRow[] {
@@ -293,7 +316,7 @@ function buildFilterSectionsForArea(areaRows: AreaServiceFilterRow[]): FilterSec
   return FILTER_FIELD_CONFIG.map((config) => {
     const rowKey = FILTER_FIELD_TO_ROW_KEY[config.fieldName]
     const rawValues: string[] = areaRows.map((row) => row[rowKey])
-    const items = aggregateAreaFieldValues(rawValues)
+    const items = aggregateAreaFieldValues(rawValues, config.fieldName)
 
     return {
       title: config.title,

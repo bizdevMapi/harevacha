@@ -45,7 +45,7 @@ const ReportErrorModal = ({ serviceName, onClose, onSubmit }: ReportErrorModalPr
     const formData = new FormData(form)
 
     try {
-      const response = await fetch('https://web3forms.com/api/v1/contact', {
+      const response = await fetch('https://api.web3forms.com/submit', {
         method: 'POST',
         body: formData,
       })
@@ -111,7 +111,7 @@ const ReportErrorModal = ({ serviceName, onClose, onSubmit }: ReportErrorModalPr
 
         <form className="mt-6 flex w-full flex-col gap-5" onSubmit={handleSubmit}>
           <input type="hidden" name="access_key" value={import.meta.env.VITE_WEB3FORMS_KEY || ''} />
-          <input type="hidden" name="to_email" value="rivkah@mapi.gov.il" />
+          <input type="hidden" name="to_email" value={import.meta.env.VITE_WEB3FORMS_TO_EMAIL || ''} />
           <input type="hidden" name="service_name" value={serviceName || 'N/A'} />
 
           <div className="flex w-full flex-col gap-4 sm:flex-row">

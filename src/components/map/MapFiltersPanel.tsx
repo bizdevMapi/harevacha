@@ -31,12 +31,47 @@ function FilterListItem({
   item,
   checked,
   onChange,
+  isBadgeStyle,
 }: {
   item: FilterItem
   checked: boolean
   onChange: (checked: boolean) => void
+  isBadgeStyle?: boolean
 }) {
   const id = useId()
+
+  if (isBadgeStyle) {
+    return (
+      <label
+        htmlFor={id}
+        className="flex cursor-pointer items-center justify-between border-b border-[#e0e5eb] p-2"
+      >
+        <div className="flex min-w-0 items-center gap-2">
+          <span
+            className="size-2 shrink-0 rounded-[2px]"
+            style={{ backgroundColor: item.color }}
+            aria-hidden
+          />
+          <span
+            className="truncate text-sm leading-[18px]"
+            style={{ color: item.color }}
+          >
+            {item.label}
+          </span>
+          <span className="shrink-0 text-xs leading-[18px] text-[#5f708a] tabular-nums">
+            ({item.count})
+          </span>
+        </div>
+        <input
+          id={id}
+          type="checkbox"
+          checked={checked}
+          onChange={(e) => onChange(e.target.checked)}
+          className="size-5 shrink-0 cursor-pointer rounded border border-[#e0e5eb] bg-white accent-brand-darkBlue"
+        />
+      </label>
+    )
+  }
 
   return (
     <label
@@ -144,6 +179,7 @@ function FilterSection({
                 item={item}
                 checked={selectedKeys.has(key)}
                 onChange={(checked) => onToggle(key, checked)}
+                isBadgeStyle={section.title === 'סוג ארגון נותן שירות'}
               />
             )
           })}
