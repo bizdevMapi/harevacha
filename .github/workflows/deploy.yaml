@@ -28,6 +28,8 @@ jobs:
           VITE_GOVMAP_TOKEN: ${{ secrets.VITE_GOVMAP_TOKEN }}
           VITE_GOVMAP_URL: ${{ secrets.VITE_GOVMAP_URL }}
           VITE_SERVICES_LAYER: ${{ secrets.VITE_SERVICES_LAYER }}
+          VITE_WEB3FORMS_KEY: ${{ secrets.VITE_WEB3FORMS_KEY }}
+          VITE_WEB3FORMS_TO_EMAIL: ${{ secrets.VITE_WEB3FORMS_TO_EMAIL }}
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
