@@ -422,7 +422,11 @@ const MapPointInfoCard = ({
       )}
 
       {isReportModalOpen && (
-        <ReportErrorModal serviceName={title} onClose={() => setIsReportModalOpen(false)} />
+        <ReportErrorModal
+          serviceName={title}
+          organizationType={getFieldValue('serviceproviderorganizationtype')}
+          onClose={() => setIsReportModalOpen(false)}
+        />
       )}
     </aside>
   )
