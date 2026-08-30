@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import type { MapPointInfoIconId } from './mapPointInfoData'
 import {
+  IconChevronLeft,
+  IconChevronRight,
   IconClose,
   IconExpand,
   IconInfo,
@@ -10,6 +12,7 @@ import {
 } from './MapPointInfoIcons'
 import ReportErrorModal from './ReportErrorModal'
 import MultiServiceListPanel, { type ServiceData } from './MultiServiceListPanel'
+import { ServiceHeaderContent } from './detailsGridUtils'
 
 export type MapPointInfoField = {
   fieldName?: string
@@ -23,6 +26,7 @@ type MapPointInfoCardProps = {
   selectedAreaCenter?: { x: number; y: number } | null
   onExpandMap: (center: { x: number; y: number } | null) => void
   multipleServices?: ServiceData[]
+  multipleServicesFields?: MapPointInfoField[][]
 }
 
 type DetailRowData = {
@@ -136,13 +140,37 @@ const MapPointInfoCard = ({
   selectedAreaCenter,
   onExpandMap,
   multipleServices,
+  multipleServicesFields,
 }: MapPointInfoCardProps) => {
   const lastServiceNameRef = useRef<string | null>(null)
+  const lastMultiAddressRef = useRef<string | null>(null)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [isMiniMapReady, setIsMiniMapReady] = useState(false)
   const [isReportModalOpen, setIsReportModalOpen] = useState(false)
+  const [selectedServiceIndex, setSelectedServiceIndex] = useState<number | null>(null)
+
+  useEffect(() => {
+    scrollContainerRef.current?.scrollTo(0, 0)
+  }, [selectedServiceIndex])
+
+  // Reset the list/detail sub-view whenever the selected map point's service list changes
+  const currentMultiAddress = multipleServices ? multipleServices[0]?.fulladdress ?? '' : null
+  if (lastMultiAddressRef.current !== currentMultiAddress) {
+    lastMultiAddressRef.current = currentMultiAddress
+    if (selectedServiceIndex !== null) setSelectedServiceIndex(null)
+  }
+
+  const canGoToPreviousService = !!multipleServices && selectedServiceIndex !== null && selectedServiceIndex > 0
+  const canGoToNextService =
+    !!multipleServices && selectedServiceIndex !== null && selectedServiceIndex < multipleServices.length - 1
+
+  const activeData: MapPointInfoField[] =
+    multipleServices && selectedServiceIndex !== null
+      ? multipleServicesFields?.[selectedServiceIndex] ?? []
+      : (data ?? [])
 
   const fieldMap = new Map<string, string>()
-  for (const row of data ?? []) {
+  for (const row of activeData) {
     if (!row?.fieldName) continue
     const value = cleanFieldValue(row.fieldValue)
     if (value) fieldMap.set(row.fieldName.toLowerCase(), value)
@@ -233,12 +261,21 @@ const MapPointInfoCard = ({
       aria-label={`פרטי מענה: ${title}`}
     >
       <div className="flex min-h-0 flex-1 flex-col gap-4 px-8">
-        {/* Header with close button and address (for multiple services) */}
-        <div className="flex pt-8 w-full items-center justify-between">
-          {multipleServices ? (
+        {/* Header with close button, and either the shared address, or a back button + title */}
+        <div className="flex pt-8 w-full items-center justify-between gap-2">
+          {multipleServices && selectedServiceIndex === null ? (
             <p className="text-right text-[14px] font-medium text-[#5f708a] flex-1">
               {multipleServices[0]?.fulladdress || '-'}
             </p>
+          ) : multipleServices ? (
+            <button
+              type="button"
+              onClick={() => setSelectedServiceIndex(null)}
+              className="flex items-center gap-1 text-[14px] font-medium text-[#084878]"
+            >
+              <IconChevronRight />
+              <span>חזרה לרשימה</span>
+            </button>
           ) : (
             <h2 className="text-right text-[22px] font-bold leading-[21px] text-[#084878] flex-1">{title}</h2>
           )}
@@ -252,14 +289,41 @@ const MapPointInfoCard = ({
           </button>
         </div>
 
-        <div className="flex min-h-0 w-full max-w-[340px] flex-1 flex-col items-end gap-6 overflow-y-auto overflow-x-clip pb-6">
-          {multipleServices ? (
-            <MultiServiceListPanel services={multipleServices} address={undefined} />
+        <div
+          ref={scrollContainerRef}
+          className="flex min-h-0 w-full max-w-[340px] flex-1 flex-col items-end gap-6 overflow-y-auto overflow-x-clip pb-6 pl-2"
+        >
+          {multipleServices && selectedServiceIndex === null ? (
+            <MultiServiceListPanel services={multipleServices} onSelect={setSelectedServiceIndex} />
           ) : (
             <>
-              {/* {!!title && (
-                <h2 className="text-right text-[22px] font-bold leading-[21px] text-[#084878]">{title}</h2>
-              )} */}
+              {multipleServices && selectedServiceIndex !== null && (
+                <div className="flex w-full items-start gap-3">
+                  <div className="min-w-0 flex-1">
+                    <ServiceHeaderContent service={multipleServices[selectedServiceIndex]} />
+                  </div>
+                  <div className="flex shrink-0 items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedServiceIndex((i) => (i ?? 0) - 1)}
+                      disabled={!canGoToPreviousService}
+                      className="flex size-6 items-center justify-center rounded-full bg-[#eef2f6] transition-colors hover:bg-[#dde6ee] disabled:opacity-30"
+                      aria-label="המענה הקודם"
+                    >
+                      <IconChevronRight />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedServiceIndex((i) => (i ?? 0) + 1)}
+                      disabled={!canGoToNextService}
+                      className="flex size-6 items-center justify-center rounded-full bg-[#eef2f6] transition-colors hover:bg-[#dde6ee] disabled:opacity-30"
+                      aria-label="המענה הבא"
+                    >
+                      <IconChevronLeft />
+                    </button>
+                  </div>
+                </div>
+              )}
               {!!description && (
                 <div className="flex w-full items-center justify-center py-4">
                   <p className="w-full text-right text-[14px] leading-[22px] text-[#34404f]">{description}</p>

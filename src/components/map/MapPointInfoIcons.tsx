@@ -151,6 +151,30 @@ function IconExpand() {
   )
 }
 
+function IconBack() {
+  return (
+    <svg className="size-5 text-[#34404f]" viewBox="0 0 20 20" fill="none" aria-hidden>
+      <path d="M7.5 5l6 5-6 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function IconChevronLeft() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+      <path d="M10 3.5 5.5 8l4.5 4.5" stroke="#5F708A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function IconChevronRight() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+      <path d="M6 3.5 10.5 8 6 12.5" stroke="#5F708A" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
 function IconClose() {
   return (
     <svg className="size-6 text-[#34404f]" viewBox="0 0 24 24" fill="none" aria-hidden>
@@ -288,4 +312,15 @@ export function MapPointInfoIcon({ icon }: { icon: MapPointInfoIconId }) {
   }
 }
 
-export { IconClose, IconExpand, IconMapPinLarge, IconReport, IconInfo, IconSparkle, IconSend }
+export {
+  IconBack,
+  IconChevronLeft,
+  IconChevronRight,
+  IconClose,
+  IconExpand,
+  IconMapPinLarge,
+  IconReport,
+  IconInfo,
+  IconSparkle,
+  IconSend,
+}

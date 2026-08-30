@@ -1,6 +1,4 @@
-import { MapPointInfoIcon } from './MapPointInfoIcons'
-import { getOrganizationIcon } from '../../constants/organizationTypeIcons'
-import { buildDetailCells, InfoRow } from './detailsGridUtils'
+import { buildDetailCells, InfoRow, ServiceHeaderContent } from './detailsGridUtils'
 
 export type ServiceData = {
   objectId?: number
@@ -21,31 +19,28 @@ export type ServiceData = {
 type MultiServiceListPanelProps = {
   services: ServiceData[]
   address?: string
+  onSelect?: (index: number) => void
 }
 
-const ServiceListItem = ({ index, service }: { index: number; service: ServiceData }) => {
-  const orgIconId = getOrganizationIcon(service.serviceproviderorganizationtype)
+const ServiceListItem = ({
+  service,
+  onClick,
+}: {
+  index: number
+  service: ServiceData
+  onClick?: () => void
+}) => {
   const detailCells = buildDetailCells(service)
 
   return (
-    <div className="flex flex-col gap-4 rounded-2xl border border-[#e0e5eb] bg-white p-4">
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex flex-col gap-4 rounded-2xl border border-[#e0e5eb] bg-white p-4 text-right transition-colors hover:bg-[#f5f8fc]"
+    >
       {/* Gray header section with title and description */}
       <div className="flex flex-col gap-2 bg-[#f5f8fc] px-6 py-4 rounded-2xl">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex shrink-0">
-            <MapPointInfoIcon icon={orgIconId} />
-          </div>
-          <div className="flex-1 text-right">
-            {service.servicetypename && (
-              <p className="text-[12px] leading-4 text-[#5f708a]">
-                {service.servicetypename}
-              </p>
-            )}
-            <h3 className="text-[16px] font-bold leading-[22px] text-[#34404f]">
-              {service.servicename || '-'}
-            </h3>
-          </div>
-        </div>
+        <ServiceHeaderContent service={service} />
         {service.servicedescription && (
           <p className="text-right text-[13px] leading-5 text-[#34404f] w-full">
             {service.servicedescription}
@@ -54,7 +49,7 @@ const ServiceListItem = ({ index, service }: { index: number; service: ServiceDa
       </div>
 
       {/* Info section with grid */}
-      <div className="grid grid-cols-2 grid-rows-3 gap-x-4 gap-y-3 py-4 bg-white rounded-2xl" dir="rtl">
+      <div className="grid grid-cols-2 grid-rows-3 gap-x-4 gap-y-3 bg-white rounded-2xl" dir="rtl">
         {detailCells.map((cell) => (
           <div
             key={`${cell.row}-${cell.col}-${cell.icon}`}
@@ -65,11 +60,11 @@ const ServiceListItem = ({ index, service }: { index: number; service: ServiceDa
           </div>
         ))}
       </div>
-    </div>
+    </button>
   )
 }
 
-const MultiServiceListPanel = ({ services, address }: MultiServiceListPanelProps) => {
+const MultiServiceListPanel = ({ services, onSelect }: MultiServiceListPanelProps) => {
   if (!services || services.length === 0) {
     return null
   }
@@ -77,7 +72,12 @@ const MultiServiceListPanel = ({ services, address }: MultiServiceListPanelProps
   return (
     <div className="flex flex-col gap-4">
       {services.map((service, index) => (
-        <ServiceListItem key={service.objectId || index} index={index} service={service} />
+        <ServiceListItem
+          key={service.objectId || index}
+          index={index}
+          service={service}
+          onClick={onSelect ? () => onSelect(index) : undefined}
+        />
       ))}
     </div>
   )

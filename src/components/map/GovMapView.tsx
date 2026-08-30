@@ -1064,6 +1064,7 @@ const GovMapView = () => {
                   selectedAreaCenter={selectedAreaOption?.value ?? null}
                   onExpandMap={handleExpandPointMap}
                   multipleServices={serviceDataArray}
+                  multipleServicesFields={fieldsArray as MapPointInfoField[][]}
                 />
               )
             }
