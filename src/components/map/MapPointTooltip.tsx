@@ -1,6 +1,8 @@
 import { useLayoutEffect, useRef, useState } from 'react'
 import { MapPointInfoIcon } from './MapPointInfoIcons'
 import { getOrganizationIcon } from '../../constants/organizationTypeIcons'
+import { cleanValue, buildDetailCells, InfoRow } from './detailsGridUtils'
+import type { DetailCell } from './detailsGridUtils'
 
 type MapPointTooltipData = {
   address?: string
@@ -25,32 +27,7 @@ type TooltipPlacement = 'above' | 'below'
 const TOOLTIP_GAP_PX = 12
 const VIEWPORT_EDGE_PADDING_PX = 8
 
-const cleanValue = (value?: string) => {
-  if (!value) return ''
-  const normalized = String(value).trim()
-  if (!normalized || normalized.toLowerCase() === 'null') return ''
-  return normalized
-}
-
 type DetailIcon = Parameters<typeof MapPointInfoIcon>[0]['icon']
-
-type TooltipDetailCell = {
-  row: 1 | 2 | 3
-  col: 1 | 2
-  icon: DetailIcon
-  value: string
-}
-
-const InfoRow = ({ icon, value }: { icon: DetailIcon; value: string }) => (
-  <div className="flex h-[25px] w-full min-w-0 items-center justify-start gap-2 text-right text-[12px] leading-[22.87px] text-[#5f708a]">
-    <span className="shrink-0">
-      <MapPointInfoIcon icon={icon} />
-    </span>
-    <span className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap" title={value}>
-      {value}
-    </span>
-  </div>
-)
 
 function resolveTooltipPlacement(
   anchorTop: number,
@@ -76,7 +53,7 @@ const MapPointTooltip = ({ data, position }: MapPointTooltipProps) => {
   const isMultiple = data.isMultipleServices
 
   // Figma: col 1 = ימין, col 2 = שמאל (RTL grid)
-  const detailCells: TooltipDetailCell[] = [
+  const detailCells: DetailCell[] = [
     { row: 1, col: 1, icon: 'group', value: cleanValue(data.audiences) },
     { row: 1, col: 2, icon: 'price', value: cleanValue(data.price) },
     { row: 2, col: 2, icon: 'building', value: cleanValue(data.provider) },
@@ -84,7 +61,6 @@ const MapPointTooltip = ({ data, position }: MapPointTooltipProps) => {
     { row: 3, col: 1, icon: 'target', value: cleanValue(data.airisktype) },
     { row: 3, col: 2, icon: 'accessibility', value: cleanValue(data.accessibility) },
   ]
-  console.log('detailCells:', detailCells)
 
   useLayoutEffect(() => {
     const tooltipEl = tooltipRef.current

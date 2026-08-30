@@ -9,6 +9,7 @@ import {
   MapPointInfoIcon,
 } from './MapPointInfoIcons'
 import ReportErrorModal from './ReportErrorModal'
+import MultiServiceListPanel, { type ServiceData } from './MultiServiceListPanel'
 
 export type MapPointInfoField = {
   fieldName?: string
@@ -21,6 +22,7 @@ type MapPointInfoCardProps = {
   onClose: () => void
   selectedAreaCenter?: { x: number; y: number } | null
   onExpandMap: (center: { x: number; y: number } | null) => void
+  multipleServices?: ServiceData[]
 }
 
 type DetailRowData = {
@@ -133,6 +135,7 @@ const MapPointInfoCard = ({
   onClose,
   selectedAreaCenter,
   onExpandMap,
+  multipleServices,
 }: MapPointInfoCardProps) => {
   const lastServiceNameRef = useRef<string | null>(null)
   const [isMiniMapReady, setIsMiniMapReady] = useState(false)
@@ -230,32 +233,45 @@ const MapPointInfoCard = ({
       aria-label={`פרטי מענה: ${title}`}
     >
       <div className="flex min-h-0 flex-1 flex-col gap-4 px-8">
-        <div className="flex w-full max-w-[340px] flex-col gap-2">
-          <div className="flex pt-8 w-full items-center justify-between">
-            <h2 className="text-right text-[22px] font-bold leading-[21px] text-[#084878]">{title}</h2>
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex size-12 shrink-0 items-center justify-center rounded-3xl py-3 transition-colors hover:bg-[#f0f4f8]"
-              aria-label="סגירה"
-            >
-              <IconClose />
-            </button>
-          </div>
-
-          {!!description && (
-            <div className="flex w-full items-center justify-center py-4">
-              <p className="w-full text-right text-[14px] leading-[22px] text-[#34404f]">{description}</p>
-            </div>
+        {/* Header with close button and address (for multiple services) */}
+        <div className="flex pt-8 w-full items-center justify-between">
+          {multipleServices ? (
+            <p className="text-right text-[14px] font-medium text-[#5f708a] flex-1">
+              {multipleServices[0]?.fulladdress || '-'}
+            </p>
+          ) : (
+            <h2 className="text-right text-[22px] font-bold leading-[21px] text-[#084878] flex-1">{title}</h2>
           )}
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex size-12 shrink-0 items-center justify-center rounded-3xl py-3 transition-colors hover:bg-[#f0f4f8]"
+            aria-label="סגירה"
+          >
+            <IconClose />
+          </button>
         </div>
 
         <div className="flex min-h-0 w-full max-w-[340px] flex-1 flex-col items-end gap-6 overflow-y-auto overflow-x-clip pb-6">
-          <div className="flex w-full flex-col items-end justify-center gap-3.5">
-            {details.map((detail) => (
-              <DetailRow key={detail.id} detail={detail} showLabel={isOtherLayer} />
-            ))}
-          </div>
+          {multipleServices ? (
+            <MultiServiceListPanel services={multipleServices} address={undefined} />
+          ) : (
+            <>
+              {/* {!!title && (
+                <h2 className="text-right text-[22px] font-bold leading-[21px] text-[#084878]">{title}</h2>
+              )} */}
+              {!!description && (
+                <div className="flex w-full items-center justify-center py-4">
+                  <p className="w-full text-right text-[14px] leading-[22px] text-[#34404f]">{description}</p>
+                </div>
+              )}
+              <div className="flex w-full flex-col items-end justify-center gap-3.5">
+                {details.map((detail) => (
+                  <DetailRow key={detail.id} detail={detail} showLabel={isOtherLayer} />
+                ))}
+              </div>
+            </>
+          )}
 
           {miniMapSrc && (
             <div className="relative h-[196px] w-full shrink-0 overflow-hidden rounded-2xl bg-[#f0f4f8]">
