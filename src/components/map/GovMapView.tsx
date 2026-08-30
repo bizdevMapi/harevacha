@@ -520,6 +520,7 @@ const GovMapView = () => {
           cityObjectId: '1',
           optionValue: getCityCenterAreaSelectValue(JERUSALEM_CITY_CENTER_AREA_OPTION.value),
           geometry: JERUSALEM_CITY_CENTER_AREA_OPTION.geometry,
+          filter: "(cityid=3000)"
         },
         ...jerusalemNeighborhoods
       ])
