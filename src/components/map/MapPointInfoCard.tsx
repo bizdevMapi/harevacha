@@ -34,6 +34,7 @@ type DetailRowData = {
   icon: MapPointInfoIconId
   value: string,
   hebel?: string
+  isLink?: boolean
 }
 
 type MapCenterPoint = {
@@ -55,6 +56,20 @@ function parseCoordinate(value: unknown): number | null {
   return Number.isFinite(parsed) ? parsed : null
 }
 
+function formatDateDDMMYYYY(value: string): string {
+  const normalized = value.replace(/(\d)(AM|PM)/i, '$1 $2')
+  const parsed = new Date(normalized)
+  if (Number.isNaN(parsed.getTime())) return value
+  const day = String(parsed.getDate()).padStart(2, '0')
+  const month = String(parsed.getMonth() + 1).padStart(2, '0')
+  const year = parsed.getFullYear()
+  return `${day}/${month}/${year}`
+}
+
+function toHref(value: string): string {
+  return /^https?:\/\//i.test(value) ? value : `https://${value}`
+}
+
 function DetailRow({ detail, showLabel }: { detail: DetailRowData; showLabel?: boolean }) {
   if (showLabel) {
     return (
@@ -62,8 +77,19 @@ function DetailRow({ detail, showLabel }: { detail: DetailRowData; showLabel?: b
         <span className="text-right text-[14px] font-semibold leading-[22.871px] text-[#084878]">
           {detail.id}
         </span>
-                <p className="min-w-0 flex-1 text-left text-[14px] leading-[22.871px] text-[#5f708a]">{detail.value}</p>
-
+        {detail.isLink ? (
+          <a
+            href={toHref(detail.value)}
+            target="_blank"
+            rel="noopener noreferrer"
+            dir="ltr"
+            className="min-w-0 flex-1 truncate text-left text-[14px] leading-[22.871px] text-[#0090dd] underline"
+          >
+            {detail.value}
+          </a>
+        ) : (
+          <p className="min-w-0 flex-1 text-left text-[14px] leading-[22.871px] text-[#5f708a]">{detail.value}</p>
+        )}
       </div>
     )
   }
@@ -76,7 +102,19 @@ function DetailRow({ detail, showLabel }: { detail: DetailRowData; showLabel?: b
       <span className="w-full text-right text-[14px] font-semibold leading-[22.871px] text-[#084878]">
         {detail.hebel || detail.id}
       </span>
-      <p className="w-full flex-1 text-right text-[14px] leading-[22.871px] text-[#5f708a]">{detail.value}</p>
+      {detail.isLink ? (
+        <a
+          href={toHref(detail.value)}
+          target="_blank"
+          rel="noopener noreferrer"
+          dir="ltr"
+          className="block w-full truncate text-right text-[14px] leading-[22.871px] text-[#0090dd] underline"
+        >
+          {detail.value}
+        </a>
+      ) : (
+        <p className="w-full flex-1 text-right text-[14px] leading-[22.871px] text-[#5f708a]">{detail.value}</p>
+      )}
     </div>
   )
 }
@@ -216,7 +254,8 @@ const MapPointInfoCard = ({
         }
 
         if (!value && spec.fallbackField) value = getFieldValue(spec.fallbackField)
-        return { id: spec.id, icon: spec.icon, value, hebel: spec.hebel }
+        if (value && (spec.id === 'insertdate' || spec.id === 'servicedate')) value = formatDateDDMMYYYY(value)
+        return { id: spec.id, icon: spec.icon, value, hebel: spec.hebel, isLink: spec.id === 'link' }
       }).filter((item) => item.value)
 
   const title = isOtherLayer
@@ -271,7 +310,7 @@ const MapPointInfoCard = ({
             <button
               type="button"
               onClick={() => setSelectedServiceIndex(null)}
-              className="flex items-center gap-1 text-[14px] font-medium text-[#084878]"
+              className="flex items-center gap-1 text-[14px] font-medium text-[#084878] cursor-pointer"
             >
               <IconChevronRight />
               <span>חזרה לרשימה</span>
@@ -282,7 +321,7 @@ const MapPointInfoCard = ({
           <button
             type="button"
             onClick={onClose}
-            className="flex size-12 shrink-0 items-center justify-center rounded-3xl py-3 transition-colors hover:bg-[#f0f4f8]"
+            className="flex size-12 shrink-0 items-center justify-center rounded-3xl py-3 transition-colors hover:bg-[#f0f4f8] cursor-pointer"
             aria-label="סגירה"
           >
             <IconClose />
@@ -307,7 +346,7 @@ const MapPointInfoCard = ({
                       type="button"
                       onClick={() => setSelectedServiceIndex((i) => (i ?? 0) - 1)}
                       disabled={!canGoToPreviousService}
-                      className="flex size-6 items-center justify-center rounded-full bg-[#eef2f6] transition-colors hover:bg-[#dde6ee] disabled:opacity-30"
+                      className="flex size-6 items-center justify-center rounded-full bg-[#eef2f6] transition-colors hover:bg-[#dde6ee] disabled:opacity-30 cursor-pointer disabled:cursor-default"
                       aria-label="המענה הקודם"
                     >
                       <IconChevronRight />
@@ -316,7 +355,7 @@ const MapPointInfoCard = ({
                       type="button"
                       onClick={() => setSelectedServiceIndex((i) => (i ?? 0) + 1)}
                       disabled={!canGoToNextService}
-                      className="flex size-6 items-center justify-center rounded-full bg-[#eef2f6] transition-colors hover:bg-[#dde6ee] disabled:opacity-30"
+                      className="flex size-6 items-center justify-center rounded-full bg-[#eef2f6] transition-colors hover:bg-[#dde6ee] disabled:opacity-30 cursor-pointer disabled:cursor-default"
                       aria-label="המענה הבא"
                     >
                       <IconChevronLeft />

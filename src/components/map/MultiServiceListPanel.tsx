@@ -36,7 +36,7 @@ const ServiceListItem = ({
     <button
       type="button"
       onClick={onClick}
-      className="flex flex-col gap-4 rounded-2xl border border-[#e0e5eb] bg-white p-4 text-right transition-colors hover:bg-[#f5f8fc]"
+      className="group flex flex-col gap-4 rounded-2xl border border-[#e0e5eb] bg-white p-4 text-right transition-colors hover:bg-[#f5f8fc] cursor-pointer"
     >
       {/* Gray header section with title and description */}
       <div className="flex flex-col gap-2 bg-[#f5f8fc] px-6 py-4 rounded-2xl">
@@ -49,7 +49,7 @@ const ServiceListItem = ({
       </div>
 
       {/* Info section with grid */}
-      <div className="grid grid-cols-2 grid-rows-3 gap-x-4 gap-y-3 bg-white rounded-2xl" dir="rtl">
+      <div className="grid grid-cols-2 grid-rows-3 gap-x-4 gap-y-3 bg-white transition-colors group-hover:bg-[#f5f8fc] rounded-2xl" dir="rtl">
         {detailCells.map((cell) => (
           <div
             key={`${cell.row}-${cell.col}-${cell.icon}`}
