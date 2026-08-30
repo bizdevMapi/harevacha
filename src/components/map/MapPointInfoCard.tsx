@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import type { MapPointInfoIconId } from './mapPointInfoData'
 import {
+  IconChevronLeft,
+  IconChevronRight,
   IconClose,
   IconExpand,
   IconInfo,
@@ -9,6 +11,8 @@ import {
   MapPointInfoIcon,
 } from './MapPointInfoIcons'
 import ReportErrorModal from './ReportErrorModal'
+import MultiServiceListPanel, { type ServiceData } from './MultiServiceListPanel'
+import { ServiceHeaderContent } from './detailsGridUtils'
 
 export type MapPointInfoField = {
   fieldName?: string
@@ -21,6 +25,8 @@ type MapPointInfoCardProps = {
   onClose: () => void
   selectedAreaCenter?: { x: number; y: number } | null
   onExpandMap: (center: { x: number; y: number } | null) => void
+  multipleServices?: ServiceData[]
+  multipleServicesFields?: MapPointInfoField[][]
 }
 
 type DetailRowData = {
@@ -28,6 +34,7 @@ type DetailRowData = {
   icon: MapPointInfoIconId
   value: string,
   hebel?: string
+  isLink?: boolean
 }
 
 type MapCenterPoint = {
@@ -49,6 +56,20 @@ function parseCoordinate(value: unknown): number | null {
   return Number.isFinite(parsed) ? parsed : null
 }
 
+function formatDateDDMMYYYY(value: string): string {
+  const normalized = value.replace(/(\d)(AM|PM)/i, '$1 $2')
+  const parsed = new Date(normalized)
+  if (Number.isNaN(parsed.getTime())) return value
+  const day = String(parsed.getDate()).padStart(2, '0')
+  const month = String(parsed.getMonth() + 1).padStart(2, '0')
+  const year = parsed.getFullYear()
+  return `${day}/${month}/${year}`
+}
+
+function toHref(value: string): string {
+  return /^https?:\/\//i.test(value) ? value : `https://${value}`
+}
+
 function DetailRow({ detail, showLabel }: { detail: DetailRowData; showLabel?: boolean }) {
   if (showLabel) {
     return (
@@ -56,8 +77,19 @@ function DetailRow({ detail, showLabel }: { detail: DetailRowData; showLabel?: b
         <span className="text-right text-[14px] font-semibold leading-[22.871px] text-[#084878]">
           {detail.id}
         </span>
-                <p className="min-w-0 flex-1 text-left text-[14px] leading-[22.871px] text-[#5f708a]">{detail.value}</p>
-
+        {detail.isLink ? (
+          <a
+            href={toHref(detail.value)}
+            target="_blank"
+            rel="noopener noreferrer"
+            dir="ltr"
+            className="min-w-0 flex-1 truncate text-left text-[14px] leading-[22.871px] text-[#0090dd] underline"
+          >
+            {detail.value}
+          </a>
+        ) : (
+          <p className="min-w-0 flex-1 text-left text-[14px] leading-[22.871px] text-[#5f708a]">{detail.value}</p>
+        )}
       </div>
     )
   }
@@ -70,7 +102,19 @@ function DetailRow({ detail, showLabel }: { detail: DetailRowData; showLabel?: b
       <span className="w-full text-right text-[14px] font-semibold leading-[22.871px] text-[#084878]">
         {detail.hebel || detail.id}
       </span>
-      <p className="w-full flex-1 text-right text-[14px] leading-[22.871px] text-[#5f708a]">{detail.value}</p>
+      {detail.isLink ? (
+        <a
+          href={toHref(detail.value)}
+          target="_blank"
+          rel="noopener noreferrer"
+          dir="ltr"
+          className="block w-full truncate text-right text-[14px] leading-[22.871px] text-[#0090dd] underline"
+        >
+          {detail.value}
+        </a>
+      ) : (
+        <p className="w-full flex-1 text-right text-[14px] leading-[22.871px] text-[#5f708a]">{detail.value}</p>
+      )}
     </div>
   )
 }
@@ -133,13 +177,38 @@ const MapPointInfoCard = ({
   onClose,
   selectedAreaCenter,
   onExpandMap,
+  multipleServices,
+  multipleServicesFields,
 }: MapPointInfoCardProps) => {
   const lastServiceNameRef = useRef<string | null>(null)
+  const lastMultiAddressRef = useRef<string | null>(null)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [isMiniMapReady, setIsMiniMapReady] = useState(false)
   const [isReportModalOpen, setIsReportModalOpen] = useState(false)
+  const [selectedServiceIndex, setSelectedServiceIndex] = useState<number | null>(null)
+
+  useEffect(() => {
+    scrollContainerRef.current?.scrollTo(0, 0)
+  }, [selectedServiceIndex])
+
+  // Reset the list/detail sub-view whenever the selected map point's service list changes
+  const currentMultiAddress = multipleServices ? multipleServices[0]?.fulladdress ?? '' : null
+  if (lastMultiAddressRef.current !== currentMultiAddress) {
+    lastMultiAddressRef.current = currentMultiAddress
+    if (selectedServiceIndex !== null) setSelectedServiceIndex(null)
+  }
+
+  const canGoToPreviousService = !!multipleServices && selectedServiceIndex !== null && selectedServiceIndex > 0
+  const canGoToNextService =
+    !!multipleServices && selectedServiceIndex !== null && selectedServiceIndex < multipleServices.length - 1
+
+  const activeData: MapPointInfoField[] =
+    multipleServices && selectedServiceIndex !== null
+      ? multipleServicesFields?.[selectedServiceIndex] ?? []
+      : (data ?? [])
 
   const fieldMap = new Map<string, string>()
-  for (const row of data ?? []) {
+  for (const row of activeData) {
     if (!row?.fieldName) continue
     const value = cleanFieldValue(row.fieldValue)
     if (value) fieldMap.set(row.fieldName.toLowerCase(), value)
@@ -185,7 +254,8 @@ const MapPointInfoCard = ({
         }
 
         if (!value && spec.fallbackField) value = getFieldValue(spec.fallbackField)
-        return { id: spec.id, icon: spec.icon, value, hebel: spec.hebel }
+        if (value && (spec.id === 'insertdate' || spec.id === 'servicedate')) value = formatDateDDMMYYYY(value)
+        return { id: spec.id, icon: spec.icon, value, hebel: spec.hebel, isLink: spec.id === 'link' }
       }).filter((item) => item.value)
 
   const title = isOtherLayer
@@ -230,32 +300,81 @@ const MapPointInfoCard = ({
       aria-label={`פרטי מענה: ${title}`}
     >
       <div className="flex min-h-0 flex-1 flex-col gap-4 px-8">
-        <div className="flex w-full max-w-[340px] flex-col gap-2">
-          <div className="flex pt-8 w-full items-center justify-between">
-            <h2 className="text-right text-[22px] font-bold leading-[21px] text-[#084878]">{title}</h2>
+        {/* Header with close button, and either the shared address, or a back button + title */}
+        <div className="flex pt-8 w-full items-center justify-between gap-2">
+          {multipleServices && selectedServiceIndex === null ? (
+            <p className="text-right text-[14px] font-medium text-[#5f708a] flex-1">
+              {multipleServices[0]?.fulladdress || '-'}
+            </p>
+          ) : multipleServices ? (
             <button
               type="button"
-              onClick={onClose}
-              className="flex size-12 shrink-0 items-center justify-center rounded-3xl py-3 transition-colors hover:bg-[#f0f4f8]"
-              aria-label="סגירה"
+              onClick={() => setSelectedServiceIndex(null)}
+              className="flex items-center gap-1 text-[14px] font-medium text-[#084878] cursor-pointer"
             >
-              <IconClose />
+              <IconChevronRight />
+              <span>חזרה לרשימה</span>
             </button>
-          </div>
-
-          {!!description && (
-            <div className="flex w-full items-center justify-center py-4">
-              <p className="w-full text-right text-[14px] leading-[22px] text-[#34404f]">{description}</p>
-            </div>
+          ) : (
+            <h2 className="text-right text-[22px] font-bold leading-[21px] text-[#084878] flex-1">{title}</h2>
           )}
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex size-12 shrink-0 items-center justify-center rounded-3xl py-3 transition-colors hover:bg-[#f0f4f8] cursor-pointer"
+            aria-label="סגירה"
+          >
+            <IconClose />
+          </button>
         </div>
 
-        <div className="flex min-h-0 w-full max-w-[340px] flex-1 flex-col items-end gap-6 overflow-y-auto overflow-x-clip pb-6">
-          <div className="flex w-full flex-col items-end justify-center gap-3.5">
-            {details.map((detail) => (
-              <DetailRow key={detail.id} detail={detail} showLabel={isOtherLayer} />
-            ))}
-          </div>
+        <div
+          ref={scrollContainerRef}
+          className="flex min-h-0 w-full max-w-[340px] flex-1 flex-col items-end gap-6 overflow-y-auto overflow-x-clip pb-6 pl-2"
+        >
+          {multipleServices && selectedServiceIndex === null ? (
+            <MultiServiceListPanel services={multipleServices} onSelect={setSelectedServiceIndex} />
+          ) : (
+            <>
+              {multipleServices && selectedServiceIndex !== null && (
+                <div className="flex w-full items-start gap-3">
+                  <div className="min-w-0 flex-1">
+                    <ServiceHeaderContent service={multipleServices[selectedServiceIndex]} />
+                  </div>
+                  <div className="flex shrink-0 items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedServiceIndex((i) => (i ?? 0) - 1)}
+                      disabled={!canGoToPreviousService}
+                      className="flex size-6 items-center justify-center rounded-full bg-[#eef2f6] transition-colors hover:bg-[#dde6ee] disabled:opacity-30 cursor-pointer disabled:cursor-default"
+                      aria-label="המענה הקודם"
+                    >
+                      <IconChevronRight />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedServiceIndex((i) => (i ?? 0) + 1)}
+                      disabled={!canGoToNextService}
+                      className="flex size-6 items-center justify-center rounded-full bg-[#eef2f6] transition-colors hover:bg-[#dde6ee] disabled:opacity-30 cursor-pointer disabled:cursor-default"
+                      aria-label="המענה הבא"
+                    >
+                      <IconChevronLeft />
+                    </button>
+                  </div>
+                </div>
+              )}
+              {!!description && (
+                <div className="flex w-full items-center justify-center py-4">
+                  <p className="w-full text-right text-[14px] leading-[22px] text-[#34404f]">{description}</p>
+                </div>
+              )}
+              <div className="flex w-full flex-col items-end justify-center gap-3.5">
+                {details.map((detail) => (
+                  <DetailRow key={detail.id} detail={detail} showLabel={isOtherLayer} />
+                ))}
+              </div>
+            </>
+          )}
 
           {miniMapSrc && (
             <div className="relative h-[196px] w-full shrink-0 overflow-hidden rounded-2xl bg-[#f0f4f8]">
@@ -303,7 +422,11 @@ const MapPointInfoCard = ({
       )}
 
       {isReportModalOpen && (
-        <ReportErrorModal serviceName={title} onClose={() => setIsReportModalOpen(false)} />
+        <ReportErrorModal
+          serviceName={title}
+          organizationType={getFieldValue('serviceproviderorganizationtype')}
+          onClose={() => setIsReportModalOpen(false)}
+        />
       )}
     </aside>
   )

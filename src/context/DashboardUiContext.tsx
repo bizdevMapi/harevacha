@@ -14,8 +14,9 @@ import { getCityCenterAreaSelectValue, TIRAT_CARMEL_CITY_AREA_OPTION } from '../
 import type { MapPointInfoField } from '../components/map/MapPointInfoCard'
 
 export type SelectedPointInfo = {
-  fields: MapPointInfoField[]
+  fields: MapPointInfoField[] | MapPointInfoField[][]
   isOtherLayer: boolean
+  isMultipleServices?: boolean
 }
 
 export type DashboardViewMode = 'map' | 'list'

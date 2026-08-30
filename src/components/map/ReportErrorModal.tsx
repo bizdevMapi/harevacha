@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { IconClose, IconSend } from './MapPointInfoIcons'
+import { IconClose, IconSend, MapPointInfoIcon } from './MapPointInfoIcons'
+import { getOrganizationIcon, getOrganizationPillColor } from '../../constants/organizationTypeIcons'
 
 type ReportErrorModalProps = {
   /** שם המענה שעליו מדווחת הטעות — מוצג כתגית */
   serviceName?: string
+  /** סוג הארגון המפעיל את המענה — קובע את האייקון והצבע של התגית */
+  organizationType?: string
   onClose: () => void
   onSubmit?: (payload: ReportErrorPayload) => void
 }
@@ -16,7 +19,7 @@ export type ReportErrorPayload = {
   message: string
 }
 
-const ReportErrorModal = ({ serviceName, onClose, onSubmit }: ReportErrorModalProps) => {
+const ReportErrorModal = ({ serviceName, organizationType, onClose, onSubmit }: ReportErrorModalProps) => {
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [message, setMessage] = useState('')
@@ -68,6 +71,8 @@ const ReportErrorModal = ({ serviceName, onClose, onSubmit }: ReportErrorModalPr
     }
   }
 
+  const pillColor = getOrganizationPillColor(organizationType)
+
   const inputClass =
     'w-full rounded-2xl border border-[#dbe3ec] bg-white px-4 py-3 text-right text-[14px] leading-[22px] text-[#34404f] outline-none transition-colors placeholder:text-[#a4b1c0] focus:border-[#4353ff] focus:ring-0'
 
@@ -102,9 +107,12 @@ const ReportErrorModal = ({ serviceName, onClose, onSubmit }: ReportErrorModalPr
           </p>
 
           {!!serviceName && (
-            <span className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-[#f4eafb] px-3 py-1 text-[13px] font-semibold text-[#8a2ac0]">
-              <span className="flex size-4 items-center justify-center rounded-full bg-[#8a2ac0] text-[10px] font-bold text-white">
-                ?
+            <span
+              className="mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[13px] font-semibold"
+              style={{ backgroundColor: pillColor.bg, color: pillColor.text }}
+            >
+              <span className="flex size-5 shrink-0 items-center justify-center [&>svg]:h-5 [&>svg]:w-5">
+                <MapPointInfoIcon icon={getOrganizationIcon(organizationType)} />
               </span>
               {serviceName}
             </span>
