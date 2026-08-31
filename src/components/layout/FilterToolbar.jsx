@@ -1,5 +1,6 @@
 import {
   IconBackCircle,
+  IconClose,
   IconHelp,
   IconList,
   IconMap,
@@ -41,8 +42,18 @@ const FilterToolbar = ({ onBack = () => { } }) => {
     setProfileKey,
     neighborhoodsList,
     matchedServicesCount,
+    activeQuickFilterLabel,
+    setActiveQuickFilterLabel,
+    setSelectedServiceFilterKeys,
+    setServiceFilterSearchQuery,
   } = useDashboardUi()
   const matchCount = matchedServicesCount
+
+  const handleClearQuickFilter = () => {
+    setActiveQuickFilterLabel(null)
+    setSelectedServiceFilterKeys(new Set())
+    setServiceFilterSearchQuery('')
+  }
   const divider = (
     <div
       className="hidden h-11 w-px shrink-0 bg-white/55 sm:block"
@@ -107,9 +118,26 @@ const FilterToolbar = ({ onBack = () => { } }) => {
               className="min-w-0 flex-1 text-center text-[15px] tracking-tight text-white drop-shadow-sm sm:text-right"
               style={{ textShadow: '0 1px 1px rgba(0,0,0,0.15)' }}
             >
-              מענים מותאמים{' '}
-              :{' '}
-              <span className="tabular-nums font-bold">{matchCount}</span>
+              {activeQuickFilterLabel ? (
+                <>
+                  <span className="tabular-nums font-bold">{matchCount}</span>{' '}
+                  {activeQuickFilterLabel}
+                  <button
+                    type="button"
+                    onClick={handleClearQuickFilter}
+                    aria-label="ביטול הסינון המהיר"
+                    className="mr-1.5 inline-flex size-5 items-center justify-center rounded-full text-white/80 transition-colors hover:bg-white/15 hover:text-white"
+                  >
+                    <IconClose />
+                  </button>
+                </>
+              ) : (
+                <>
+                  מענים מותאמים{' '}
+                  :{' '}
+                  <span className="tabular-nums font-bold">{matchCount}</span>
+                </>
+              )}
             </p>
           <div className="flex shrink-0 flex-wrap items-center gap-3 sm:gap-4">
           

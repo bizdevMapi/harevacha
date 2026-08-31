@@ -26,6 +26,7 @@ const ServicesListView = () => {
     neighborhoodsList,
     expandedFilterSections,
     setExpandedFilterSections,
+    setActiveQuickFilterLabel,
   } = useDashboardUi()
 
   const filterSections = useMemo(
@@ -60,11 +61,17 @@ const ServicesListView = () => {
         hideToggle
         onToggle={() => {}}
         searchQuery={serviceFilterSearchQuery}
-        onSearchQueryChange={setServiceFilterSearchQuery}
+        onSearchQueryChange={(query) => {
+          setActiveQuickFilterLabel(null)
+          setServiceFilterSearchQuery(query)
+        }}
         filterSections={filterSections}
         filtersLoading={servicesListLoading}
         selectedKeys={selectedServiceFilterKeys}
-        onFilterSelectionChange={setSelectedServiceFilterKeys}
+        onFilterSelectionChange={(keys) => {
+          setActiveQuickFilterLabel(null)
+          setSelectedServiceFilterKeys(keys)
+        }}
         expandedSections={expandedFilterSections}
         onExpandedSectionsChange={setExpandedFilterSections}
       />

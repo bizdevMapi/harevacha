@@ -25,19 +25,19 @@ function QuickFilterButton({ icon, label, count, onClick }: QuickFilterButtonPro
 }
 
 type MapQuickFiltersProps = {
-  localCount?: number
-  missingDataCount?: number
-  onLocalClick?: () => void
-  onMissingDataClick?: () => void
+  remoteServicesCount?: number
+  missingAddressCount?: number
+  onRemoteServicesClick?: () => void
+  onMissingAddressClick?: () => void
 }
 
 const MapQuickFilters = ({
-  localCount = 0,
-  missingDataCount = 0,
-  onLocalClick,
-  onMissingDataClick,
+  remoteServicesCount = 0,
+  missingAddressCount = 0,
+  onRemoteServicesClick,
+  onMissingAddressClick,
 }: MapQuickFiltersProps) => {
-  const hasAnyFilters = localCount > 0 || missingDataCount > 0
+  const hasAnyFilters = remoteServicesCount > 0 || missingAddressCount > 0
 
   if (!hasAnyFilters) {
     return null
@@ -45,20 +45,20 @@ const MapQuickFilters = ({
 
   return (
     <div className="absolute right-4 top-4 z-20 flex flex-col gap-2" dir="rtl">
-      {localCount > 0 && (
+      {remoteServicesCount > 0 && (
         <QuickFilterButton
           icon="filter"
-          label=":מענים מקוונים / עד הבית"
-          count={localCount}
-          onClick={onLocalClick}
+          label="מענים מקוונים / עד הבית / טלפוני"
+          count={remoteServicesCount}
+          onClick={onRemoteServicesClick}
         />
       )}
-      {missingDataCount > 0 && (
+      {missingAddressCount > 0 && (
         <QuickFilterButton
           icon="snowflake"
-          label=":מענים עם כתובת חסרה"
-          count={missingDataCount}
-          onClick={onMissingDataClick}
+          label="מענים עם כתובת חסרה"
+          count={missingAddressCount}
+          onClick={onMissingAddressClick}
         />
       )}
     </div>

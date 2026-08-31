@@ -70,6 +70,9 @@ export type DashboardUiValue = {
   setSelectedPointInfo: Dispatch<SetStateAction<SelectedPointInfo | null>>
   expandedFilterSections: Set<string>
   setExpandedFilterSections: Dispatch<SetStateAction<Set<string>>>
+  /** תווית המסנן המהיר הפעיל (מהמפה) — להצגה לצד מספר המענים בסרגל, כדי שיהיה ברור מה מוצג */
+  activeQuickFilterLabel: string | null
+  setActiveQuickFilterLabel: Dispatch<SetStateAction<string | null>>
 }
 
 const DashboardUiContext = createContext<DashboardUiValue | null>(null)
@@ -102,6 +105,7 @@ export function DashboardUiProvider({ children }: { children: ReactNode }) {
   const [expandedFilterSections, setExpandedFilterSections] = useState<Set<string>>(
     () => new Set(),
   )
+  const [activeQuickFilterLabel, setActiveQuickFilterLabel] = useState<string | null>(null)
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -156,6 +160,8 @@ export function DashboardUiProvider({ children }: { children: ReactNode }) {
       setSelectedPointInfo,
       expandedFilterSections,
       setExpandedFilterSections,
+      activeQuickFilterLabel,
+      setActiveQuickFilterLabel,
     }),
     [
       viewMode,
@@ -174,6 +180,7 @@ export function DashboardUiProvider({ children }: { children: ReactNode }) {
       selectedServiceFilterKeys,
       selectedPointInfo,
       expandedFilterSections,
+      activeQuickFilterLabel,
     ],
   )
 

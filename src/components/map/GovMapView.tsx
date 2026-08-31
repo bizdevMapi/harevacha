@@ -313,6 +313,7 @@ const GovMapView = () => {
     setSelectedPointInfo,
     expandedFilterSections,
     setExpandedFilterSections,
+    setActiveQuickFilterLabel,
   } = useDashboardUi()
   const mapRef = useRef<HTMLDivElement | null>(null)
   const isHoverIdentifyInFlightRef = useRef(false)
@@ -350,36 +351,35 @@ const GovMapView = () => {
     setSelectedPointInfo(null)
   }
 
-  const handlePhysicalLocationFilter = () => {
-    console.log('Physical location filter applied', selectedServiceFilterKeys)
-    const newKeys = new Set(selectedServiceFilterKeys)
-    newKeys.add('סוג מיקום::מקוון')
-    newKeys.add('סוג מיקום::טלפוני')
-    newKeys.add('סוג מיקום::עד הבית')
-    setSelectedServiceFilterKeys(newKeys)
+  /** מסנן מהיר: "מענים מקוונים/עד הבית/טלפוני" — לפי סוג מיקום המענה בלבד, גם אם קיימת כתובת */
+  const handleRemoteServicesFilter = () => {
+    setSelectedServiceFilterKeys(
+      new Set(['סוג מיקום::מקוון', 'סוג מיקום::טלפוני', 'סוג מיקום::עד הבית']),
+    )
+    setServiceFilterSearchQuery('')
+    setActiveQuickFilterLabel('מענים מקוונים / עד הבית / טלפוני')
     setViewMode('list')
   }
 
+  /** מסנן מהיר: "מענים עם כתובת חסרה" — לפי סוג מיקום המענה בלבד */
   const handleMissingAddressFilter = () => {
-    const newKeys = new Set(selectedServiceFilterKeys)
-    newKeys.add('סוג מיקום::לא נמצא מידע')
-    newKeys.delete('סוג מיקום::פיזי')
-    setSelectedServiceFilterKeys(newKeys)
+    setSelectedServiceFilterKeys(
+      new Set(['סוג מיקום::פיזי', 'סוג מיקום::לא נמצא מידע']),
+    )
+    setServiceFilterSearchQuery('')
+    setActiveQuickFilterLabel('מענים עם כתובת חסרה')
     setViewMode('list')
   }
 
-  const physicalLocationCount = servicesList.filter(
-    (service) => service.locationtype?.toLowerCase().includes('מקוון') ||
-      service.locationtype?.toLowerCase().includes('טלפוני') ||
-      service.locationtype?.toLowerCase().includes('עד הבית')
+  const remoteServicesCount = servicesList.filter(
+    (service) => service.locationtype?.includes('מקוון') ||
+      service.locationtype?.includes('טלפוני') ||
+      service.locationtype?.includes('עד הבית')
   ).length
 
   const missingAddressCount = servicesList.filter(
-    (service) => {
-      const hasPhysical = service.locationtype?.toLowerCase().includes('לא נמצא מידע') ||
-        service.locationtype?.toLowerCase().includes('פיזי')
-      return hasPhysical
-    }
+    (service) => service.locationtype?.includes('פיזי') ||
+      service.locationtype?.includes('לא נמצא מידע')
   ).length
 
   useEffect(() => {
@@ -1006,11 +1006,17 @@ const GovMapView = () => {
           isOpen={isFiltersOpen}
           onToggle={() => setIsFiltersOpen((prev) => !prev)}
           searchQuery={serviceFilterSearchQuery}
-          onSearchQueryChange={setServiceFilterSearchQuery}
+          onSearchQueryChange={(query) => {
+            setActiveQuickFilterLabel(null)
+            setServiceFilterSearchQuery(query)
+          }}
           filterSections={filterSections}
           filtersLoading={servicesListLoading}
           selectedKeys={selectedServiceFilterKeys}
-          onFilterSelectionChange={setSelectedServiceFilterKeys}
+          onFilterSelectionChange={(keys) => {
+            setActiveQuickFilterLabel(null)
+            setSelectedServiceFilterKeys(keys)
+          }}
           expandedSections={expandedFilterSections}
           onExpandedSectionsChange={setExpandedFilterSections}
         />
@@ -1023,12 +1029,12 @@ const GovMapView = () => {
               position={hoverTooltipPosition}
             />
           )}
-          {/* <MapQuickFilters
-            localCount={physicalLocationCount}
-            missingDataCount={missingAddressCount}
-            onLocalClick={handlePhysicalLocationFilter}
-            onMissingDataClick={handleMissingAddressFilter}
-          /> */}
+          <MapQuickFilters
+            remoteServicesCount={remoteServicesCount}
+            missingAddressCount={missingAddressCount}
+            onRemoteServicesClick={handleRemoteServicesFilter}
+            onMissingAddressClick={handleMissingAddressFilter}
+          />
           <MapProfileInsightsCard />
         </div>
         {selectedPointInfo && (
