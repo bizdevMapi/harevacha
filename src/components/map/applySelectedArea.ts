@@ -1,6 +1,7 @@
 import {
   GOVMAP_DEFAULT_VIEW_LEVEL,
   GOVMAP_MUNICIPALITIES_LAYER_ID,
+  ISRAEL_EXTENT_POLYGON,
   SITE,
 } from '../../constants'
 import type { NeighborhoodMapOption } from '../../context/DashboardUiContext'
@@ -9,6 +10,7 @@ import {
   mapIntersectFeaturesToServicesList,
   SERVICE_TABLE_LAYER_FIELDS,
 } from '../../data/servicesListTypes'
+import { MAP_POINT_INFO_FIELD_NAMES, type MapPointInfoField } from './MapPointInfoCard'
 
 const NEIGHBORHOODS_LAYER_NAME = '22'
 
@@ -198,4 +200,28 @@ export async function applySelectedArea(
   } finally {
     callbacks.setServicesListLoading(false)
   }
+}
+
+/**
+ * שליפת כל השדות של מענה בודד לפי serviceid — לפתיחת "מידע נוסף של מענה" מתוך הטבלה
+ * באותה מלאות שיש בלחיצה מהמפה, בלי לטעון את כל השדות האלה מראש עבור כל שורות הטבלה.
+ */
+export async function fetchServiceFullDetailsById(serviceid: string): Promise<MapPointInfoField[]> {
+  const govmap = window.govmap
+  const fields = MAP_POINT_INFO_FIELD_NAMES
+  const response = await govmap?.intersectFeatures?.({
+    geometry: ISRAEL_EXTENT_POLYGON,
+    layerName: SITE.layers.servicesLayer,
+    fields,
+    whereClause: `serviceid = ${serviceid}`,
+  })
+
+  console.log('fetchServiceFullDetailsById response:', response)
+
+  const values = response?.data?.[0]?.Values
+  if (!Array.isArray(values)) return []
+
+  return fields
+    .map((fieldName, i) => ({ fieldName, fieldValue: values[i] }))
+    .filter((field) => field.fieldValue != null && String(field.fieldValue).trim() !== '')
 }

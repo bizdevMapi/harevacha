@@ -6,6 +6,7 @@ import {
   GOVMAP_MUNICIPALITIES_LAYER_ID,
   GOVMAP_NEIGHBORHOOD_CLICK_MIN_LEVEL,
   GOVMAP_NEIGHBORHOODS_LAYER_ID,
+  ISRAEL_EXTENT_POLYGON,
   JERUSALEM_CITY_CENTER_AREA_OPTION,
   SITE,
   TIRAT_CARMEL_CITY_AREA_OPTION,
@@ -417,7 +418,7 @@ const GovMapView = () => {
 
   const getNeighborhoods = () => {
     const params = {
-      geometry: `POLYGON ((130000 380000, 285000 380000, 285000 805000, 130000 805000, 130000 380000))`,
+      geometry: ISRAEL_EXTENT_POLYGON,
       layerName: '22',
       fields: ['fname', 'setl_name', 'nbr_code'],
       whereClause: "setl_name IN ( 'טירת כרמל', 'ירושלים')",

@@ -125,8 +125,8 @@ const DETAIL_SPECS: Array<{ id: string; icon: MapPointInfoIconId; field: string;
   { id: 'risk', icon: 'target', field: 'riskstatusdescription_agg', hebel: 'מצבי סיכון' },
   // 4: לאילו מצבי סיכון מענה זה מתאים?
   { id: 'airisktype', icon: 'target', field: 'airisktype', hebel: 'מצבי סיכון' },
-  // 5: מדוע מענה זה מוצג כ/ן?
-  { id: 'aiscore', icon: 'target', field: 'aiscoreexplanation', hebel: 'מדוע מענה זה מוצג ?' },
+  // 5: לאילו מצבי סיכון מענה זה מתאים?
+  { id: 'airisktypeexplanation', icon: 'target', field: 'airisktypeexplanation', hebel: 'לאילו מצבי סיכון מענה זה מתאים?' },
   // 6: כתובת
   { id: 'address', icon: 'location', field: 'fulladdress', hebel: 'כתובת' },
   // 7: סוג מיקום
@@ -169,6 +169,15 @@ const DETAIL_SPECS: Array<{ id: string; icon: MapPointInfoIconId; field: string;
   { id: 'insertdate', icon: 'clock', field: 'insertdate', hebel: 'תאריך שליפת המידע מהרשת' },
   // 26: תאריך
   { id: 'servicedate', icon: 'clock', field: 'servicedate', hebel: 'תאריך' },
+]
+
+/** כל שמות השדות שהפאנל בפועל מציג (DETAIL_SPECS + כותרת/תיאור/מיקום) — מקור אחד לשליפת נתונים מלאים לפי מזהה */
+export const MAP_POINT_INFO_FIELD_NAMES = [
+  ...DETAIL_SPECS.map((spec) => spec.field),
+  'servicename',
+  'servicedescription',
+  'gisx',
+  'gisy',
 ]
 
 const MapPointInfoCard = ({

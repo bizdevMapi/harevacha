@@ -70,10 +70,12 @@ interface GovMapApi {
   unbindEvent?: (eventType: number | string, handler: (payload: GovMapClickPayload) => void) => void
   zoomToXY?: (params: { x: number; y: number; level?: number; marker?: boolean }) => void
   intersectFeatures?: (params: {
-    geometry: string
+    geometry?: string
+    address?: string
     layerName: string
     fields: string[]
     whereClause?: string
+    radius?: number
     getShapes?: boolean
   }) => Promise<{ data?: Array<{ ObjectId?: number; Values?: unknown[] }> }>
   searchInLayer?: (params: {

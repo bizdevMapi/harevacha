@@ -41,6 +41,10 @@ export const TIRAT_CARMEL_CITY_AREA_OPTION = {
   geometry: 'POLYGON ((196500 739500, 199500 739500, 199500 744000, 196500 744000, 196500 739500))'
 } as const
 
+/** פוליגון שמכסה את כל שטח הארץ — לשימוש עם intersectFeatures כשהסינון האמיתי נעשה ב-whereClause ולא בגיאומטריה */
+export const ISRAEL_EXTENT_POLYGON =
+  'POLYGON ((130000 380000, 285000 380000, 285000 805000, 130000 805000, 130000 380000))' as const
+
 /** רמת זום ל-GovMap — ערכים גבוהים מדי (למשל 10+) עלולים להציג מפה לבנה ללא אריחי בסיס */
 export const GOVMAP_DEFAULT_VIEW_LEVEL = 7 as const
 
