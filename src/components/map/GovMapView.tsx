@@ -6,6 +6,7 @@ import {
   GOVMAP_MUNICIPALITIES_LAYER_ID,
   GOVMAP_NEIGHBORHOOD_CLICK_MIN_LEVEL,
   GOVMAP_NEIGHBORHOODS_LAYER_ID,
+  ISRAEL_EXTENT_POLYGON,
   JERUSALEM_CITY_CENTER_AREA_OPTION,
   SITE,
   TIRAT_CARMEL_CITY_AREA_OPTION,
@@ -22,7 +23,8 @@ import {
   updateFilterSectionsCounts,
   type FilterSectionData,
 } from './mapLayerFilters'
-import MapPointInfoCard from './MapPointInfoCard'
+import MapPointInfoCard, { type MapPointInfoField } from './MapPointInfoCard'
+import MultiServiceListPanel, { type ServiceData } from './MultiServiceListPanel'
 import MapPointTooltip from './MapPointTooltip'
 import MapProfileInsightsCard from './profile-insights/MapProfileInsightsCard'
 import MapQuickFilters from './MapQuickFilters'
@@ -91,6 +93,21 @@ const isSignificantHoverMove = (
   return false
 }
 
+type ServiceData = {
+  objectId?: number
+  servicename?: string
+  fulladdress?: string
+  servicedescription?: string
+  targetpopulations?: string
+  requirespayment?: string
+  requirespaymentamount?: string
+  serviceproviderorganizationtype?: string
+  language?: string
+  airisktype?: string
+  accessibility?: string
+  providername?: string
+}
+
 type HoverPointTooltipInfo = {
   address?: string
   title: string
@@ -101,6 +118,8 @@ type HoverPointTooltipInfo = {
   languages?: string
   airisktype?: string
   accessibility?: string
+  isMultipleServices?: boolean
+  multipleServices?: ServiceData[]
 }
 
 type IdentifyField = { fieldName?: string; fieldValue?: string | null }
@@ -399,7 +418,7 @@ const GovMapView = () => {
 
   const getNeighborhoods = () => {
     const params = {
-      geometry: `POLYGON ((130000 380000, 285000 380000, 285000 805000, 130000 805000, 130000 380000))`,
+      geometry: ISRAEL_EXTENT_POLYGON,
       layerName: '22',
       fields: ['fname', 'setl_name', 'nbr_code'],
       whereClause: "setl_name IN ( 'טירת כרמל', 'ירושלים')",
@@ -502,6 +521,7 @@ const GovMapView = () => {
           cityObjectId: '1',
           optionValue: getCityCenterAreaSelectValue(JERUSALEM_CITY_CENTER_AREA_OPTION.value),
           geometry: JERUSALEM_CITY_CENTER_AREA_OPTION.geometry,
+          filter: "(cityid=3000)"
         },
         ...jerusalemNeighborhoods
       ])
@@ -549,10 +569,10 @@ const GovMapView = () => {
         }
 
         // Map array values to field names based on index
-        const getFieldValue = (fieldName: string): string => {
+        const getFieldValue = (fieldName: string, item: any[]): string => {
           const index = fieldNames.indexOf(fieldName)
           if (index === -1) return ''
-          const value = rawValues[index]
+          const value = item[index]
           return String(value ?? '')
         }
 
@@ -562,19 +582,60 @@ const GovMapView = () => {
           return normalized
         }
 
-        const paymentAmount = cleanValue(getFieldValue('requirespaymentamount'))
-        const requiresPayment = cleanValue(getFieldValue('requirespayment'))
-        setHoverPointInfo({
-          address: cleanValue(getFieldValue('fulladdress')),
-          title: cleanValue(getFieldValue('servicename')),
-          description: cleanValue(getFieldValue('servicedescription')),
-          audiences: cleanValue(getFieldValue('targetpopulations')),
-          price: getFieldValue('requirespayment'),
-          provider: cleanValue(getFieldValue('serviceproviderorganizationtype')),
-          languages: cleanValue(getFieldValue('language')),
-          airisktype: cleanValue(getFieldValue('airisktype')),
-          accessibility: cleanValue(getFieldValue('accessibility')),
-        })
+        // If only one service, show tooltip as before
+        if (response.data.length === 1) {
+          const paymentAmount = cleanValue(getFieldValue('requirespaymentamount', rawValues))
+          const requiresPayment = cleanValue(getFieldValue('requirespayment', rawValues))
+          setHoverPointInfo({
+            address: cleanValue(getFieldValue('fulladdress', rawValues)),
+            title: cleanValue(getFieldValue('servicename', rawValues)),
+            description: cleanValue(getFieldValue('servicedescription', rawValues)),
+            audiences: cleanValue(getFieldValue('targetpopulations', rawValues)),
+            price: getFieldValue('requirespayment', rawValues),
+            provider: cleanValue(getFieldValue('serviceproviderorganizationtype', rawValues)),
+            languages: cleanValue(getFieldValue('language', rawValues)),
+            airisktype: cleanValue(getFieldValue('airisktype', rawValues)),
+            accessibility: cleanValue(getFieldValue('accessibility', rawValues)),
+            isMultipleServices: false,
+          })
+        } else {
+          // If multiple services, collect all service data
+          const firstItem = response.data[0]
+          const address = cleanValue(getFieldValue('fulladdress', firstItem.Values))
+          const orgTypes = response.data
+            .map((item: any) => cleanValue(getFieldValue('serviceproviderorganizationtype', item.Values)))
+            .filter((type: string) => type)
+
+          // Extract all service data
+          const multipleServices: ServiceData[] = response.data.map((item: any) => ({
+            objectId: item.objectId,
+            servicename: cleanValue(getFieldValue('servicename', item.Values)),
+            fulladdress: cleanValue(getFieldValue('fulladdress', item.Values)),
+            servicedescription: cleanValue(getFieldValue('servicedescription', item.Values)),
+            targetpopulations: cleanValue(getFieldValue('targetpopulations', item.Values)),
+            requirespayment: cleanValue(getFieldValue('requirespayment', item.Values)),
+            requirespaymentamount: cleanValue(getFieldValue('requirespaymentamount', item.Values)),
+            serviceproviderorganizationtype: cleanValue(getFieldValue('serviceproviderorganizationtype', item.Values)),
+            language: cleanValue(getFieldValue('language', item.Values)),
+            airisktype: cleanValue(getFieldValue('airisktype', item.Values)),
+            accessibility: cleanValue(getFieldValue('accessibility', item.Values)),
+            providername: cleanValue(getFieldValue('providername', item.Values)),
+          }))
+
+          setHoverPointInfo({
+            address: address,
+            title: `${response.data.length} סוגי מענים`,
+            description: orgTypes.join(', '),
+            audiences: '',
+            price: '',
+            provider: '',
+            languages: '',
+            airisktype: '',
+            accessibility: '',
+            isMultipleServices: true,
+            multipleServices: multipleServices,
+          })
+        }
       })
       ?.catch((error: unknown) => {
         console.error('failed identifying map point on hover', error)
@@ -718,10 +779,20 @@ const GovMapView = () => {
 
           // Priority 1: Show service info if found
           if (serviceLayer) {
-            const entity = serviceLayer.entities?.[0]
-            if (entity) {
-              const serviceFields = normalizeServiceFieldsForCard(entity, serviceLayer.fieldsMapping)
-              setSelectedPointInfo({ fields: serviceFields, isOtherLayer: false })
+            const entities = serviceLayer.entities ?? []
+            if (entities.length > 0) {
+              if (entities.length > 1) {
+                // Multiple services: pass all entities, mark as multiple
+                setSelectedPointInfo({
+                  fields: entities.map((e) => normalizeServiceFieldsForCard(e, serviceLayer.fieldsMapping)),
+                  isOtherLayer: false,
+                  isMultipleServices: true,
+                })
+              } else {
+                // Single service: pass as normal
+                const serviceFields = normalizeServiceFieldsForCard(entities[0], serviceLayer.fieldsMapping)
+                setSelectedPointInfo({ fields: serviceFields, isOtherLayer: false })
+              }
               return
             }
           }
@@ -961,13 +1032,55 @@ const GovMapView = () => {
           <MapProfileInsightsCard />
         </div>
         {selectedPointInfo && (
-          <MapPointInfoCard
-            data={selectedPointInfo.fields}
-            isOtherLayer={selectedPointInfo.isOtherLayer}
-            onClose={() => setSelectedPointInfo(null)}
-            selectedAreaCenter={selectedAreaOption?.value ?? null}
-            onExpandMap={handleExpandPointMap}
-          />
+          (() => {
+            if (selectedPointInfo.isMultipleServices) {
+              // Convert MapPointInfoField[][] to ServiceData[]
+              const fieldsArray = Array.isArray(selectedPointInfo.fields) ? selectedPointInfo.fields : [selectedPointInfo.fields]
+              const serviceDataArray: ServiceData[] = fieldsArray.map((fields) => {
+                const data: ServiceData = {}
+                const fieldsArr = Array.isArray(fields) ? fields : [fields]
+                for (const field of fieldsArr) {
+                  const fieldName = field.fieldName?.toLowerCase()
+                  const fieldValue = String(field.fieldValue ?? '')
+                  if (fieldName === 'servicename') data.servicename = fieldValue
+                  if (fieldName === 'servicetypename') data.servicetypename = fieldValue
+                  if (fieldName === 'fulladdress') data.fulladdress = fieldValue
+                  if (fieldName === 'servicedescription') data.servicedescription = fieldValue
+                  if (fieldName === 'targetpopulations') data.targetpopulations = fieldValue
+                  if (fieldName === 'requirespayment') data.requirespayment = fieldValue
+                  if (fieldName === 'requirespaymentamount') data.requirespaymentamount = fieldValue
+                  if (fieldName === 'serviceproviderorganizationtype') data.serviceproviderorganizationtype = fieldValue
+                  if (fieldName === 'language') data.language = fieldValue
+                  if (fieldName === 'airisktype') data.airisktype = fieldValue
+                  if (fieldName === 'accessibility') data.accessibility = fieldValue
+                  if (fieldName === 'providername') data.providername = fieldValue
+                }
+                return data
+              })
+
+              return (
+                <MapPointInfoCard
+                  data={selectedPointInfo.fields as MapPointInfoField[]}
+                  isOtherLayer={selectedPointInfo.isOtherLayer}
+                  onClose={() => setSelectedPointInfo(null)}
+                  selectedAreaCenter={selectedAreaOption?.value ?? null}
+                  onExpandMap={handleExpandPointMap}
+                  multipleServices={serviceDataArray}
+                  multipleServicesFields={fieldsArray as MapPointInfoField[][]}
+                />
+              )
+            }
+
+            return (
+              <MapPointInfoCard
+                data={selectedPointInfo.fields as MapPointInfoField[]}
+                isOtherLayer={selectedPointInfo.isOtherLayer}
+                onClose={() => setSelectedPointInfo(null)}
+                selectedAreaCenter={selectedAreaOption?.value ?? null}
+                onExpandMap={handleExpandPointMap}
+              />
+            )
+          })()
         )}
       </div>
     </section>

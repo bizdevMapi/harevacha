@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import type { ServiceListColumn, ServiceListItem } from '../../data/servicesListTypes'
 import { SERVICE_LIST_COLUMNS } from '../../data/servicesListTypes'
+import { fetchServiceFullDetailsById } from '../map/applySelectedArea'
 import type { MapPointInfoField } from '../map/MapPointInfoCard'
 
 const TABLE_MIN_WIDTH = SERVICE_LIST_COLUMNS.reduce((sum, col) => sum + col.width, 0)
@@ -107,6 +108,7 @@ type ServicesListTableProps = {
   onServiceClick?: (fields: MapPointInfoField[]) => void
 }
 
+/** רשת ביטחון: שדות מצומצמים שכבר קיימים בשורת הטבלה, לשימוש אם השליפה המלאה לפי serviceid נכשלת/ריקה */
 const convertServiceToPointInfo = (service: ServiceListItem): MapPointInfoField[] => {
   const fields: MapPointInfoField[] = []
 
@@ -116,19 +118,17 @@ const convertServiceToPointInfo = (service: ServiceListItem): MapPointInfoField[
     }
   }
 
-  // Add all fields
   addField('servicename', service.servicename)
   addField('servicetypename', service.servicetypename)
-  addField('servicedescription', service.servicedescription)
   addField('providername', service.providername)
   addField('fulladdress', service.fulladdress)
   addField('participationeligibility', service.participationeligibility)
   addField('serviceproviderorganizationtype', service.serviceproviderorganizationtype)
   addField('locationtype', service.locationtype)
-  addField('openhours', service.openhours)
-  addField('frequency', service.frequency)
   addField('requirespaymentamount', service.requirespaymentamount)
   addField('language', service.language)
+  addField('airisktype', service.airisktype)
+  addField('activitytype', service.activitytype)
 
   return fields
 }
@@ -140,10 +140,18 @@ const ServicesListTable = ({
 }: ServicesListTableProps) => {
   const [sortAsc, setSortAsc] = useState(true)
   const [sortColumn, setSortColumn] = useState<string>('servicename')
+  const lastClickedServiceIdRef = useRef<string | number | null>(null)
 
-  const handleServiceClick = (row: ServiceListItem) => {
-    const fields = convertServiceToPointInfo(row)
-    onServiceClick?.(fields)
+  const handleServiceClick = async (row: ServiceListItem) => {
+    lastClickedServiceIdRef.current = row.serviceid
+    onServiceClick?.(convertServiceToPointInfo(row))
+    try {
+      const fullFields = await fetchServiceFullDetailsById(String(row.serviceid))
+      if (lastClickedServiceIdRef.current !== row.serviceid) return
+      if (fullFields.length > 0) onServiceClick?.(fullFields)
+    } catch (error) {
+      console.error('failed fetching full service details', error)
+    }
   }
 
   const handleSortClick = (columnId: string) => {

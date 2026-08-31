@@ -24,6 +24,7 @@ export type ServiceTableField = (typeof SERVICE_TABLE_LAYER_FIELDS)[number]
 
 export type ServiceListItem = {
   objectId: number
+  serviceid: string | number
   servicename: string
   servicetypename: string
   targetpopulations: string
