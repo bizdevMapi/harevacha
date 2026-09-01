@@ -999,7 +999,7 @@ const GovMapView = () => {
   }, [isFiltersOpen])
 
   return (
-    <section className="h-full w-full overflow-hidden rounded-md border border-brand-lightBlue bg-brand-bgLight">
+    <section className="h-full w-full overflow-hidden rounded-tr-md rounded-br-md rounded-bl-md border border-brand-lightBlue bg-brand-bgLight">
       <div className="relative flex h-full w-full">
         <MapFiltersPanel
           key={servicesQueryGeometry}
