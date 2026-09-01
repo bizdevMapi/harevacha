@@ -436,7 +436,7 @@ const MapPointInfoCard = ({
             </>
           )}
 
-          {miniMapSrc && (
+          {miniMapSrc && !(multipleServices && selectedServiceIndex === null) && (
             <div className="relative h-[196px] w-full shrink-0 overflow-hidden rounded-2xl bg-[#f0f4f8]">
               <iframe
                 src={miniMapSrc}
@@ -462,7 +462,7 @@ const MapPointInfoCard = ({
         </div>
       </div>
 
-      {!isOtherLayer && (
+      {!isOtherLayer && !(multipleServices && selectedServiceIndex === null) && (
         <div className="flex w-full shrink-0 items-center justify-between gap-2 border-t border-[#eef2f6] px-8 py-4">
           <span className="inline-flex items-center gap-1.5 text-[13px] text-[#a4b1c0]">
             <IconSparkle />
