@@ -4,7 +4,6 @@ export const SERVICE_TABLE_LAYER_FIELDS = [
   'servicetypename',
    'targetpopulations',
   'language',
-  'openhours',
   'accessibility',
   'requirespaymentamount',
   'requirespayment',
@@ -12,12 +11,12 @@ export const SERVICE_TABLE_LAYER_FIELDS = [
   'fulladdress',
   'providername',
   'locationtype',
+  'reliability_id',
   'participationeligibility',
   'activitytype',
   'airisktype',
   'cityid',
-  'providercitycode',
-  'frequency',
+  'providercitycode'
 ] as const
 
 export type ServiceTableField = (typeof SERVICE_TABLE_LAYER_FIELDS)[number]
@@ -29,8 +28,9 @@ export type ServiceListItem = {
   servicetypename: string
   targetpopulations: string
   locationtype: string
+  /** קוד אמינות המיקום של המענה — 11 = "מיקום שניתן בצורה ידנית" */
+  reliability_id: string
   language: string
-  openhours: string
   accessibility: string
   requirespaymentamount: string
   requirespayment: string
@@ -134,9 +134,9 @@ export function mapIntersectFeaturesToServicesList(
         RiskStatusDescription_Agg: String(item.RiskStatusDescription_Agg ?? ''),
         targetpopulations: String(item.targetpopulations ?? ''),
         locationtype: String(item.locationtype ?? ''),
+        reliability_id: String(item.reliability_id ?? item.Reliability_ID ?? ''),
         language: String(item.language ?? ''),
         Phone: String(item.Phone ?? ''),
-        OpenHours: String(item.OpenHours ?? ''),
         accessibility: String(item.accessibility ?? ''),
         requirespaymentamount: String(item.requirespaymentamount ?? ''),
         requirespayment: String(item.requirespayment ?? ''),

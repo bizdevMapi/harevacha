@@ -21,6 +21,8 @@ import {
   filterServicesBySearchQuery,
   filterServicesBySelectedKeys,
   updateFilterSectionsCounts,
+  MANUAL_LOCATION_RELIABILITY_ID,
+  MISSING_ADDRESS_FILTER_KEY,
   type FilterSectionData,
 } from './mapLayerFilters'
 import MapPointInfoCard, { type MapPointInfoField } from './MapPointInfoCard'
@@ -362,11 +364,9 @@ const GovMapView = () => {
     setViewMode('list')
   }
 
-  /** מסנן מהיר: "מענים עם כתובת חסרה" — לפי סוג מיקום המענה בלבד */
+  /** מסנן מהיר: "מענים עם כתובת חסרה" — רק מענים עם קוד אמינות מיקום 11 ("מיקום שניתן בצורה ידנית") */
   const handleMissingAddressFilter = () => {
-    setSelectedServiceFilterKeys(
-      new Set(['סוג מיקום::פיזי', 'סוג מיקום::לא נמצא מידע']),
-    )
+    setSelectedServiceFilterKeys(new Set([MISSING_ADDRESS_FILTER_KEY]))
     setServiceFilterSearchQuery('')
     setActiveQuickFilterLabel('מענים עם כתובת חסרה')
     setViewMode('list')
@@ -379,8 +379,7 @@ const GovMapView = () => {
   ).length
 
   const missingAddressCount = servicesList.filter(
-    (service) => service.locationtype?.includes('פיזי') ||
-      service.locationtype?.includes('לא נמצא מידע')
+    (service) => String(service.reliability_id ?? '').trim() === MANUAL_LOCATION_RELIABILITY_ID
   ).length
 
   useEffect(() => {

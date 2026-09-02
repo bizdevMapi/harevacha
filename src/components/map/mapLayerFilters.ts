@@ -36,6 +36,24 @@ export const FILTER_SECTIONS_CONFIG = [
   { fieldName: 'participationeligibility', title: 'קהל יעד' },
 ] as const
 
+/**
+ * שדות סינון שאין להם מקטע בסרגל הצד — קיימים רק כדי שהמסננים המהירים במפה
+ * יוכלו להשתמש באותו מנגנון מפתחות (`כותרת::ערך`) כמו הסינון הרגיל.
+ */
+export const HIDDEN_FILTER_SECTIONS_CONFIG = [
+  { fieldName: 'reliability_id', title: 'אמינות מיקום' },
+] as const
+
+/**
+ * שדות שהסינון עליהם הוא השוואה מדויקת ולא LIKE — קודים מספריים, שבהם
+ * `LIKE '%11%'` היה תופס גם 110 או 211.
+ */
+const EXACT_MATCH_FILTER_FIELDS = new Set<string>(['reliability_id'])
+
+/** מסנן מהיר "מענים עם כתובת חסרה" — קוד אמינות 11 = "מיקום שניתן בצורה ידנית" */
+export const MANUAL_LOCATION_RELIABILITY_ID = '11'
+export const MISSING_ADDRESS_FILTER_KEY = `אמינות מיקום::${MANUAL_LOCATION_RELIABILITY_ID}`
+
 const FILTER_FIELD_CONFIG = FILTER_SECTIONS_CONFIG
 
 type AreaServiceFilterRow = {
@@ -70,11 +88,13 @@ const FILTER_FIELD_TO_ROW_KEY: Record<
   participationeligibility: 'participationEligibility',
 }
 
-const FILTER_FIELD_TO_SERVICE_KEY: Record<
-  (typeof FILTER_SECTIONS_CONFIG)[number]['fieldName'],
-  keyof ServiceListItem
-> = {
+type FilterFieldName =
+  | (typeof FILTER_SECTIONS_CONFIG)[number]['fieldName']
+  | (typeof HIDDEN_FILTER_SECTIONS_CONFIG)[number]['fieldName']
+
+const FILTER_FIELD_TO_SERVICE_KEY: Record<FilterFieldName, keyof ServiceListItem> = {
   locationtype: 'locationtype',
+  reliability_id: 'reliability_id',
   airisktype: 'airisktype',
   accessibility: 'accessibility',
   targetpopulations: 'targetpopulations',
@@ -87,7 +107,10 @@ const FILTER_FIELD_TO_SERVICE_KEY: Record<
 }
 
 export const SECTION_TITLE_TO_FIELD_NAME: Record<string, string> = Object.fromEntries(
-  FILTER_SECTIONS_CONFIG.map((config) => [config.title, config.fieldName]),
+  [...FILTER_SECTIONS_CONFIG, ...HIDDEN_FILTER_SECTIONS_CONFIG].map((config) => [
+    config.title,
+    config.fieldName,
+  ]),
 )
 
 export function parseFilterSelectionKey(
@@ -109,6 +132,11 @@ function escapeSqlLiteral(value: string): string {
 }
 
 function fieldContainsClause(fieldName: string, value: string): string {
+  if (EXACT_MATCH_FILTER_FIELDS.has(fieldName)) {
+    return /^\d+$/.test(value)
+      ? `${fieldName} = ${value}`
+      : `${fieldName} = '${escapeSqlLiteral(value)}'`
+  }
   return `${fieldName} LIKE '%${escapeSqlLiteral(value)}%'`
 }
 
@@ -264,7 +292,15 @@ export function updateFilterSectionsCounts(
   })
 }
 
-function fieldValueMatchesSelection(fieldValue: string, selectedValues: string[]): boolean {
+function fieldValueMatchesSelection(
+  fieldName: string,
+  fieldValue: string,
+  selectedValues: string[],
+): boolean {
+  if (EXACT_MATCH_FILTER_FIELDS.has(fieldName)) {
+    const trimmed = fieldValue.trim()
+    return selectedValues.some((selected) => trimmed === selected.trim())
+  }
   return selectedValues.some((selected) => fieldValue.includes(selected))
 }
 
@@ -291,7 +327,7 @@ export function filterServicesBySelectedKeys(
       const serviceKey =
         FILTER_FIELD_TO_SERVICE_KEY[fieldName as keyof typeof FILTER_FIELD_TO_SERVICE_KEY]
       const fieldValue = String(service[serviceKey] ?? '')
-      if (!fieldValueMatchesSelection(fieldValue, values)) return false
+      if (!fieldValueMatchesSelection(fieldName, fieldValue, values)) return false
     }
     return true
   })
