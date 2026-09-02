@@ -13,7 +13,7 @@ import {
 } from '../../constants'
 import type { NeighborhoodMapOption } from '../../context/DashboardUiContext'
 import { loadGovmapScript } from '../../utils/loadGovmapScript'
-import { applySelectedArea } from './applySelectedArea'
+import { applySelectedAreas } from './applySelectedArea'
 import MapFiltersPanel from './MapFiltersPanel'
 import {
   buildFilterSectionsFromServiceList,
@@ -293,8 +293,8 @@ const GovMapView = () => {
   const {
     viewMode,
     setViewMode,
-    selectedArea,
-    setSelectedArea,
+    selectedAreas,
+    setSelectedAreas,
     servicesQueryGeometry,
     neighborhoodsList,
     servicesList,
@@ -326,21 +326,22 @@ const GovMapView = () => {
   const areaServiceObjectIdsRef = useRef<number[]>([])
   const mapZoomLevelRef = useRef(GOVMAP_DEFAULT_VIEW_LEVEL)
   const neighborhoodsListRef = useRef(neighborhoodsList)
-  const selectedAreaRef = useRef(selectedArea)
+  const selectedAreasRef = useRef(selectedAreas)
   const [isFiltersOpen, setIsFiltersOpen] = useState(true)
   const [isMapReady, setIsMapReady] = useState(false)
   const [filterSections, setFilterSections] = useState<FilterSectionData[]>([])
   const [hoverPointInfo, setHoverPointInfo] = useState<HoverPointTooltipInfo | null>(null)
   const [hoverTooltipPosition, setHoverTooltipPosition] = useState<{ left: number; top: number } | null>(null)
-  const selectedAreaOption = neighborhoodsList.find((n) => n.optionValue === selectedArea)
+  const selectedAreaOptions = neighborhoodsList.filter((n) => selectedAreas.includes(n.optionValue))
   const applyAreaSelection = (option: NeighborhoodMapOption) => {
-    if (option.optionValue === selectedAreaRef.current) {
+    const current = selectedAreasRef.current
+    if (current.length === 1 && current[0] === option.optionValue) {
       return
     }
-    setSelectedArea(option.optionValue)
+    setSelectedAreas([option.optionValue])
   }
   const handleExpandPointMap = (center: { x: number; y: number } | null) => {
-    const target = center ?? selectedAreaOption?.value ?? null
+    const target = center ?? selectedAreaOptions[0]?.value ?? null
     if (!target) return
     window.govmap?.zoomToXY?.({
       x: target.x,
@@ -391,8 +392,8 @@ const GovMapView = () => {
   }, [neighborhoodsList])
 
   useEffect(() => {
-    selectedAreaRef.current = selectedArea
-  }, [selectedArea])
+    selectedAreasRef.current = selectedAreas
+  }, [selectedAreas])
 
   useEffect(() => {
     return () => {
@@ -483,6 +484,7 @@ const GovMapView = () => {
           layerObjectId: n.id,
           nbrCode: n.nbrCode || undefined,
           fname: n.fname,
+          cityName: n.setlName,
         }
       }
 
@@ -504,6 +506,7 @@ const GovMapView = () => {
           label: TIRAT_CARMEL_CITY_AREA_OPTION.label,
           value: { ...TIRAT_CARMEL_CITY_AREA_OPTION.value },
           cityObjectId: '2',
+          cityName: TIRAT_CARMEL_CITY_AREA_OPTION.label,
           optionValue: getCityCenterAreaSelectValue(TIRAT_CARMEL_CITY_AREA_OPTION.value),
           geometry: TIRAT_CARMEL_CITY_AREA_OPTION.geometry,
           filter: "(cityid=2100)"
@@ -519,6 +522,7 @@ const GovMapView = () => {
           label: JERUSALEM_CITY_CENTER_AREA_OPTION.label,
           value: { ...JERUSALEM_CITY_CENTER_AREA_OPTION.value },
           cityObjectId: '1',
+          cityName: JERUSALEM_CITY_CENTER_AREA_OPTION.label,
           optionValue: getCityCenterAreaSelectValue(JERUSALEM_CITY_CENTER_AREA_OPTION.value),
           geometry: JERUSALEM_CITY_CENTER_AREA_OPTION.geometry,
           filter: "(cityid=3000)"
@@ -938,13 +942,13 @@ const GovMapView = () => {
   }, [])
 
   useEffect(() => {
-    if (!isMapReady || !selectedArea) return
+    if (!isMapReady || selectedAreas.length === 0) return
 
-    const option = neighborhoodsList.find((n) => n.optionValue === selectedArea)
-    if (!option) return
+    const options = neighborhoodsList.filter((n) => selectedAreas.includes(n.optionValue))
+    if (options.length === 0) return
 
     let active = true
-    void applySelectedArea(option, {
+    void applySelectedAreas(options, {
       setServicesQueryGeometry,
       setServicesListLoading,
       setServicesList: (rows) => {
@@ -957,7 +961,7 @@ const GovMapView = () => {
     }
   }, [
     isMapReady,
-    selectedArea,
+    selectedAreas,
     neighborhoodsList,
     setServicesQueryGeometry,
     setServicesList,
@@ -1069,7 +1073,7 @@ const GovMapView = () => {
                   data={selectedPointInfo.fields as MapPointInfoField[]}
                   isOtherLayer={selectedPointInfo.isOtherLayer}
                   onClose={() => setSelectedPointInfo(null)}
-                  selectedAreaCenter={selectedAreaOption?.value ?? null}
+                  selectedAreaCenter={selectedAreaOptions[0]?.value ?? null}
                   onExpandMap={handleExpandPointMap}
                   multipleServices={serviceDataArray}
                   multipleServicesFields={fieldsArray as MapPointInfoField[][]}
@@ -1082,7 +1086,7 @@ const GovMapView = () => {
                 data={selectedPointInfo.fields as MapPointInfoField[]}
                 isOtherLayer={selectedPointInfo.isOtherLayer}
                 onClose={() => setSelectedPointInfo(null)}
-                selectedAreaCenter={selectedAreaOption?.value ?? null}
+                selectedAreaCenter={selectedAreaOptions[0]?.value ?? null}
                 onExpandMap={handleExpandPointMap}
               />
             )

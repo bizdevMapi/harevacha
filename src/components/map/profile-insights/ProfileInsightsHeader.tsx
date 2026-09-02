@@ -12,9 +12,9 @@ type ProfileInsightsHeaderProps = {
 }
 
 const ProfileInsightsHeader = ({ detailsExpanded, onToggleDetails }: ProfileInsightsHeaderProps) => {
-  const { populationSegment, selectedArea, profileKey } = useDashboardUi()
+  const { populationSegment, selectedAreas, profileKey } = useDashboardUi()
   const populationSubtitle = getPopulationSegmentLabel(populationSegment)
-  const mainTitle = getProfileInsightsMainTitle(selectedArea, profileKey)
+  const mainTitle = getProfileInsightsMainTitle(selectedAreas, profileKey)
   const total = CITY_PROFILE_TOTAL
   /** תצוגת הפס: בהיר משמאל, כהה מימין (כמו בתמונה) */
   const ordered = [...CITY_PROFILE_SLICES].reverse()

@@ -22,7 +22,7 @@ const ServicesListView = () => {
     setSelectedServiceFilterKeys,
     selectedPointInfo,
     setSelectedPointInfo,
-    selectedArea,
+    selectedAreas,
     neighborhoodsList,
     expandedFilterSections,
     setExpandedFilterSections,
@@ -39,7 +39,7 @@ const ServicesListView = () => {
     return filterServicesBySearchQuery(bySelectedKeys, appliedServiceFilterSearchQuery)
   }, [servicesList, selectedServiceFilterKeys, appliedServiceFilterSearchQuery])
 
-  const selectedAreaOption = neighborhoodsList.find((n) => n.optionValue === selectedArea)
+  const selectedAreaOptions = neighborhoodsList.filter((n) => selectedAreas.includes(n.optionValue))
 
   useEffect(() => {
     if (viewMode !== 'list') return
@@ -94,9 +94,9 @@ const ServicesListView = () => {
           data={selectedPointInfo.fields}
           isOtherLayer={selectedPointInfo.isOtherLayer}
           onClose={() => setSelectedPointInfo(null)}
-          selectedAreaCenter={selectedAreaOption?.value ?? null}
+          selectedAreaCenter={selectedAreaOptions[0]?.value ?? null}
           onExpandMap={(center) => {
-            const target = center ?? selectedAreaOption?.value ?? null
+            const target = center ?? selectedAreaOptions[0]?.value ?? null
             if (!target) return
             window.govmap?.zoomToXY?.({
               x: target.x,

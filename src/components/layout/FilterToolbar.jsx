@@ -8,11 +8,13 @@ import {
   IconPin,
 } from '../../assets/icons'
 import {
+  DASHBOARD_DEFAULT_AREA_VALUE,
   POPULATION_SEGMENT_OPTIONS,
   PROFILE_FILTER_OPTIONS,
 } from '../../constants'
 import { useDashboardUi } from '../../context/DashboardUiContext'
-import { ToolbarSelect, Tooltip } from '../ui'
+import { applyCityNeighborhoodExclusivity } from '../../utils/areaSelection'
+import { AreaMultiSelect, ToolbarSelect, Tooltip } from '../ui'
 
 const toolbarSelectWidthClass =
   'w-full max-w-[200px] sm:w-[200px] sm:max-w-[200px] xl:w-[240px] xl:max-w-[240px] 2xl:w-[312px] 2xl:max-w-[312px]'
@@ -34,8 +36,8 @@ const FilterToolbar = ({ onBack = () => { } }) => {
   const {
     viewMode,
     setViewMode,
-    selectedArea,
-    setSelectedArea,
+    selectedAreas,
+    setSelectedAreas,
     populationSegment,
     setPopulationSegment,
     profileKey,
@@ -62,16 +64,19 @@ const FilterToolbar = ({ onBack = () => { } }) => {
   )
 
   const areaSelect = (
-    <ToolbarSelect
+    <AreaMultiSelect
       label="אזור"
-      value={selectedArea}
-      onChange={(e) => setSelectedArea(e.target.value)}
-      options={[
-        ...neighborhoodsList.map((n) => ({
-          value: n.optionValue,
-          label: n.label,
-        })),
-      ]}
+      selectedValues={selectedAreas}
+      onChange={(next) =>
+        setSelectedAreas(
+          applyCityNeighborhoodExclusivity(selectedAreas, next, neighborhoodsList),
+        )
+      }
+      options={neighborhoodsList.map((n) => ({
+        value: n.optionValue,
+        label: n.label,
+      }))}
+      defaultValues={[DASHBOARD_DEFAULT_AREA_VALUE]}
       rightIcon={<IconPin />}
       className={toolbarSelectWidthClass}
     />
