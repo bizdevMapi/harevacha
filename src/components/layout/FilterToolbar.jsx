@@ -1,5 +1,6 @@
 import {
   IconBackCircle,
+  IconClose,
   IconHelp,
   IconList,
   IconMap,
@@ -7,11 +8,13 @@ import {
   IconPin,
 } from '../../assets/icons'
 import {
+  DASHBOARD_DEFAULT_AREA_VALUE,
   POPULATION_SEGMENT_OPTIONS,
   PROFILE_FILTER_OPTIONS,
 } from '../../constants'
 import { useDashboardUi } from '../../context/DashboardUiContext'
-import { ToolbarSelect, Tooltip } from '../ui'
+import { applyCityNeighborhoodExclusivity } from '../../utils/areaSelection'
+import { AreaMultiSelect, ToolbarSelect, Tooltip } from '../ui'
 
 const toolbarSelectWidthClass =
   'w-full max-w-[200px] sm:w-[200px] sm:max-w-[200px] xl:w-[240px] xl:max-w-[240px] 2xl:w-[312px] 2xl:max-w-[312px]'
@@ -33,16 +36,26 @@ const FilterToolbar = ({ onBack = () => { } }) => {
   const {
     viewMode,
     setViewMode,
-    selectedArea,
-    setSelectedArea,
+    selectedAreas,
+    setSelectedAreas,
     populationSegment,
     setPopulationSegment,
     profileKey,
     setProfileKey,
     neighborhoodsList,
     matchedServicesCount,
+    activeQuickFilterLabel,
+    setActiveQuickFilterLabel,
+    setSelectedServiceFilterKeys,
+    setServiceFilterSearchQuery,
   } = useDashboardUi()
   const matchCount = matchedServicesCount
+
+  const handleClearQuickFilter = () => {
+    setActiveQuickFilterLabel(null)
+    setSelectedServiceFilterKeys(new Set())
+    setServiceFilterSearchQuery('')
+  }
   const divider = (
     <div
       className="hidden h-11 w-px shrink-0 bg-white/55 sm:block"
@@ -51,16 +64,19 @@ const FilterToolbar = ({ onBack = () => { } }) => {
   )
 
   const areaSelect = (
-    <ToolbarSelect
+    <AreaMultiSelect
       label="אזור"
-      value={selectedArea}
-      onChange={(e) => setSelectedArea(e.target.value)}
-      options={[
-        ...neighborhoodsList.map((n) => ({
-          value: n.optionValue,
-          label: n.label,
-        })),
-      ]}
+      selectedValues={selectedAreas}
+      onChange={(next) =>
+        setSelectedAreas(
+          applyCityNeighborhoodExclusivity(selectedAreas, next, neighborhoodsList),
+        )
+      }
+      options={neighborhoodsList.map((n) => ({
+        value: n.optionValue,
+        label: n.label,
+      }))}
+      defaultValues={[DASHBOARD_DEFAULT_AREA_VALUE]}
       rightIcon={<IconPin />}
       className={toolbarSelectWidthClass}
     />
@@ -107,9 +123,26 @@ const FilterToolbar = ({ onBack = () => { } }) => {
               className="min-w-0 flex-1 text-center text-[15px] tracking-tight text-white drop-shadow-sm sm:text-right"
               style={{ textShadow: '0 1px 1px rgba(0,0,0,0.15)' }}
             >
-              מענים מותאמים{' '}
-              :{' '}
-              <span className="tabular-nums font-bold">{matchCount}</span>
+              {activeQuickFilterLabel ? (
+                <>
+                  <span className="tabular-nums font-bold">{matchCount}</span>{' '}
+                  {activeQuickFilterLabel}
+                  <button
+                    type="button"
+                    onClick={handleClearQuickFilter}
+                    aria-label="ביטול הסינון המהיר"
+                    className="mr-1.5 inline-flex size-5 items-center justify-center rounded-full text-white/80 transition-colors hover:bg-white/15 hover:text-white"
+                  >
+                    <IconClose />
+                  </button>
+                </>
+              ) : (
+                <>
+                  מענים מותאמים{' '}
+                  :{' '}
+                  <span className="tabular-nums font-bold">{matchCount}</span>
+                </>
+              )}
             </p>
           <div className="flex shrink-0 flex-wrap items-center gap-3 sm:gap-4">
           

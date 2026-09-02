@@ -41,6 +41,22 @@ export const TIRAT_CARMEL_CITY_AREA_OPTION = {
   geometry: 'POLYGON ((196500 739500, 199500 739500, 199500 744000, 196500 744000, 196500 739500))'
 } as const
 
+/** העיירות הקבועות בסלקט «אזור» — התוויות תואמות את setl_name בשכבה 22 */
+export const DASHBOARD_CITY_AREA_OPTIONS = [
+  JERUSALEM_CITY_CENTER_AREA_OPTION,
+  TIRAT_CARMEL_CITY_AREA_OPTION,
+] as const
+
+/**
+ * מרכז וגיאומטריה של עיר לפי שמה — לזום לעיר במקום לשכונה כשנבחרו כמה שכונות.
+ */
+export function getCityAreaOptionByName(
+  cityName: string | undefined,
+): (typeof DASHBOARD_CITY_AREA_OPTIONS)[number] | null {
+  if (!cityName) return null
+  return DASHBOARD_CITY_AREA_OPTIONS.find((city) => city.label === cityName) ?? null
+}
+
 /** פוליגון שמכסה את כל שטח הארץ — לשימוש עם intersectFeatures כשהסינון האמיתי נעשה ב-whereClause ולא בגיאומטריה */
 export const ISRAEL_EXTENT_POLYGON =
   'POLYGON ((130000 380000, 285000 380000, 285000 805000, 130000 805000, 130000 380000))' as const
@@ -60,6 +76,14 @@ export function getCityCenterAreaSelectValue(point: { x: number; y: number }): s
   return `${point.x},${point.y}`
 }
 
+/**
+ * האזור הנבחר כברירת מחדל — גם כמצב ההתחלתי של הדשבורד וגם היעד של «נקה הכל»,
+ * כדי שתמיד יישאר אזור אחד נבחר (הזרימה של המפה ורשימת המענים מניחה בחירה לא ריקה).
+ */
+export const DASHBOARD_DEFAULT_AREA_VALUE = getCityCenterAreaSelectValue(
+  TIRAT_CARMEL_CITY_AREA_OPTION.value,
+)
+
 export const PROFILE_FILTER_OPTIONS = [
   { value: 'none', label: 'ללא פרופיל' },
   { value: 'profileA', label: 'פרופיל א' },
@@ -75,9 +99,10 @@ export function getProfileFilterLabel(profileValue: string): string {
 /**
  * כותרת ראשית בכרטיס תובנות — לפי אזור ופרופיל שנבחרו בסרגל.
  */
-export function getProfileInsightsMainTitle(selectedArea: string, profileKey: string): string {
-  const isAllCity = selectedArea === DASHBOARD_ALL_CITY_AREA_VALUE
+export function getProfileInsightsMainTitle(selectedAreas: string[], profileKey: string): string {
+  const isAllCity = selectedAreas.length === 1 && selectedAreas[0] === DASHBOARD_ALL_CITY_AREA_VALUE
   const hasProfile = profileKey !== 'none'
+  const isMultipleAreas = selectedAreas.length > 1
 
   if (isAllCity && !hasProfile) {
     return 'לפי פרופילים בכל העיר'
@@ -85,11 +110,16 @@ export function getProfileInsightsMainTitle(selectedArea: string, profileKey: st
   if (isAllCity && hasProfile) {
     return `לפי ${getProfileFilterLabel(profileKey)} בכל העיר`
   }
-  if (!isAllCity && hasProfile) {
-    const areaLabel = getDashboardAreaLabel(selectedArea)
+  if (isMultipleAreas) {
+    return hasProfile
+      ? `לפי ${getProfileFilterLabel(profileKey)} באזורים הנבחרים`
+      : 'לפי פרופילים באזורים הנבחרים'
+  }
+  if (hasProfile) {
+    const areaLabel = getDashboardAreaLabel(selectedAreas[0])
     return `לפי ${getProfileFilterLabel(profileKey)} ב${areaLabel}`
   }
-  const areaLabel = getDashboardAreaLabel(selectedArea)
+  const areaLabel = getDashboardAreaLabel(selectedAreas[0])
   return `לפי פרופילים ב${areaLabel}`
 }
 

@@ -56,14 +56,45 @@ function parseCoordinate(value: unknown): number | null {
   return Number.isFinite(parsed) ? parsed : null
 }
 
-function formatDateDDMMYYYY(value: string): string {
+function parseServiceDate(value: string): Date | null {
+  if (!value) return null
   const normalized = value.replace(/(\d)(AM|PM)/i, '$1 $2')
   const parsed = new Date(normalized)
-  if (Number.isNaN(parsed.getTime())) return value
+  return Number.isNaN(parsed.getTime()) ? null : parsed
+}
+
+function formatDateDDMMYYYY(value: string): string {
+  const parsed = parseServiceDate(value)
+  if (!parsed) return value
   const day = String(parsed.getDate()).padStart(2, '0')
   const month = String(parsed.getMonth() + 1).padStart(2, '0')
   const year = parsed.getFullYear()
   return `${day}/${month}/${year}`
+}
+
+const STALE_SERVICE_DATE_THRESHOLD_YEARS = 3
+
+/** מספר שנים מלאות שעברו מ-ServiceDate, או null אם התאריך לא ישן מ-3 שנים (או שאין תאריך תקין) */
+function getStaleServiceDateYearsAgo(rawServiceDate: string): number | null {
+  const serviceDate = parseServiceDate(rawServiceDate)
+  if (!serviceDate) return null
+
+  const today = new Date()
+  const cutoff = new Date(today)
+  cutoff.setFullYear(cutoff.getFullYear() - STALE_SERVICE_DATE_THRESHOLD_YEARS)
+  if (serviceDate >= cutoff) return null
+
+  let years = today.getFullYear() - serviceDate.getFullYear()
+  const anniversaryThisYear = new Date(serviceDate)
+  anniversaryThisYear.setFullYear(today.getFullYear())
+  if (anniversaryThisYear > today) years -= 1
+  return years
+}
+
+function formatYearsAgoLabel(years: number): string {
+  if (years === 1) return 'שנה'
+  if (years === 2) return 'שנתיים'
+  return `${years} שנים`
 }
 
 function toHref(value: string): string {
@@ -280,6 +311,7 @@ const MapPointInfoCard = ({
     return { x, y }
   })()
   const mapCenter = isOtherLayer ? null : (serviceCenter ?? selectedAreaCenter ?? null)
+  const staleServiceDateYearsAgo = isOtherLayer ? null : getStaleServiceDateYearsAgo(getFieldValue('servicedate'))
 
   // Reset mini map when switching services
   if (lastServiceNameRef.current !== title) {
@@ -308,9 +340,28 @@ const MapPointInfoCard = ({
       dir="rtl"
       aria-label={`פרטי מענה: ${title}`}
     >
+      {staleServiceDateYearsAgo !== null && !(multipleServices && selectedServiceIndex === null) && (
+        <div className="w-full shrink-0">
+          <div className="flex w-full items-center gap-1.5 border border-[#dde6ee] bg-[#eef2f6] px-4 py-2 text-right">
+            <svg
+              className="size-4 shrink-0 text-[#5f708a]"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              aria-hidden
+            >
+              <circle cx="12" cy="12" r="8.25" stroke="currentColor" strokeWidth="1.75" />
+              <path d="M12 8v4.5l3 2" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <p className="text-[13px] leading-[18px] text-[#5f708a]">
+              לתשומת ליבך, מידע אחרון על המענה התקבל לפני {formatYearsAgoLabel(staleServiceDateYearsAgo)}
+            </p>
+          </div>
+        </div>
+      )}
       <div className="flex min-h-0 flex-1 flex-col gap-4 px-8">
         {/* Header with close button, and either the shared address, or a back button + title */}
-        <div className="flex pt-8 w-full items-center justify-between gap-2">
+        <div className={`flex w-full items-center justify-between gap-2 ${staleServiceDateYearsAgo === null ? 'pt-8' : 'pt-4'}`}>
           {multipleServices && selectedServiceIndex === null ? (
             <p className="text-right text-[14px] font-medium text-[#5f708a] flex-1">
               {multipleServices[0]?.fulladdress || '-'}
@@ -385,7 +436,7 @@ const MapPointInfoCard = ({
             </>
           )}
 
-          {miniMapSrc && (
+          {miniMapSrc && !(multipleServices && selectedServiceIndex === null) && (
             <div className="relative h-[196px] w-full shrink-0 overflow-hidden rounded-2xl bg-[#f0f4f8]">
               <iframe
                 src={miniMapSrc}
@@ -411,7 +462,7 @@ const MapPointInfoCard = ({
         </div>
       </div>
 
-      {!isOtherLayer && (
+      {!isOtherLayer && !(multipleServices && selectedServiceIndex === null) && (
         <div className="flex w-full shrink-0 items-center justify-between gap-2 border-t border-[#eef2f6] px-8 py-4">
           <span className="inline-flex items-center gap-1.5 text-[13px] text-[#a4b1c0]">
             <IconSparkle />

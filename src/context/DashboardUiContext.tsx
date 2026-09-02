@@ -10,7 +10,7 @@ import {
   type SetStateAction,
 } from 'react'
 import type { ServiceListItem } from '../data/servicesListTypes'
-import { getCityCenterAreaSelectValue, TIRAT_CARMEL_CITY_AREA_OPTION } from '../constants'
+import { DASHBOARD_DEFAULT_AREA_VALUE, TIRAT_CARMEL_CITY_AREA_OPTION } from '../constants'
 import type { MapPointInfoField } from '../components/map/MapPointInfoCard'
 
 export type SelectedPointInfo = {
@@ -33,6 +33,8 @@ export type NeighborhoodMapOption = {
   nbrCode?: string
   /** שם שכונה — חיפוש בשכבה כשאין nbr_code */
   fname?: string
+  /** שם היישוב שהשכונה שייכת לו (setl_name בשכבה 22) — להתמקדות בעיר בבחירה מרובה */
+  cityName?: string
   geometry?: string,
   cityObjectId?: string,
   /** מזהה ישות בשכבת רשויות (125) — להדגשת גבול הרשות */
@@ -43,8 +45,8 @@ export type NeighborhoodMapOption = {
 export type DashboardUiValue = {
   viewMode: DashboardViewMode
   setViewMode: (mode: DashboardViewMode) => void
-  selectedArea: string
-  setSelectedArea: (area: string) => void
+  selectedAreas: string[]
+  setSelectedAreas: Dispatch<SetStateAction<string[]>>
   populationSegment: string
   setPopulationSegment: (segment: string) => void
   profileKey: string
@@ -70,6 +72,9 @@ export type DashboardUiValue = {
   setSelectedPointInfo: Dispatch<SetStateAction<SelectedPointInfo | null>>
   expandedFilterSections: Set<string>
   setExpandedFilterSections: Dispatch<SetStateAction<Set<string>>>
+  /** תווית המסנן המהיר הפעיל (מהמפה) — להצגה לצד מספר המענים בסרגל, כדי שיהיה ברור מה מוצג */
+  activeQuickFilterLabel: string | null
+  setActiveQuickFilterLabel: Dispatch<SetStateAction<string | null>>
 }
 
 const DashboardUiContext = createContext<DashboardUiValue | null>(null)
@@ -80,9 +85,7 @@ const SEARCH_FILTER_DEBOUNCE_MS = 350
  */
 export function DashboardUiProvider({ children }: { children: ReactNode }) {
   const [viewMode, setViewMode] = useState<DashboardViewMode>('map')
-  const [selectedArea, setSelectedArea] = useState(
-    getCityCenterAreaSelectValue(TIRAT_CARMEL_CITY_AREA_OPTION.value),
-  )
+  const [selectedAreas, setSelectedAreas] = useState<string[]>([DASHBOARD_DEFAULT_AREA_VALUE])
   const [populationSegment, setPopulationSegmentState] = useState('none')
   const [profileKey, setProfileKey] = useState('none')
   const [profileInsightsOpen, setProfileInsightsOpen] = useState(false)
@@ -102,6 +105,7 @@ export function DashboardUiProvider({ children }: { children: ReactNode }) {
   const [expandedFilterSections, setExpandedFilterSections] = useState<Set<string>>(
     () => new Set(),
   )
+  const [activeQuickFilterLabel, setActiveQuickFilterLabel] = useState<string | null>(null)
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -129,8 +133,8 @@ export function DashboardUiProvider({ children }: { children: ReactNode }) {
     (): DashboardUiValue => ({
       viewMode,
       setViewMode,
-      selectedArea,
-      setSelectedArea,
+      selectedAreas,
+      setSelectedAreas,
       populationSegment,
       setPopulationSegment,
       profileKey,
@@ -156,10 +160,12 @@ export function DashboardUiProvider({ children }: { children: ReactNode }) {
       setSelectedPointInfo,
       expandedFilterSections,
       setExpandedFilterSections,
+      activeQuickFilterLabel,
+      setActiveQuickFilterLabel,
     }),
     [
       viewMode,
-      selectedArea,
+      selectedAreas,
       populationSegment,
       profileKey,
       profileInsightsOpen,
@@ -174,6 +180,7 @@ export function DashboardUiProvider({ children }: { children: ReactNode }) {
       selectedServiceFilterKeys,
       selectedPointInfo,
       expandedFilterSections,
+      activeQuickFilterLabel,
     ],
   )
 
