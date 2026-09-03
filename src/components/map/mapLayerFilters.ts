@@ -25,12 +25,12 @@ export type FilterSectionData = {
 
 export const FILTER_SECTIONS_CONFIG = [
   { fieldName: 'airisktype', title: 'מצב סיכון ייעודי' },
+  { fieldName: 'servicetypename', title: 'סוג המענה' },
+  { fieldName: 'serviceproviderorganizationtype', title: 'סוג ארגון נותן שירות' },
   { fieldName: 'accessibility', title: 'הנגשה' },
   { fieldName: 'locationtype', title: 'סוג מיקום' },
   { fieldName: 'targetpopulations', title: 'התאמה לסוגי אוכלוסיות' },
   { fieldName: 'language', title: 'שפות המענה' },
-  { fieldName: 'servicetypename', title: 'סוג המענה' },
-  { fieldName: 'serviceproviderorganizationtype', title: 'סוג ארגון נותן שירות' },
   { fieldName: 'requirespayment', title: 'עלות השירות' },
   { fieldName: 'activitytype', title: 'סוג הפעילות' },
   { fieldName: 'participationeligibility', title: 'קהל יעד' },
