@@ -10,7 +10,7 @@ import {
   type SetStateAction,
 } from 'react'
 import type { ServiceListItem } from '../data/servicesListTypes'
-import { DASHBOARD_DEFAULT_AREA_VALUE, TIRAT_CARMEL_CITY_AREA_OPTION } from '../constants'
+import { ACTIVE_DEFAULT_AREA_VALUE, ACTIVE_DEFAULT_CITY } from '../utils/activeCity'
 import type { MapPointInfoField } from '../components/map/MapPointInfoCard'
 
 export type SelectedPointInfo = {
@@ -85,7 +85,7 @@ const SEARCH_FILTER_DEBOUNCE_MS = 350
  */
 export function DashboardUiProvider({ children }: { children: ReactNode }) {
   const [viewMode, setViewMode] = useState<DashboardViewMode>('map')
-  const [selectedAreas, setSelectedAreas] = useState<string[]>([DASHBOARD_DEFAULT_AREA_VALUE])
+  const [selectedAreas, setSelectedAreas] = useState<string[]>([ACTIVE_DEFAULT_AREA_VALUE])
   const [populationSegment, setPopulationSegmentState] = useState('none')
   const [profileKey, setProfileKey] = useState('none')
   const [profileInsightsOpen, setProfileInsightsOpen] = useState(false)
@@ -94,7 +94,7 @@ export function DashboardUiProvider({ children }: { children: ReactNode }) {
   const [matchedServicesCount, setMatchedServicesCount] = useState(0)
   const [servicesListLoading, setServicesListLoading] = useState(false)
   const [servicesQueryGeometry, setServicesQueryGeometry] = useState<string>(
-    TIRAT_CARMEL_CITY_AREA_OPTION.geometry || ''
+    ACTIVE_DEFAULT_CITY.geometry || ''
   )
   const [serviceFilterSearchQuery, setServiceFilterSearchQuery] = useState('')
   const [appliedServiceFilterSearchQuery, setAppliedServiceFilterSearchQuery] = useState('')
