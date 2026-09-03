@@ -44,7 +44,7 @@ const MapQuickFilters = ({
   }
 
   return (
-    <div className="absolute right-4 top-4 z-20 flex flex-col gap-2" dir="rtl">
+    <div className="absolute left-20 top-5 z-20 flex flex-col gap-2" dir="rtl">
       {remoteServicesCount > 0 && (
         <QuickFilterButton
           icon="filter"

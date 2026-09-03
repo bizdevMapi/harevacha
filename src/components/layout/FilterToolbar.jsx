@@ -8,10 +8,10 @@ import {
   IconPin,
 } from '../../assets/icons'
 import {
-  DASHBOARD_DEFAULT_AREA_VALUE,
   POPULATION_SEGMENT_OPTIONS,
   PROFILE_FILTER_OPTIONS,
 } from '../../constants'
+import { ACTIVE_DEFAULT_AREA_VALUE } from '../../utils/activeCity'
 import { useDashboardUi } from '../../context/DashboardUiContext'
 import { applyCityNeighborhoodExclusivity } from '../../utils/areaSelection'
 import { AreaMultiSelect, ToolbarSelect, Tooltip } from '../ui'
@@ -76,7 +76,7 @@ const FilterToolbar = ({ onBack = () => { } }) => {
         value: n.optionValue,
         label: n.label,
       }))}
-      defaultValues={[DASHBOARD_DEFAULT_AREA_VALUE]}
+      defaultValues={[ACTIVE_DEFAULT_AREA_VALUE]}
       rightIcon={<IconPin />}
       className={toolbarSelectWidthClass}
     />

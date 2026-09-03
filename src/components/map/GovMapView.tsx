@@ -7,10 +7,9 @@ import {
   GOVMAP_NEIGHBORHOOD_CLICK_MIN_LEVEL,
   GOVMAP_NEIGHBORHOODS_LAYER_ID,
   ISRAEL_EXTENT_POLYGON,
-  JERUSALEM_CITY_CENTER_AREA_OPTION,
   SITE,
-  TIRAT_CARMEL_CITY_AREA_OPTION,
 } from '../../constants'
+import { ACTIVE_CITY_AREA_OPTIONS, ACTIVE_DEFAULT_CITY } from '../../utils/activeCity'
 import type { NeighborhoodMapOption } from '../../context/DashboardUiContext'
 import { loadGovmapScript } from '../../utils/loadGovmapScript'
 import { applySelectedAreas } from './applySelectedArea'
@@ -21,6 +20,8 @@ import {
   filterServicesBySearchQuery,
   filterServicesBySelectedKeys,
   updateFilterSectionsCounts,
+  MANUAL_LOCATION_RELIABILITY_ID,
+  MISSING_ADDRESS_FILTER_KEY,
   type FilterSectionData,
 } from './mapLayerFilters'
 import MapPointInfoCard, { type MapPointInfoField } from './MapPointInfoCard'
@@ -362,11 +363,9 @@ const GovMapView = () => {
     setViewMode('list')
   }
 
-  /** מסנן מהיר: "מענים עם כתובת חסרה" — לפי סוג מיקום המענה בלבד */
+  /** מסנן מהיר: "מענים עם כתובת חסרה" — רק מענים עם קוד אמינות מיקום 11 ("מיקום שניתן בצורה ידנית") */
   const handleMissingAddressFilter = () => {
-    setSelectedServiceFilterKeys(
-      new Set(['סוג מיקום::פיזי', 'סוג מיקום::לא נמצא מידע']),
-    )
+    setSelectedServiceFilterKeys(new Set([MISSING_ADDRESS_FILTER_KEY]))
     setServiceFilterSearchQuery('')
     setActiveQuickFilterLabel('מענים עם כתובת חסרה')
     setViewMode('list')
@@ -379,8 +378,7 @@ const GovMapView = () => {
   ).length
 
   const missingAddressCount = servicesList.filter(
-    (service) => service.locationtype?.includes('פיזי') ||
-      service.locationtype?.includes('לא נמצא מידע')
+    (service) => String(service.reliability_id ?? '').trim() === MANUAL_LOCATION_RELIABILITY_ID
   ).length
 
   useEffect(() => {
@@ -422,7 +420,7 @@ const GovMapView = () => {
       geometry: ISRAEL_EXTENT_POLYGON,
       layerName: '22',
       fields: ['fname', 'setl_name', 'nbr_code'],
-      whereClause: "setl_name IN ( 'טירת כרמל', 'ירושלים')",
+      whereClause: `setl_name IN (${ACTIVE_CITY_AREA_OPTIONS.map((city) => `'${city.label}'`).join(', ')})`,
       getShapes: true,
     }
     window.govmap?.intersectFeatures?.(params)?.then(function (response: {
@@ -491,44 +489,34 @@ const GovMapView = () => {
       const byFname = (a: NeighborhoodRow, b: NeighborhoodRow) =>
         a.fname.localeCompare(b.fname, 'he')
 
-      const jerusalemRows = groupByNbrCode(raw.filter((r) => r.setlName === 'ירושלים')).sort(
-        byFname,
-      )
-      const tiratRows = groupByNbrCode(raw.filter((r) => r.setlName === 'טירת כרמל')).sort(
-        byFname,
-      )
-      const jerusalemNeighborhoods = jerusalemRows.map(toOption)
-      const tiratNeighborhoods = tiratRows.map(toOption)
+      // בלוק לכל עיר פעילה: «כל העיר», «מענים נוספים בסביבה» שלה, ואז השכונות שלה.
+      // הערים הפעילות נקבעות לפי פרמטר cityid בכתובת — בלי פרמטר אלו כל הערים.
+      const areaOptions = ACTIVE_CITY_AREA_OPTIONS.flatMap((city): NeighborhoodMapOption[] => {
+        const cityNeighborhoods = groupByNbrCode(raw.filter((r) => r.setlName === city.label))
+          .sort(byFname)
+          .map(toOption)
 
-      setNeighborhoodsList([
+        return [
+          {
+            label: city.label,
+            value: { ...city.value },
+            cityObjectId: city.cityObjectId,
+            cityName: city.label,
+            optionValue: getCityCenterAreaSelectValue(city.value),
+            geometry: city.geometry,
+            filter: `(cityid=${city.cityId})`,
+          },
+          {
+            label: `${city.label} - מענים נוספים בסביבה`,
+            optionValue: `${city.label} - מענים נוספים בסביבה`,
+            value: { ...city.value },
+            filter: `(providercitycode in (${city.nearbyProviderCityCodes.join(', ')}))`,
+          },
+          ...cityNeighborhoods,
+        ]
+      })
 
-        {
-          label: TIRAT_CARMEL_CITY_AREA_OPTION.label,
-          value: { ...TIRAT_CARMEL_CITY_AREA_OPTION.value },
-          cityObjectId: '2',
-          cityName: TIRAT_CARMEL_CITY_AREA_OPTION.label,
-          optionValue: getCityCenterAreaSelectValue(TIRAT_CARMEL_CITY_AREA_OPTION.value),
-          geometry: TIRAT_CARMEL_CITY_AREA_OPTION.geometry,
-          filter: "(cityid=2100)"
-        },
-        {
-          label: 'מענים נוספים בסביבה',
-          optionValue: 'מענים נוספים בסביבה',
-          value: { ...TIRAT_CARMEL_CITY_AREA_OPTION.value },
-          filter: "(providercitycode in (4000, 5000, 6900,683))",
-        },
-        ...tiratNeighborhoods,
-        {
-          label: JERUSALEM_CITY_CENTER_AREA_OPTION.label,
-          value: { ...JERUSALEM_CITY_CENTER_AREA_OPTION.value },
-          cityObjectId: '1',
-          cityName: JERUSALEM_CITY_CENTER_AREA_OPTION.label,
-          optionValue: getCityCenterAreaSelectValue(JERUSALEM_CITY_CENTER_AREA_OPTION.value),
-          geometry: JERUSALEM_CITY_CENTER_AREA_OPTION.geometry,
-          filter: "(cityid=3000)"
-        },
-        ...jerusalemNeighborhoods
-      ])
+      setNeighborhoodsList(areaOptions)
     }).catch(function (error) {
       console.error('failed getting neighborhoods', error)
     })
@@ -909,8 +897,8 @@ const GovMapView = () => {
         token: GOVMAP_TOKEN,
         level: GOVMAP_DEFAULT_VIEW_LEVEL,
         center: {
-          x: TIRAT_CARMEL_CITY_AREA_OPTION.value.x,
-          y: TIRAT_CARMEL_CITY_AREA_OPTION.value.y
+          x: ACTIVE_DEFAULT_CITY.value.x,
+          y: ACTIVE_DEFAULT_CITY.value.y
         },
         layersMode: 1,
         identifyOnClick: false,
