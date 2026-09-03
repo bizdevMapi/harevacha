@@ -39,6 +39,11 @@ const HOVER_MIN_SCREEN_MOVE_PX = 12
 /** תזוזה מינימלית בקואורדינטות מפה לפני identify חדש */
 const HOVER_MIN_MAP_MOVE = 25
 
+/** קודי עיר הספק שנכללים ב«מענים נוספים בסביבה» של ירושלים — כל הקודים שבשדה providercitycode חוץ מירושלים עצמה (3000) */
+const JERUSALEM_NEARBY_PROVIDER_CITY_CODES = [
+ 1015, 2400, 2610, 3618, 4000, 5000, 6100, 6300, 6900, 7700, 7900, 8400,8600, 8700
+] as const
+
 type MapPointerPayload = {
   mapPoint?: { x?: number; y?: number }
   screenPoint?: { x?: number; y?: number }
@@ -511,8 +516,8 @@ const GovMapView = () => {
           filter: "(cityid=2100)"
         },
         {
-          label: 'מענים נוספים בסביבה',
-          optionValue: 'מענים נוספים בסביבה',
+          label: 'טירת כרמל - מענים נוספים בסביבה',
+          optionValue: 'טירת כרמל - מענים נוספים בסביבה',
           value: { ...TIRAT_CARMEL_CITY_AREA_OPTION.value },
           filter: "(providercitycode in (4000, 5000, 6900,683))",
         },
@@ -525,6 +530,12 @@ const GovMapView = () => {
           optionValue: getCityCenterAreaSelectValue(JERUSALEM_CITY_CENTER_AREA_OPTION.value),
           geometry: JERUSALEM_CITY_CENTER_AREA_OPTION.geometry,
           filter: "(cityid=3000)"
+        },
+        {
+          label: 'ירושלים - מענים נוספים בסביבה',
+          optionValue: 'ירושלים - מענים נוספים בסביבה',
+          value: { ...JERUSALEM_CITY_CENTER_AREA_OPTION.value },
+          filter: `(providercitycode in (${JERUSALEM_NEARBY_PROVIDER_CITY_CODES.join(', ')}))`,
         },
         ...jerusalemNeighborhoods
       ])
