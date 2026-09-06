@@ -21,11 +21,11 @@ const Header = () => {
         {/* שם הרשות שהדשבורד מוגדר לה — רק כשהעיר נקבעה בפרמטר cityid */}
         {URL_SELECTED_CITY && (
           <div className="absolute end-4 top-1/2 flex -translate-y-1/2 items-center gap-1.5 md:end-8">
-            <span className="whitespace-nowrap text-sm text-[#161a20] md:text-[15px]">
-              רווחה {URL_SELECTED_CITY.label}
-            </span>
             <span className="text-brand-darkBlue">
               <IconUser />
+            </span>
+            <span className="whitespace-nowrap text-sm text-[#161a20] md:text-[15px]">
+              רווחה {URL_SELECTED_CITY.label}
             </span>
           </div>
         )}
