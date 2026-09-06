@@ -77,7 +77,6 @@ function normalizeGovmapFields(rawEntity: unknown): Record<string, string> {
 const POINT_INFO_DETAIL_SPECS: Array<{ field: string; icon: MapPointInfoIconId }> = [
   { field: 'FullAddress', icon: 'location' },
   { field: 'Phone', icon: 'phone' },
-  { field: 'OpenHours', icon: 'clock' },
   { field: 'TargetPopulations', icon: 'group' },
   { field: 'RiskStatusDescription_Agg', icon: 'target' },
   { field: 'ServiceProviderOrganizationType', icon: 'building' },

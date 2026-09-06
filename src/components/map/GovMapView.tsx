@@ -6,13 +6,13 @@ import {
   GOVMAP_MUNICIPALITIES_LAYER_ID,
   GOVMAP_NEIGHBORHOOD_CLICK_MIN_LEVEL,
   GOVMAP_NEIGHBORHOODS_LAYER_ID,
-  JERUSALEM_CITY_CENTER_AREA_OPTION,
+  ISRAEL_EXTENT_POLYGON,
   SITE,
-  TIRAT_CARMEL_CITY_AREA_OPTION,
 } from '../../constants'
+import { ACTIVE_CITY_AREA_OPTIONS, ACTIVE_DEFAULT_CITY } from '../../utils/activeCity'
 import type { NeighborhoodMapOption } from '../../context/DashboardUiContext'
 import { loadGovmapScript } from '../../utils/loadGovmapScript'
-import { applySelectedArea } from './applySelectedArea'
+import { applySelectedAreas } from './applySelectedArea'
 import MapFiltersPanel from './MapFiltersPanel'
 import {
   buildFilterSectionsFromServiceList,
@@ -20,6 +20,8 @@ import {
   filterServicesBySearchQuery,
   filterServicesBySelectedKeys,
   updateFilterSectionsCounts,
+  MANUAL_LOCATION_RELIABILITY_ID,
+  MISSING_ADDRESS_FILTER_KEY,
   type FilterSectionData,
 } from './mapLayerFilters'
 import MapPointInfoCard, { type MapPointInfoField } from './MapPointInfoCard'
@@ -292,8 +294,8 @@ const GovMapView = () => {
   const {
     viewMode,
     setViewMode,
-    selectedArea,
-    setSelectedArea,
+    selectedAreas,
+    setSelectedAreas,
     servicesQueryGeometry,
     neighborhoodsList,
     servicesList,
@@ -312,6 +314,7 @@ const GovMapView = () => {
     setSelectedPointInfo,
     expandedFilterSections,
     setExpandedFilterSections,
+    setActiveQuickFilterLabel,
   } = useDashboardUi()
   const mapRef = useRef<HTMLDivElement | null>(null)
   const isHoverIdentifyInFlightRef = useRef(false)
@@ -324,21 +327,22 @@ const GovMapView = () => {
   const areaServiceObjectIdsRef = useRef<number[]>([])
   const mapZoomLevelRef = useRef(GOVMAP_DEFAULT_VIEW_LEVEL)
   const neighborhoodsListRef = useRef(neighborhoodsList)
-  const selectedAreaRef = useRef(selectedArea)
+  const selectedAreasRef = useRef(selectedAreas)
   const [isFiltersOpen, setIsFiltersOpen] = useState(true)
   const [isMapReady, setIsMapReady] = useState(false)
   const [filterSections, setFilterSections] = useState<FilterSectionData[]>([])
   const [hoverPointInfo, setHoverPointInfo] = useState<HoverPointTooltipInfo | null>(null)
   const [hoverTooltipPosition, setHoverTooltipPosition] = useState<{ left: number; top: number } | null>(null)
-  const selectedAreaOption = neighborhoodsList.find((n) => n.optionValue === selectedArea)
+  const selectedAreaOptions = neighborhoodsList.filter((n) => selectedAreas.includes(n.optionValue))
   const applyAreaSelection = (option: NeighborhoodMapOption) => {
-    if (option.optionValue === selectedAreaRef.current) {
+    const current = selectedAreasRef.current
+    if (current.length === 1 && current[0] === option.optionValue) {
       return
     }
-    setSelectedArea(option.optionValue)
+    setSelectedAreas([option.optionValue])
   }
   const handleExpandPointMap = (center: { x: number; y: number } | null) => {
-    const target = center ?? selectedAreaOption?.value ?? null
+    const target = center ?? selectedAreaOptions[0]?.value ?? null
     if (!target) return
     window.govmap?.zoomToXY?.({
       x: target.x,
@@ -349,36 +353,32 @@ const GovMapView = () => {
     setSelectedPointInfo(null)
   }
 
-  const handlePhysicalLocationFilter = () => {
-    console.log('Physical location filter applied', selectedServiceFilterKeys)
-    const newKeys = new Set(selectedServiceFilterKeys)
-    newKeys.add('סוג מיקום::מקוון')
-    newKeys.add('סוג מיקום::טלפוני')
-    newKeys.add('סוג מיקום::עד הבית')
-    setSelectedServiceFilterKeys(newKeys)
+  /** מסנן מהיר: "מענים מקוונים/עד הבית/טלפוני" — לפי סוג מיקום המענה בלבד, גם אם קיימת כתובת */
+  const handleRemoteServicesFilter = () => {
+    setSelectedServiceFilterKeys(
+      new Set(['סוג מיקום::מקוון', 'סוג מיקום::טלפוני', 'סוג מיקום::עד הבית']),
+    )
+    setServiceFilterSearchQuery('')
+    setActiveQuickFilterLabel('מענים מקוונים / עד הבית / טלפוני')
     setViewMode('list')
   }
 
+  /** מסנן מהיר: "מענים עם כתובת חסרה" — רק מענים עם קוד אמינות מיקום 11 ("מיקום שניתן בצורה ידנית") */
   const handleMissingAddressFilter = () => {
-    const newKeys = new Set(selectedServiceFilterKeys)
-    newKeys.add('סוג מיקום::לא נמצא מידע')
-    newKeys.delete('סוג מיקום::פיזי')
-    setSelectedServiceFilterKeys(newKeys)
+    setSelectedServiceFilterKeys(new Set([MISSING_ADDRESS_FILTER_KEY]))
+    setServiceFilterSearchQuery('')
+    setActiveQuickFilterLabel('מענים עם כתובת חסרה')
     setViewMode('list')
   }
 
-  const physicalLocationCount = servicesList.filter(
-    (service) => service.locationtype?.toLowerCase().includes('מקוון') ||
-      service.locationtype?.toLowerCase().includes('טלפוני') ||
-      service.locationtype?.toLowerCase().includes('עד הבית')
+  const remoteServicesCount = servicesList.filter(
+    (service) => service.locationtype?.includes('מקוון') ||
+      service.locationtype?.includes('טלפוני') ||
+      service.locationtype?.includes('עד הבית')
   ).length
 
   const missingAddressCount = servicesList.filter(
-    (service) => {
-      const hasPhysical = service.locationtype?.toLowerCase().includes('לא נמצא מידע') ||
-        service.locationtype?.toLowerCase().includes('פיזי')
-      return hasPhysical
-    }
+    (service) => String(service.reliability_id ?? '').trim() === MANUAL_LOCATION_RELIABILITY_ID
   ).length
 
   useEffect(() => {
@@ -390,8 +390,8 @@ const GovMapView = () => {
   }, [neighborhoodsList])
 
   useEffect(() => {
-    selectedAreaRef.current = selectedArea
-  }, [selectedArea])
+    selectedAreasRef.current = selectedAreas
+  }, [selectedAreas])
 
   useEffect(() => {
     return () => {
@@ -417,10 +417,10 @@ const GovMapView = () => {
 
   const getNeighborhoods = () => {
     const params = {
-      geometry: `POLYGON ((130000 380000, 285000 380000, 285000 805000, 130000 805000, 130000 380000))`,
+      geometry: ISRAEL_EXTENT_POLYGON,
       layerName: '22',
       fields: ['fname', 'setl_name', 'nbr_code'],
-      whereClause: "setl_name IN ( 'טירת כרמל', 'ירושלים')",
+      whereClause: `setl_name IN (${ACTIVE_CITY_AREA_OPTIONS.map((city) => `'${city.label}'`).join(', ')})`,
       getShapes: true,
     }
     window.govmap?.intersectFeatures?.(params)?.then(function (response: {
@@ -482,48 +482,41 @@ const GovMapView = () => {
           layerObjectId: n.id,
           nbrCode: n.nbrCode || undefined,
           fname: n.fname,
+          cityName: n.setlName,
         }
       }
 
       const byFname = (a: NeighborhoodRow, b: NeighborhoodRow) =>
         a.fname.localeCompare(b.fname, 'he')
 
-      const jerusalemRows = groupByNbrCode(raw.filter((r) => r.setlName === 'ירושלים')).sort(
-        byFname,
-      )
-      const tiratRows = groupByNbrCode(raw.filter((r) => r.setlName === 'טירת כרמל')).sort(
-        byFname,
-      )
-      const jerusalemNeighborhoods = jerusalemRows.map(toOption)
-      const tiratNeighborhoods = tiratRows.map(toOption)
+      // בלוק לכל עיר פעילה: «כל העיר», «מענים נוספים בסביבה» שלה, ואז השכונות שלה.
+      // הערים הפעילות נקבעות לפי פרמטר cityid בכתובת — בלי פרמטר אלו כל הערים.
+      const areaOptions = ACTIVE_CITY_AREA_OPTIONS.flatMap((city): NeighborhoodMapOption[] => {
+        const cityNeighborhoods = groupByNbrCode(raw.filter((r) => r.setlName === city.label))
+          .sort(byFname)
+          .map(toOption)
 
-      setNeighborhoodsList([
+        return [
+          {
+            label: city.label,
+            value: { ...city.value },
+            cityObjectId: city.cityObjectId,
+            cityName: city.label,
+            optionValue: getCityCenterAreaSelectValue(city.value),
+            geometry: city.geometry,
+            filter: `(cityid=${city.cityId})`,
+          },
+          {
+            label: `${city.label} - מענים נוספים בסביבה`,
+            optionValue: `${city.label} - מענים נוספים בסביבה`,
+            value: { ...city.value },
+            filter: `(providercitycode in (${city.nearbyProviderCityCodes.join(', ')}))`,
+          },
+          ...cityNeighborhoods,
+        ]
+      })
 
-        {
-          label: TIRAT_CARMEL_CITY_AREA_OPTION.label,
-          value: { ...TIRAT_CARMEL_CITY_AREA_OPTION.value },
-          cityObjectId: '2',
-          optionValue: getCityCenterAreaSelectValue(TIRAT_CARMEL_CITY_AREA_OPTION.value),
-          geometry: TIRAT_CARMEL_CITY_AREA_OPTION.geometry,
-          filter: "(cityid=2100)"
-        },
-        {
-          label: 'מענים נוספים בסביבה',
-          optionValue: 'מענים נוספים בסביבה',
-          value: { ...TIRAT_CARMEL_CITY_AREA_OPTION.value },
-          filter: "(providercitycode in (4000, 5000, 6900,683))",
-        },
-        ...tiratNeighborhoods,
-        {
-          label: JERUSALEM_CITY_CENTER_AREA_OPTION.label,
-          value: { ...JERUSALEM_CITY_CENTER_AREA_OPTION.value },
-          cityObjectId: '1',
-          optionValue: getCityCenterAreaSelectValue(JERUSALEM_CITY_CENTER_AREA_OPTION.value),
-          geometry: JERUSALEM_CITY_CENTER_AREA_OPTION.geometry,
-          filter: "(cityid=3000)"
-        },
-        ...jerusalemNeighborhoods
-      ])
+      setNeighborhoodsList(areaOptions)
     }).catch(function (error) {
       console.error('failed getting neighborhoods', error)
     })
@@ -545,7 +538,7 @@ const GovMapView = () => {
       geometry: `POINT (${mapPoint.x} ${mapPoint.y})`,
       layerName: SITE.layers.servicesLayer,
       fields: fieldNames,
-      radius: mapZoomLevelRef.current <= GOVMAP_DEFAULT_VIEW_LEVEL ? 50 : 30
+      radius: mapZoomLevelRef.current <= GOVMAP_DEFAULT_VIEW_LEVEL ? 150 : 30
     }
 
     govmap.intersectFeatures(params)
@@ -904,8 +897,8 @@ const GovMapView = () => {
         token: GOVMAP_TOKEN,
         level: GOVMAP_DEFAULT_VIEW_LEVEL,
         center: {
-          x: TIRAT_CARMEL_CITY_AREA_OPTION.value.x,
-          y: TIRAT_CARMEL_CITY_AREA_OPTION.value.y
+          x: ACTIVE_DEFAULT_CITY.value.x,
+          y: ACTIVE_DEFAULT_CITY.value.y
         },
         layersMode: 1,
         identifyOnClick: false,
@@ -937,13 +930,13 @@ const GovMapView = () => {
   }, [])
 
   useEffect(() => {
-    if (!isMapReady || !selectedArea) return
+    if (!isMapReady || selectedAreas.length === 0) return
 
-    const option = neighborhoodsList.find((n) => n.optionValue === selectedArea)
-    if (!option) return
+    const options = neighborhoodsList.filter((n) => selectedAreas.includes(n.optionValue))
+    if (options.length === 0) return
 
     let active = true
-    void applySelectedArea(option, {
+    void applySelectedAreas(options, {
       setServicesQueryGeometry,
       setServicesListLoading,
       setServicesList: (rows) => {
@@ -956,7 +949,7 @@ const GovMapView = () => {
     }
   }, [
     isMapReady,
-    selectedArea,
+    selectedAreas,
     neighborhoodsList,
     setServicesQueryGeometry,
     setServicesList,
@@ -998,18 +991,24 @@ const GovMapView = () => {
   }, [isFiltersOpen])
 
   return (
-    <section className="h-full w-full overflow-hidden rounded-md border border-brand-lightBlue bg-brand-bgLight">
+    <section className="h-full w-full overflow-hidden rounded-tr-md rounded-br-md rounded-bl-md border border-brand-lightBlue bg-brand-bgLight">
       <div className="relative flex h-full w-full">
         <MapFiltersPanel
           key={servicesQueryGeometry}
           isOpen={isFiltersOpen}
           onToggle={() => setIsFiltersOpen((prev) => !prev)}
           searchQuery={serviceFilterSearchQuery}
-          onSearchQueryChange={setServiceFilterSearchQuery}
+          onSearchQueryChange={(query) => {
+            setActiveQuickFilterLabel(null)
+            setServiceFilterSearchQuery(query)
+          }}
           filterSections={filterSections}
           filtersLoading={servicesListLoading}
           selectedKeys={selectedServiceFilterKeys}
-          onFilterSelectionChange={setSelectedServiceFilterKeys}
+          onFilterSelectionChange={(keys) => {
+            setActiveQuickFilterLabel(null)
+            setSelectedServiceFilterKeys(keys)
+          }}
           expandedSections={expandedFilterSections}
           onExpandedSectionsChange={setExpandedFilterSections}
         />
@@ -1022,12 +1021,12 @@ const GovMapView = () => {
               position={hoverTooltipPosition}
             />
           )}
-          {/* <MapQuickFilters
-            localCount={physicalLocationCount}
-            missingDataCount={missingAddressCount}
-            onLocalClick={handlePhysicalLocationFilter}
-            onMissingDataClick={handleMissingAddressFilter}
-          /> */}
+          <MapQuickFilters
+            remoteServicesCount={remoteServicesCount}
+            missingAddressCount={missingAddressCount}
+            onRemoteServicesClick={handleRemoteServicesFilter}
+            onMissingAddressClick={handleMissingAddressFilter}
+          />
           <MapProfileInsightsCard />
         </div>
         {selectedPointInfo && (
@@ -1062,7 +1061,7 @@ const GovMapView = () => {
                   data={selectedPointInfo.fields as MapPointInfoField[]}
                   isOtherLayer={selectedPointInfo.isOtherLayer}
                   onClose={() => setSelectedPointInfo(null)}
-                  selectedAreaCenter={selectedAreaOption?.value ?? null}
+                  selectedAreaCenter={selectedAreaOptions[0]?.value ?? null}
                   onExpandMap={handleExpandPointMap}
                   multipleServices={serviceDataArray}
                   multipleServicesFields={fieldsArray as MapPointInfoField[][]}
@@ -1075,7 +1074,7 @@ const GovMapView = () => {
                 data={selectedPointInfo.fields as MapPointInfoField[]}
                 isOtherLayer={selectedPointInfo.isOtherLayer}
                 onClose={() => setSelectedPointInfo(null)}
-                selectedAreaCenter={selectedAreaOption?.value ?? null}
+                selectedAreaCenter={selectedAreaOptions[0]?.value ?? null}
                 onExpandMap={handleExpandPointMap}
               />
             )

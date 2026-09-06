@@ -27,19 +27,63 @@ export function getPopulationSegmentLabel(segmentValue: string): string {
 /** ערך «כל העיר» בסלקט האזור — יישור עם FilterToolbar */
 export const DASHBOARD_ALL_CITY_AREA_VALUE = 'jerusalem-all'
 
-/** אזור קבוע ראשון בסלקט «אזור» — מרכז ירושלים (קואורדינטות GovMap / רשת ישראל החדשה) */
+/**
+ * מרכז ירושלים (קואורדינטות GovMap / רשת ישראל החדשה).
+ * `cityId` = קוד היישוב בשדה cityid של שכבת המענים, וגם הערך של פרמטר cityid בכתובת.
+ * `nearbyProviderCityCodes` = קודי providercitycode של «מענים נוספים בסביבה» של העיר.
+ */
 export const JERUSALEM_CITY_CENTER_AREA_OPTION = {
   label: 'ירושלים',
+  cityId: 3000,
+  cityObjectId: '1',
   value: { x: 220000, y: 630000 },
-  geometry: 'POLYGON ((211000 621000, 227000 621000, 227000 643000, 211000 643000, 211000 621000))'
+  geometry: 'POLYGON ((211000 621000, 227000 621000, 227000 643000, 211000 643000, 211000 621000))',
+  nearbyProviderCityCodes: [
+    1015, 2400, 2610, 3618, 4000, 5000, 6100, 6300, 6900, 7700, 7900, 8400, 8600, 8700,
+  ],
 } as const
 
-/** מרכז טירת כרמל — אחרי שכונות ירושלים ולפני שכונות טירת כרמל מהשכבה */
+/** מרכז טירת כרמל */
 export const TIRAT_CARMEL_CITY_AREA_OPTION = {
   label: 'טירת כרמל',
+  cityId: 2100,
+  cityObjectId: '2',
   value: { x: 198811.34, y: 741553.42 },
-  geometry: 'POLYGON ((196500 739500, 199500 739500, 199500 744000, 196500 744000, 196500 739500))'
+  geometry: 'POLYGON ((196500 739500, 199500 739500, 199500 744000, 196500 744000, 196500 739500))',
+  nearbyProviderCityCodes: [4000, 5000, 6900, 683],
 } as const
+
+/**
+ * העיירות הקבועות בסלקט «אזור» — התוויות תואמות את setl_name בשכבה 22.
+ * הסדר כאן הוא הסדר שבו מוצגים בסלקט הבלוקים של הערים (עיר, «מענים נוספים בסביבה», שכונות).
+ */
+export const DASHBOARD_CITY_AREA_OPTIONS = [
+  TIRAT_CARMEL_CITY_AREA_OPTION,
+  JERUSALEM_CITY_CENTER_AREA_OPTION,
+] as const
+
+export type CityAreaOption = (typeof DASHBOARD_CITY_AREA_OPTIONS)[number]
+
+/** העיר שעליה נפתח הדשבורד כשאין פרמטר cityid בכתובת */
+export const DASHBOARD_DEFAULT_CITY = TIRAT_CARMEL_CITY_AREA_OPTION
+
+/**
+ * מרכז וגיאומטריה של עיר לפי שמה — לזום לעיר במקום לשכונה כשנבחרו כמה שכונות.
+ */
+export function getCityAreaOptionByName(cityName: string | undefined): CityAreaOption | null {
+  if (!cityName) return null
+  return DASHBOARD_CITY_AREA_OPTIONS.find((city) => city.label === cityName) ?? null
+}
+
+/** עיר לפי קוד יישוב — לזיהוי הערך של פרמטר cityid בכתובת */
+export function getCityAreaOptionByCityId(cityId: number | null): CityAreaOption | null {
+  if (cityId == null) return null
+  return DASHBOARD_CITY_AREA_OPTIONS.find((city) => city.cityId === cityId) ?? null
+}
+
+/** פוליגון שמכסה את כל שטח הארץ — לשימוש עם intersectFeatures כשהסינון האמיתי נעשה ב-whereClause ולא בגיאומטריה */
+export const ISRAEL_EXTENT_POLYGON =
+  'POLYGON ((130000 380000, 285000 380000, 285000 805000, 130000 805000, 130000 380000))' as const
 
 /** רמת זום ל-GovMap — ערכים גבוהים מדי (למשל 10+) עלולים להציג מפה לבנה ללא אריחי בסיס */
 export const GOVMAP_DEFAULT_VIEW_LEVEL = 7 as const
@@ -71,9 +115,10 @@ export function getProfileFilterLabel(profileValue: string): string {
 /**
  * כותרת ראשית בכרטיס תובנות — לפי אזור ופרופיל שנבחרו בסרגל.
  */
-export function getProfileInsightsMainTitle(selectedArea: string, profileKey: string): string {
-  const isAllCity = selectedArea === DASHBOARD_ALL_CITY_AREA_VALUE
+export function getProfileInsightsMainTitle(selectedAreas: string[], profileKey: string): string {
+  const isAllCity = selectedAreas.length === 1 && selectedAreas[0] === DASHBOARD_ALL_CITY_AREA_VALUE
   const hasProfile = profileKey !== 'none'
+  const isMultipleAreas = selectedAreas.length > 1
 
   if (isAllCity && !hasProfile) {
     return 'לפי פרופילים בכל העיר'
@@ -81,11 +126,16 @@ export function getProfileInsightsMainTitle(selectedArea: string, profileKey: st
   if (isAllCity && hasProfile) {
     return `לפי ${getProfileFilterLabel(profileKey)} בכל העיר`
   }
-  if (!isAllCity && hasProfile) {
-    const areaLabel = getDashboardAreaLabel(selectedArea)
+  if (isMultipleAreas) {
+    return hasProfile
+      ? `לפי ${getProfileFilterLabel(profileKey)} באזורים הנבחרים`
+      : 'לפי פרופילים באזורים הנבחרים'
+  }
+  if (hasProfile) {
+    const areaLabel = getDashboardAreaLabel(selectedAreas[0])
     return `לפי ${getProfileFilterLabel(profileKey)} ב${areaLabel}`
   }
-  const areaLabel = getDashboardAreaLabel(selectedArea)
+  const areaLabel = getDashboardAreaLabel(selectedAreas[0])
   return `לפי פרופילים ב${areaLabel}`
 }
 
