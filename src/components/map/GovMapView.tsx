@@ -538,7 +538,7 @@ const GovMapView = () => {
       geometry: `POINT (${mapPoint.x} ${mapPoint.y})`,
       layerName: SITE.layers.servicesLayer,
       fields: fieldNames,
-      radius: mapZoomLevelRef.current <= GOVMAP_DEFAULT_VIEW_LEVEL ? 50 : 30
+      radius: mapZoomLevelRef.current <= GOVMAP_DEFAULT_VIEW_LEVEL ? 150 : 30
     }
 
     govmap.intersectFeatures(params)
