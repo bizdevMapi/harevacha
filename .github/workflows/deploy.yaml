@@ -30,6 +30,7 @@ jobs:
           VITE_SERVICES_LAYER: ${{ secrets.VITE_SERVICES_LAYER }}
           VITE_WEB3FORMS_KEY: ${{ secrets.VITE_WEB3FORMS_KEY }}
           VITE_WEB3FORMS_TO_EMAIL: ${{ secrets.VITE_WEB3FORMS_TO_EMAIL }}
+          VITE_GOOGLE_ANALYTICS_ID: ${{ secrets.VITE_GOOGLE_ANALYTICS_ID }}
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
