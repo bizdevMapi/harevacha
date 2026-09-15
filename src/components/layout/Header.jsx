@@ -15,7 +15,7 @@ const Header = () => {
         </div>
 
         <p className="px-[max(3rem,8vw)] text-center text-base font-bold leading-snug tracking-tight text-[#161a20] md:text-lg md:leading-tight lg:text-xl">
-          פוטנציאל למצבי סיכון בקרב אוכלוסיית הגיל השלישי ומענים מותאמים
+            מערכת מפת"ח – מפה לפיתוח תכנון חברתי
         </p>
 
         {/* שם הרשות שהדשבורד מוגדר לה — רק כשהעיר נקבעה בפרמטר cityid */}
