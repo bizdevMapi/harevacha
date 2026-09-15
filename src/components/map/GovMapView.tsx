@@ -371,13 +371,17 @@ const GovMapView = () => {
     setViewMode('list')
   }
 
-  const remoteServicesCount = servicesList.filter(
+  // Calculate quick filter counts based on the filtered services list
+  const filteredByKeys = filterServicesBySelectedKeys(servicesList, selectedServiceFilterKeys)
+  const filteredBySearch = filterServicesBySearchQuery(filteredByKeys, appliedServiceFilterSearchQuery)
+
+  const remoteServicesCount = filteredBySearch.filter(
     (service) => service.locationtype?.includes('מקוון') ||
       service.locationtype?.includes('טלפוני') ||
       service.locationtype?.includes('עד הבית')
   ).length
 
-  const missingAddressCount = servicesList.filter(
+  const missingAddressCount = filteredBySearch.filter(
     (service) => String(service.reliability_id ?? '').trim() === MANUAL_LOCATION_RELIABILITY_ID
   ).length
 
