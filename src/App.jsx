@@ -2,8 +2,10 @@ import GovMapView from "./components/map/GovMapView"
 import ServicesListView from "./components/list/ServicesListView"
 import { DashboardUiProvider, useDashboardUi } from "./context/DashboardUiContext"
 import { FilterToolbar, Header } from "./components/layout"
+import { useGoogleAnalytics } from "./hooks/useGoogleAnalytics"
 
 function AppShell() {
+  useGoogleAnalytics()
   const { viewMode } = useDashboardUi()
 
   return (
