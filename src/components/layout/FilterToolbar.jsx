@@ -89,7 +89,7 @@ const FilterToolbar = ({ onBack = () => { } }) => {
         {divider}
 
         <div className="flex min-w-0 flex-1 flex-wrap items-end justify-between gap-x-4 gap-y-3 sm:flex-nowrap sm:items-center">
-          <div className="flex min-w-0 flex-wrap items-end gap-3 sm:flex-nowrap sm:gap-4">
+          {/* <div className="flex min-w-0 flex-wrap items-end gap-3 sm:flex-nowrap sm:gap-4">
             <ToolbarSelect
               label="נתוני אוכלוסייה"
               value={populationSegment}
@@ -116,8 +116,8 @@ const FilterToolbar = ({ onBack = () => { } }) => {
               </>
              
             )}
-          </div>
-          {divider}
+          </div> */}
+          {/* {divider} */}
 
           <p
               className="min-w-0 flex-1 text-center text-[15px] tracking-tight text-white drop-shadow-sm sm:text-right"
